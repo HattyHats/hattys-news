@@ -1,884 +1,770 @@
 <!DOCTYPE html>
-<!--
-  =====================================================
-  NETLIFY.TOML (create as /netlify.toml alongside this file)
-  =====================================================
-  [build]
-    publish = "."
-    command = ""
-  [[redirects]]
-    from = "/*"
-    to = "/index.html"
-    status = 200
-  [[headers]]
-    for = "/*"
-    [headers.values]
-      X-Frame-Options = "DENY"
-      X-XSS-Protection = "1; mode=block"
-      Content-Security-Policy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src * data:;"
-  =====================================================
-  NO API KEYS — verified public RSS feeds only
-  ADS — Google Auto Ads (replace YOUR_PUBLISHER_ID)
-  =====================================================
--->
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hatty's News — Real World Headlines</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231E40AF'/><text x='4' y='24' font-size='22' font-family='serif' fill='white'>H</text></svg>" />
-  <meta name="description" content="Real global news from verified sources — BBC, Reuters, AP, Al Jazeera, SCMP, DW, NHK and more. 25 countries, no spin, no sign-up." />
-  <meta property="og:title" content="Hatty's News: Real World Headlines" />
-  <meta property="og:description" content="Verified news sources from 25 countries. No algorithms, no paywalls." />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Hatty's News — Real World Headlines</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23dc2626'/><text x='4' y='24' font-size='22' font-family='serif' fill='white'>H</text></svg>"/>
+<meta name="description" content="Real global news. BBC, Reuters, AP, Al Jazeera, SCMP, NHK, DW, France 24 and 40+ more verified sources. Live crypto and stock price tickers."/>
+<!-- Google Auto Ads: replace YOUR_PUBLISHER_ID -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{display:['"Bebas Neue"','Impact','sans-serif'],mono:['"IBM Plex Mono"','monospace'],body:['Manrope','system-ui','sans-serif']}}}}</script>
+<style>
+/* ══ DARK THEME (default) ══ */
+:root {
+  --bg:#050505; --bg2:#0d0d0d; --surface:#141414; --surface2:#1a1a1a;
+  --border:#252525; --ink:#f0f0f0; --ink-muted:#888; --ink-faint:#3a3a3a;
+  --red:#dc2626; --red-b:#ef4444; --red-d:#991b1b;
+  --glow: 0 0 0 1px rgba(220,38,38,.35), 0 0 20px rgba(220,38,38,.22), 0 0 50px rgba(220,38,38,.07);
+  --glow-h: 0 0 0 1px rgba(220,38,38,.65), 0 0 30px rgba(220,38,38,.45), 0 0 70px rgba(220,38,38,.15);
+  --ticker:#080808; --t:.2s ease; --r:10px;
+}
+html.light {
+  --bg:#f0f0f0; --bg2:#e8e8e8; --surface:#ffffff; --surface2:#f7f7f7;
+  --border:#d8d8d8; --ink:#111; --ink-muted:#555; --ink-faint:#bbb;
+  --red:#dc2626; --red-b:#b91c1c; --red-d:#fca5a5;
+  --glow: 0 0 0 1px rgba(220,38,38,.2), 0 4px 24px rgba(220,38,38,.12);
+  --glow-h: 0 0 0 2px rgba(220,38,38,.45), 0 8px 40px rgba(220,38,38,.2);
+  --ticker:#18181b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:'Manrope',system-ui,sans-serif;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);min-height:100vh;transition:background .3s,color .3s;padding-bottom:112px}
+html.dark body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);opacity:.3}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--red-d);border-radius:99px}::-webkit-scrollbar-thumb:hover{background:var(--red)}
+/* header */
+#hdr{position:sticky;top:0;z-index:80;background:var(--bg);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(220,38,38,.18)}
+.logo{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.06em;color:var(--red);line-height:1;text-shadow:0 0 22px rgba(220,38,38,.5)}
+/* inputs */
+.inp{background:var(--surface);border:1px solid var(--border);color:var(--ink);font-family:'Manrope',sans-serif;transition:border-color var(--t),box-shadow var(--t)}
+.inp:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 2px rgba(220,38,38,.18)}
+.inp::placeholder{color:var(--ink-faint)}
+html.dark .inp option{background:#1a1a1a}
+/* icon btns */
+.ibtn{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:var(--ink);border-radius:6px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--t);flex-shrink:0}
+.ibtn:hover{background:rgba(220,38,38,.25);border-color:var(--red);color:var(--red)}
+/* drawer */
+#drw{position:fixed;top:0;left:0;bottom:0;width:272px;z-index:200;background:var(--surface);border-right:1px solid var(--border);box-shadow:4px 0 40px rgba(220,38,38,.1);transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto}
+#drw.open{transform:translateX(0)}
+#ovl{position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s}
+#ovl.open{opacity:1;pointer-events:auto}
+.nl{display:flex;align-items:center;gap:.65rem;padding:.7rem .9rem;font-size:.83rem;font-weight:600;color:var(--ink);text-decoration:none;border-radius:7px;margin:0 .4rem;border:none;cursor:pointer;background:none;width:calc(100% - .8rem);text-align:left;transition:background var(--t),color var(--t)}
+.nl:hover{background:rgba(220,38,38,.1);color:var(--red)}
+.ni{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:rgba(220,38,38,.1);font-size:.95rem;flex-shrink:0}
+/* news cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--glow);transition:box-shadow .25s,transform .25s,border-color .25s;animation:fu .38s ease both}
+.card:hover{box-shadow:var(--glow-h);border-color:rgba(220,38,38,.5);transform:translateY(-3px)}
+@keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.ci{width:100%;height:184px;object-fit:cover;display:block;background:var(--bg2)}
+.cb{padding:.9rem 1rem 1rem;flex:1;display:flex;flex-direction:column}
+.cs{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:.35rem}
+.ct{font-weight:700;font-size:.95rem;line-height:1.4;color:var(--ink);margin-bottom:.35rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ct a{color:inherit;text-decoration:none}.ct a:hover{color:var(--red)}
+.cd{font-size:.76rem;color:var(--ink-muted);line-height:1.6;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cf{display:flex;align-items:center;justify-content:space-between;margin-top:.8rem;padding-top:.6rem;border-top:1px solid var(--border);font-size:.67rem;color:var(--ink-faint)}
+.rbtn{background:var(--red);color:#fff;padding:.25rem .75rem;border-radius:3px;font-size:.67rem;font-weight:700;letter-spacing:.04em;transition:background var(--t),transform var(--t);text-decoration:none;white-space:nowrap;font-family:'IBM Plex Mono',monospace}
+.rbtn:hover{background:var(--red-b);transform:scale(1.04)}
+/* grid */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:1rem}
+/* filter pills */
+.fp{padding:.3rem .8rem;border-radius:4px;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--border);background:transparent;color:var(--ink-muted);cursor:pointer;transition:all var(--t);white-space:nowrap;font-family:'IBM Plex Mono',monospace}
+.fp.on,.fp:hover{border-color:var(--red);background:var(--red);color:#fff}
+/* sidebar */
+.sbox{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:.9rem;box-shadow:var(--glow)}
+.stitle{font-family:'Bebas Neue',Impact,sans-serif;font-size:.95rem;letter-spacing:.1em;color:var(--red);margin-bottom:.65rem;text-shadow:0 0 10px rgba(220,38,38,.35)}
+.slink{display:flex;align-items:center;gap:.45rem;padding:.38rem .45rem;border-radius:5px;text-decoration:none;color:var(--ink-muted);font-size:.78rem;font-weight:600;transition:all var(--t)}
+.slink:hover{color:var(--red);background:rgba(220,38,38,.08)}
+/* country chips */
+.cc{display:flex;align-items:center;justify-content:space-between;padding:.38rem .55rem;border-radius:5px;cursor:pointer;font-size:.76rem;font-weight:600;transition:all var(--t);background:transparent;color:var(--ink-muted);border:none;width:100%;text-align:left}
+.cc:hover,.cc.on{background:rgba(220,38,38,.1);color:var(--red)}
+.qb{font-size:.56rem;font-weight:800;padding:2px 5px;border-radius:3px;flex-shrink:0;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
+.qs{background:rgba(34,197,94,.15);color:#22c55e}.qg{background:rgba(59,130,246,.15);color:#60a5fa}.ql{background:rgba(234,179,8,.15);color:#eab308}
+/* feed status */
+#fsb{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.75rem;align-items:center}
+.fb{padding:.16rem .45rem;border-radius:3px;font-size:.6rem;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
+.fok{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.2)}
+.ffail{background:rgba(220,38,38,.1);color:#ef4444;border:1px solid rgba(220,38,38,.2)}
+/* cov note */
+.covn{background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.12);border-radius:6px;padding:.5rem .7rem;font-size:.67rem;color:var(--ink-muted);line-height:1.6;margin-bottom:.75rem}
+/* live dot */
+.ldot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:pd 2s ease infinite;flex-shrink:0}
+@keyframes pd{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.4)}}
+/* toast */
+#toast{position:fixed;bottom:128px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);color:var(--ink);border:1px solid var(--red);box-shadow:0 0 20px rgba(220,38,38,.3);padding:.45rem 1rem;border-radius:4px;font-size:.72rem;font-weight:600;font-family:'IBM Plex Mono',monospace;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:400;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* no results */
+#nores{display:none;text-align:center;padding:4rem 1rem}
+/* spinner */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{width:34px;height:34px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .6s linear infinite}
 
-  <!-- Google Auto Ads — replace YOUR_PUBLISHER_ID -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
+/* ══════════════════════════════════
+   TICKER BARS
+══════════════════════════════════ */
+#tickers{position:fixed;bottom:0;left:0;right:0;z-index:90;background:var(--ticker);border-top:1px solid var(--border);box-shadow:0 -1px 0 rgba(220,38,38,.15),0 -6px 24px rgba(0,0,0,.5)}
+.trow{height:54px;display:flex;align-items:center;overflow:hidden;border-bottom:1px solid #222;position:relative}
+.trow:last-child{border-bottom:none}
+.tlbl{flex-shrink:0;width:88px;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:.82rem;letter-spacing:.14em;color:#fff;z-index:2;border-right:1px solid rgba(255,255,255,.1)}
+.tlbl.cr{background:var(--red)}
+.tlbl.st{background:#1d4ed8}
+.ttrack{flex:1;overflow:hidden;height:100%;position:relative;mask-image:linear-gradient(to right,transparent,#000 52px,#000 calc(100% - 52px),transparent)}
+.tinner{display:flex;align-items:center;height:100%;animation:sticker 80s linear infinite;width:max-content}
+.tinner:hover{animation-play-state:paused}
+@keyframes sticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{display:flex;align-items:center;gap:.3rem;padding:0 1.1rem;border-right:1px solid #222;height:100%;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:.7rem;cursor:default;transition:background var(--t)}
+.ti:hover{background:rgba(255,255,255,.03)}
+.tsym{font-weight:700;color:#e5e7eb;font-size:.68rem}
+.tprc{color:#d1d5db}
+.tup{font-weight:600;font-size:.66rem;padding:.1rem .32rem;border-radius:3px;background:rgba(34,197,94,.15);color:#22c55e}
+.tdn{font-weight:600;font-size:.66rem;padding:.1rem .32rem;border-radius:3px;background:rgba(239,68,68,.15);color:#ef4444}
+.tload{color:#555;font-size:.7rem;padding:0 1rem;font-family:'IBM Plex Mono',monospace;animation:blink 1.2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode:'class',
-      theme:{ extend:{
-        colors:{ brand:{ 50:'#eff6ff',100:'#dbeafe',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a' } },
-        fontFamily:{ serif:['"Playfair Display"','Georgia','serif'], sans:['"DM Sans"','system-ui','sans-serif'] }
-      }}
-    }
-  </script>
-  <script type="application/ld+json" id="schema-jsonld">{"@context":"https://schema.org","@type":"WebSite","name":"Hatty's News","url":"https://your-site.netlify.app"}</script>
-
-  <style>
-    :root {
-      --brand:#1E40AF; --brand-light:#3b82f6;
-      --ink:#0f172a; --ink-muted:#475569;
-      --surface:#ffffff; --surface-2:#f8fafc; --border:#e2e8f0;
-      --card-r:16px; --t:0.22s cubic-bezier(0.4,0,0.2,1);
-    }
-    .dark { --ink:#f1f5f9; --ink-muted:#94a3b8; --surface:#0f172a; --surface-2:#1e293b; --border:#334155; }
-    *,*::before,*::after{box-sizing:border-box}
-    html{font-family:'DM Sans',system-ui,sans-serif}
-    body{background:var(--surface-2);color:var(--ink);transition:background var(--t),color var(--t);min-height:100vh}
-    ::-webkit-scrollbar{width:5px;height:5px}
-    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
-    .dark ::-webkit-scrollbar-thumb{background:#475569}
-
-    /* Header */
-    #site-header{background:var(--brand);position:sticky;top:0;z-index:50;box-shadow:0 2px 20px rgba(30,64,175,.28)}
-    .logo-text{font-family:'Playfair Display',serif;font-weight:900;letter-spacing:-.03em}
-
-    /* Drawer */
-    #nav-drawer{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:100;background:var(--surface);box-shadow:4px 0 32px rgba(0,0,0,.18);transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto}
-    #nav-drawer.open{transform:translateX(0)}
-    #nav-overlay{position:fixed;inset:0;z-index:99;background:rgba(15,23,42,.45);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .3s}
-    #nav-overlay.open{opacity:1;pointer-events:auto}
-    .nav-link{display:flex;align-items:center;gap:.75rem;padding:.85rem 1.25rem;font-size:.9rem;font-weight:500;color:var(--ink);text-decoration:none;border-radius:10px;transition:background var(--t),color var(--t);margin:0 .5rem;border:none;cursor:pointer;background:none;width:calc(100% - 1rem);text-align:left}
-    .nav-link:hover{background:var(--surface-2);color:var(--brand)}
-    .nav-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem}
-    .nav-divider{height:1px;background:var(--border);margin:.5rem 1rem}
-
-    /* Search */
-    #search-input{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);color:#fff;transition:all var(--t)}
-    #search-input::placeholder{color:rgba(255,255,255,.6)}
-    #search-input:focus{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.6);outline:none}
-
-    /* Country select */
-    .country-sel{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);color:#fff;cursor:pointer;transition:all var(--t)}
-    .country-sel option{background:#1e3a8a;color:#fff}
-    .country-sel:focus{outline:none;border-color:rgba(255,255,255,.6)}
-
-    /* Cards */
-    .news-card{background:var(--surface);border-radius:var(--card-r);box-shadow:0 2px 16px rgba(30,64,175,.08);overflow:hidden;display:flex;flex-direction:column;transition:transform var(--t),box-shadow var(--t);border:1px solid var(--border);animation:fadeUp .38s ease both}
-    .news-card:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(30,64,175,.18)}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-    .news-card img{width:100%;height:196px;object-fit:cover;display:block;background:var(--surface-2)}
-    .ncb{padding:1.1rem 1.25rem 1.25rem;flex:1;display:flex;flex-direction:column}
-    .nc-source{font-size:.69rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--brand-light);margin-bottom:.35rem}
-    .nc-title{font-family:'Playfair Display',serif;font-size:1.03rem;font-weight:700;line-height:1.35;color:var(--ink);margin-bottom:.45rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-    .nc-desc{font-size:.81rem;color:var(--ink-muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:1}
-    .nc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:.9rem;padding-top:.7rem;border-top:1px solid var(--border);font-size:.72rem;color:var(--ink-muted)}
-    .read-btn{background:var(--brand);color:#fff;padding:.32rem .85rem;border-radius:99px;font-size:.72rem;font-weight:600;transition:background var(--t),transform var(--t);white-space:nowrap;min-height:30px;display:inline-flex;align-items:center;text-decoration:none}
-    .read-btn:hover{background:#1d4ed8;transform:scale(1.04)}
-
-    /* Filter pills */
-    .filter-pill{padding:.38rem .95rem;border-radius:99px;font-size:.76rem;font-weight:600;border:1.5px solid var(--border);background:var(--surface);color:var(--ink-muted);cursor:pointer;transition:all var(--t);white-space:nowrap;min-height:36px;line-height:1}
-    .filter-pill.active,.filter-pill:hover{border-color:var(--brand);background:var(--brand);color:#fff}
-
-    /* Grid */
-    #headlines-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(278px,1fr));gap:1.2rem}
-
-    /* Country chips */
-    .country-chip{display:flex;align-items:center;justify-content:space-between;padding:.45rem .7rem;border-radius:10px;cursor:pointer;font-size:.81rem;transition:background var(--t),color var(--t);background:var(--surface-2);color:var(--ink);border:none;width:100%;text-align:left}
-    .country-chip:hover{background:#dbeafe;color:var(--brand)}
-    .dark .country-chip:hover{background:#1e3a8a;color:#93c5fd}
-    .chip-quality{font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:99px;flex-shrink:0}
-    .q-strong{background:#dcfce7;color:#166534}
-    .q-good{background:#dbeafe;color:#1e40af}
-    .q-limited{background:#fef9c3;color:#854d0e}
-    .dark .q-strong{background:#166534;color:#bbf7d0}
-    .dark .q-good{background:#1e3a8a;color:#93c5fd}
-    .dark .q-limited{background:#78350f;color:#fde68a}
-
-    /* Feed status banner */
-    #feed-status-bar{font-size:.75rem;padding:.5rem 0;margin-bottom:.75rem;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
-    .fs-badge{padding:.2rem .55rem;border-radius:99px;font-size:.67rem;font-weight:600;display:inline-flex;align-items:center;gap:.25rem}
-    .fs-ok{background:#dcfce7;color:#166534}
-    .fs-fail{background:#fee2e2;color:#991b1b}
-    .dark .fs-ok{background:#166534;color:#bbf7d0}
-    .dark .fs-fail{background:#7f1d1d;color:#fca5a5}
-
-    /* Hamburger */
-    #hamburger{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:9px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--t);flex-shrink:0}
-    #hamburger:hover{background:rgba(255,255,255,.25)}
-
-    /* Dark toggle */
-    #dark-toggle{background:rgba(255,255,255,.15);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--t);border:none;color:#fff;font-size:1.1rem;flex-shrink:0}
-    #dark-toggle:hover{background:rgba(255,255,255,.25)}
-
-    /* Source bar */
-    #source-bar{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
-
-    /* Live dot */
-    .live-dot{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:pulsedot 1.8s ease infinite;flex-shrink:0}
-    @keyframes pulsedot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
-
-    /* Toast */
-    #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:.6rem 1.2rem;border-radius:99px;font-size:.79rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:70;white-space:nowrap;border:1px solid rgba(255,255,255,.1)}
-    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-    @keyframes spin{to{transform:rotate(360deg)}}
-    button,a,select{min-height:44px}
-    .scrollbar-hide::-webkit-scrollbar{display:none}
-    .scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}
-  </style>
+button,select,input{min-height:36px}
+</style>
 </head>
-<body class="font-sans">
+<body>
 
-<div id="nav-overlay"></div>
+<div id="ovl"></div>
 
 <!-- ══ DRAWER ══ -->
-<nav id="nav-drawer" aria-label="Site navigation">
-  <div style="background:var(--brand);padding:1.25rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+<nav id="drw" aria-label="Navigation">
+  <div style="background:var(--red);padding:1rem .9rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div>
-      <div class="logo-text" style="color:#fff;font-size:1.15rem">Hatty's Network</div>
-      <div style="color:rgba(255,255,255,.65);font-size:.7rem;margin-top:2px">All sites in one place</div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:#fff;font-size:1.25rem;letter-spacing:.1em">HATTY'S NETWORK</div>
+      <div style="color:rgba(255,255,255,.6);font-size:.62rem;letter-spacing:.08em;font-family:'IBM Plex Mono',monospace">ALL SITES</div>
     </div>
-    <button id="nav-close" aria-label="Close menu" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;min-height:0">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    <button id="drw-close" class="ibtn" style="background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.2)" aria-label="Close">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
   </div>
-  <div style="padding:.75rem 0;flex:1">
-    <div style="padding:.3rem .75rem .2rem;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted)">Hatty's Sites</div>
-    <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" class="nav-link">
-      <div class="nav-icon" style="background:#dbeafe">🏠</div>
-      <div><div style="font-weight:600">Home</div><div style="font-size:.72rem;color:var(--ink-muted)">earnwithhatty.com</div></div>
-    </a>
-    <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" class="nav-link">
-      <div class="nav-icon" style="background:#dcfce7">🛠️</div>
-      <div><div style="font-weight:600">Hatty's Tools</div><div style="font-size:.72rem;color:var(--ink-muted)">Useful online tools</div></div>
-    </a>
-    <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" class="nav-link">
-      <div class="nav-icon" style="background:#fef3c7">🔒</div>
-      <div><div style="font-weight:600">Privacy Gadgets</div><div style="font-size:.72rem;color:var(--ink-muted)">Stay private online</div></div>
-    </a>
-    <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" class="nav-link">
-      <div class="nav-icon" style="background:#ede9fe">🌌</div>
-      <div><div style="font-weight:600">Hatty's Universe</div><div style="font-size:.72rem;color:var(--ink-muted)">Explore the universe</div></div>
-    </a>
-    <div class="nav-divider"></div>
-    <div style="padding:.3rem .75rem .2rem;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted)">Settings</div>
-    <button class="nav-link" onclick="closeDrawer();document.getElementById('dark-toggle').click()">
-      <div class="nav-icon" style="background:#f1f5f9" id="theme-nav-icon">🌙</div>
-      <div><div style="font-weight:600">Toggle Dark Mode</div><div style="font-size:.72rem;color:var(--ink-muted)">Switch light / dark</div></div>
-    </button>
+  <div style="padding:.4rem 0;flex:1">
+    <div style="padding:.4rem .9rem .2rem;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace">HATTY'S SITES</div>
+    <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" class="nl"><div class="ni">🏠</div><div><div>Home</div><div style="font-size:.66rem;color:var(--ink-muted)">earnwithhatty.com</div></div></a>
+    <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" class="nl"><div class="ni">🛠️</div><div><div>Hatty's Tools</div><div style="font-size:.66rem;color:var(--ink-muted)">Useful online tools</div></div></a>
+    <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" class="nl"><div class="ni">🔒</div><div><div>Privacy Gadgets</div><div style="font-size:.66rem;color:var(--ink-muted)">Stay private online</div></div></a>
+    <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" class="nl"><div class="ni">🌌</div><div><div>Hatty's Universe</div><div style="font-size:.66rem;color:var(--ink-muted)">Explore the cosmos</div></div></a>
+    <div style="height:1px;background:var(--border);margin:.5rem .9rem"></div>
+    <div style="padding:.4rem .9rem .2rem;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace">SETTINGS</div>
+    <button class="nl" id="theme-drw-btn"><div class="ni" id="theme-drw-icon">🌙</div><div><div>Toggle Theme</div><div style="font-size:.66rem;color:var(--ink-muted)">Dark / Light</div></div></button>
   </div>
-  <div style="padding:1rem;border-top:1px solid var(--border);flex-shrink:0">
-    <p style="font-size:.7rem;color:var(--ink-muted);text-align:center">© 2026 Hatty's Network</p>
-  </div>
+  <div style="padding:.7rem .9rem;border-top:1px solid var(--border);font-size:.62rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;text-align:center">© 2026 HATTY'S NETWORK</div>
 </nav>
 
 <!-- ══ HEADER ══ -->
-<header id="site-header">
-  <div class="max-w-7xl mx-auto px-4 py-3">
-    <div class="flex items-center gap-3">
-      <button id="hamburger" aria-label="Open menu">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+<header id="hdr">
+  <div style="max-width:1440px;margin:0 auto;padding:.65rem 1rem">
+    <div style="display:flex;align-items:center;gap:.55rem">
+      <button class="ibtn" id="ham" aria-label="Menu">
+        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
-      <a href="/" class="flex items-center gap-2 shrink-0" style="min-height:0;text-decoration:none">
-        <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 4h14v1.5H3V4zm0 3.5h10V9H3V7.5zm0 3.5h14v1.5H3V11zm0 3.5h8V16H3v-1.5z" fill="white"/></svg>
-        </div>
-        <span class="logo-text text-white text-xl hidden sm:block">Hatty's <span style="opacity:.7">News</span></span>
+      <a href="/" style="text-decoration:none;flex-shrink:0">
+        <span class="logo" style="font-size:1.45rem">HATTY'S <span style="opacity:.55">NEWS</span></span>
       </a>
-      <div class="hidden sm:flex items-center gap-1.5 text-xs" style="color:rgba(255,255,255,.7)">
-        <div class="live-dot"></div><span>Live RSS</span>
+      <div style="display:flex;align-items:center;gap:.35rem;color:var(--ink-muted);font-size:.62rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;flex-shrink:0" class="hidden sm:flex">
+        <div class="ldot"></div>LIVE
       </div>
-      <div class="flex-1 flex gap-2 mx-1">
-        <input id="search-input" type="search" placeholder="Search headlines…" autocomplete="off" class="flex-1 rounded-xl px-4 py-2 text-sm" style="min-height:44px" />
-        <button id="search-btn" aria-label="Search" class="bg-white text-blue-800 font-semibold text-sm rounded-xl px-4 shrink-0 hover:bg-blue-50 transition-colors" style="min-height:44px">
-          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <div style="width:1px;height:20px;background:var(--border);flex-shrink:0" class="hidden sm:block"></div>
+      <div style="flex:1;display:flex;gap:.35rem;min-width:0">
+        <input id="si" type="search" placeholder="Search headlines…" autocomplete="off" class="inp" style="flex:1;min-width:0;border-radius:6px;padding:.4rem .8rem;font-size:.8rem"/>
+        <button id="sb" class="ibtn" aria-label="Search">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         </button>
       </div>
-      <div class="flex items-center gap-2">
-        <select id="country-select" class="country-sel rounded-xl px-3 py-2 text-sm font-medium hidden sm:block" style="min-height:44px" aria-label="Select country"></select>
-        <button id="dark-toggle" aria-label="Toggle dark mode">🌙</button>
+      <div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0">
+        <select id="csel" class="inp" style="padding:.38rem .6rem;font-size:.76rem;border-radius:6px;cursor:pointer" class="hidden sm:block"></select>
+        <button class="ibtn" id="thbtn" aria-label="Theme" title="Toggle theme"><span id="thicon">☀️</span></button>
+        <button class="ibtn" id="rfbtn" aria-label="Refresh" title="Refresh">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
       </div>
     </div>
   </div>
 </header>
 
 <!-- ══ MAIN ══ -->
-<div class="max-w-7xl mx-auto px-4 py-6">
-  <div class="flex gap-6">
+<div style="max-width:1440px;margin:0 auto;padding:1.1rem 1rem">
+  <div style="display:flex;gap:1.1rem;align-items:flex-start">
 
-    <main class="flex-1 min-w-0">
-
-      <!-- Mobile country picker -->
-      <div class="sm:hidden mb-4">
-        <select id="country-select-mobile" class="w-full rounded-xl px-3 py-2 text-sm font-medium border" style="min-height:44px;background:var(--surface);border-color:var(--border);color:var(--ink)"></select>
+    <main style="flex:1;min-width:0">
+      <!-- mobile picker -->
+      <div class="sm:hidden" style="margin-bottom:.75rem">
+        <select id="csel-m" class="inp" style="width:100%;padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"></select>
       </div>
 
-      <!-- Title row -->
-      <div class="flex items-start justify-between mb-3 flex-wrap gap-2">
+      <!-- title row -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;flex-wrap:wrap;gap:.4rem">
         <div>
-          <h1 id="country-label" class="font-serif text-2xl font-bold" style="color:var(--ink)">Top Headlines</h1>
-          <p class="text-xs mt-0.5" style="color:var(--ink-muted)">
-            <span id="article-count">Loading…</span> <span id="source-credit"></span>
-          </p>
+          <h1 id="clbl" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.75rem;letter-spacing:.08em;line-height:1;text-shadow:0 0 18px rgba(220,38,38,.12)">TOP HEADLINES</h1>
+          <p id="acnt" style="font-size:.65rem;color:var(--ink-muted);margin-top:.22rem;font-family:'IBM Plex Mono',monospace"></p>
         </div>
-        <button id="refresh-btn"
-          style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:.4rem .8rem;cursor:pointer;color:var(--ink-muted);font-size:.75rem;font-weight:600;min-height:36px;display:flex;align-items:center;gap:.4rem;transition:all var(--t)"
-          onmouseover="this.style.borderColor='var(--brand)';this.style.color='var(--brand)'"
-          onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          Refresh
-        </button>
       </div>
 
-      <!-- Feed status bar -->
-      <div id="feed-status-bar"></div>
+      <!-- feed status -->
+      <div id="fsb"></div>
+      <!-- coverage note -->
+      <div id="covn" class="covn" style="display:none"></div>
 
-      <!-- Category pills -->
-      <div class="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
-        <button class="filter-pill active" data-cat="general">🌍 Top Stories</button>
-        <button class="filter-pill" data-cat="world">🗺 World</button>
-        <button class="filter-pill" data-cat="business">💼 Business</button>
-        <button class="filter-pill" data-cat="technology">💻 Tech</button>
-        <button class="filter-pill" data-cat="sports">⚽ Sports</button>
-        <button class="filter-pill" data-cat="health">🏥 Health</button>
-        <button class="filter-pill" data-cat="science">🔬 Science</button>
+      <!-- category pills -->
+      <div style="display:flex;gap:.35rem;overflow-x:auto;padding-bottom:.45rem;margin-bottom:.45rem;-webkit-overflow-scrolling:touch">
+        <button class="fp on" data-cat="general">🌍 ALL</button>
+        <button class="fp" data-cat="world">🗺 WORLD</button>
+        <button class="fp" data-cat="business">💼 BUSINESS</button>
+        <button class="fp" data-cat="technology">💻 TECH</button>
+        <button class="fp" data-cat="sports">⚽ SPORTS</button>
+        <button class="fp" data-cat="health">🏥 HEALTH</button>
+        <button class="fp" data-cat="science">🔬 SCIENCE</button>
+        <button class="fp" data-cat="entertainment">🎬 ENTS</button>
       </div>
 
-      <!-- Source bar -->
-      <div id="source-bar"></div>
+      <!-- source bar -->
+      <div id="srcbar" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem"></div>
 
-      <!-- Grid -->
-      <div id="headlines-grid" aria-live="polite"></div>
-
-      <!-- Spinner -->
-      <div id="loading-spinner" style="display:none;justify-content:center;padding:3rem">
-        <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite"></div>
-      </div>
-
-      <!-- No results -->
-      <div id="no-results" style="display:none;text-align:center;padding:4rem 1rem">
-        <div style="font-size:3rem">📭</div>
-        <p class="font-serif text-xl mt-3" style="color:var(--ink)">No headlines found</p>
-        <p class="text-sm mt-1" style="color:var(--ink-muted)">Try a different country, category, or clear your search.</p>
-        <button id="reset-btn" class="read-btn mt-4" style="min-height:44px;padding:.6rem 1.4rem;font-size:.84rem">Reset filters</button>
+      <!-- grid -->
+      <div id="grid" aria-live="polite"></div>
+      <div id="lsp" style="display:none;justify-content:center;padding:3rem"><div class="spin"></div></div>
+      <div id="nores">
+        <div style="font-size:3rem;margin-bottom:.75rem">📭</div>
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.7rem;letter-spacing:.08em">NO HEADLINES FOUND</div>
+        <div style="font-size:.8rem;color:var(--ink-muted);margin-top:.3rem">Try a different country, category, or clear your search.</div>
+        <button id="rstbtn" class="rbtn" style="margin-top:1rem;padding:.45rem 1.1rem;font-size:.76rem">RESET</button>
       </div>
     </main>
 
     <!-- ══ SIDEBAR ══ -->
-    <aside class="w-64 shrink-0 hidden lg:block">
-
-      <!-- Hatty's sites -->
-      <div style="background:var(--surface);border-radius:var(--card-r);padding:1.25rem;border:1px solid var(--border);margin-bottom:1.25rem">
-        <h2 class="font-serif text-base font-bold mb-3" style="color:var(--ink)">🔗 Hatty's Sites</h2>
-        <div class="flex flex-col gap-1">
-          <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;text-decoration:none;color:var(--ink);font-size:.82rem;font-weight:500;transition:background var(--t)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">🏠 <span>EarnWithHatty</span></a>
-          <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;text-decoration:none;color:var(--ink);font-size:.82rem;font-weight:500;transition:background var(--t)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">🛠️ <span>Hatty's Tools</span></a>
-          <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;text-decoration:none;color:var(--ink);font-size:.82rem;font-weight:500;transition:background var(--t)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">🔒 <span>Privacy Gadgets</span></a>
-          <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;text-decoration:none;color:var(--ink);font-size:.82rem;font-weight:500;transition:background var(--t)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">🌌 <span>Hatty's Universe</span></a>
-        </div>
-      </div>
-
-      <!-- Country browser -->
-      <div style="background:var(--surface);border-radius:var(--card-r);padding:1.25rem;border:1px solid var(--border);margin-bottom:1.25rem">
-        <h2 class="font-serif text-base font-bold mb-1" style="color:var(--ink)">🌐 Browse Countries</h2>
-        <p style="font-size:.68rem;color:var(--ink-muted);margin-bottom:.75rem">Coverage quality shown per country</p>
-        <div id="country-list" class="flex flex-col gap-0.5 max-h-96 overflow-y-auto scrollbar-hide"></div>
-        <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)">
-          <div style="font-size:.65rem;color:var(--ink-muted);font-weight:600;margin-bottom:.35rem">COVERAGE LEGEND</div>
-          <div style="display:flex;flex-direction:column;gap:.25rem;font-size:.67rem;color:var(--ink-muted)">
-            <span><span class="chip-quality q-strong" style="margin-right:.3rem">Strong</span> Dedicated local English RSS</span>
-            <span><span class="chip-quality q-good" style="margin-right:.3rem">Good</span> Reliable international coverage</span>
-            <span><span class="chip-quality q-limited" style="margin-right:.3rem">Limited</span> Best available, noted honestly</span>
+    <aside style="width:216px;flex-shrink:0" class="hidden lg:block">
+      <div class="sbox">
+        <div class="stitle">🌐 COUNTRIES</div>
+        <p style="font-size:.6rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;margin-bottom:.55rem;letter-spacing:.04em">CLICK TO SWITCH</p>
+        <div id="clist" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:.08rem"></div>
+        <div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)">
+          <div style="font-size:.56rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;margin-bottom:.35rem">COVERAGE KEY</div>
+          <div style="display:flex;flex-direction:column;gap:.28rem;font-size:.63rem;color:var(--ink-muted)">
+            <span><span class="qb qs" style="margin-right:.25rem">STR</span>Dedicated local English RSS</span>
+            <span><span class="qb qg" style="margin-right:.25rem">GD</span>Reliable int'l coverage</span>
+            <span><span class="qb ql" style="margin-right:.25rem">LTD</span>Best available, noted</span>
           </div>
         </div>
       </div>
-
-      <!-- About box -->
-      <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:var(--card-r);padding:1.25rem;border:1px solid #bfdbfe">
-        <h3 class="font-serif text-sm font-bold mb-1" style="color:#1e3a8a">📡 Real news, verified sources</h3>
-        <p style="font-size:.74rem;color:#1e40af;line-height:1.6">Every feed is a genuine news outlet — BBC, Reuters, AP, SCMP, NHK, DW, Al Jazeera and more. Feed status is shown live so you always know what loaded.</p>
+      <div class="sbox">
+        <div class="stitle">📡 SOURCES</div>
+        <p style="font-size:.69rem;color:var(--ink-muted);line-height:1.65">50+ named outlets: BBC, Reuters, AP, Al Jazeera, SCMP, NHK, DW, France 24, CBC, ABC AUS, The Guardian, Sky News, NPR, CNN, The Verge, Wired, Ars Technica, TechCrunch, ESPN, CNA, and more. Feed status shown live after load.</p>
       </div>
     </aside>
-
   </div>
 </div>
 
 <!-- ══ FOOTER ══ -->
-<footer style="background:var(--surface);border-top:1px solid var(--border);margin-top:3rem;padding:2rem 0">
-  <div class="max-w-7xl mx-auto px-4">
-    <div class="flex flex-wrap justify-center gap-4 mb-5">
-      <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:underline" style="color:var(--brand)">🏠 EarnWithHatty</a>
-      <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:underline" style="color:var(--brand)">🛠️ Hatty's Tools</a>
-      <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:underline" style="color:var(--brand)">🔒 Privacy Gadgets</a>
-      <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:underline" style="color:var(--brand)">🌌 Hatty's Universe</a>
+<footer style="border-top:1px solid var(--border);margin-bottom:112px;padding:1.25rem 1rem;text-align:center">
+  <div style="max-width:1440px;margin:0 auto">
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.9rem;margin-bottom:.75rem">
+      <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🏠 EarnWithHatty</a>
+      <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🛠️ Hatty's Tools</a>
+      <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🔒 Privacy Gadgets</a>
+      <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🌌 Hatty's Universe</a>
     </div>
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <span class="logo-text" style="color:var(--brand);font-size:1.2rem">Hatty's News</span>
-        <span class="text-xs" style="color:var(--ink-muted)">© 2026 All rights reserved.</span>
-      </div>
-      <nav class="flex gap-4 text-sm flex-wrap justify-center" style="color:var(--ink-muted)">
-        <a href="#" style="color:inherit" class="hover:underline">About</a>
-        <a href="#" style="color:inherit" class="hover:underline">Privacy Policy</a>
-        <a href="#" style="color:inherit" class="hover:underline">Contact</a>
-      </nav>
-    </div>
-    <p class="text-xs mt-4 text-center" style="color:var(--ink-muted)">
-      Headlines sourced directly from verified public RSS feeds. Sources include BBC, Reuters, AP, Al Jazeera, South China Morning Post, NHK World, Deutsche Welle, France 24 and more.
-      Hatty's News is not responsible for the content of external sites.
-    </p>
+    <p style="font-size:.62rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em">© 2026 HATTY'S NETWORK · 50+ VERIFIED PUBLIC RSS SOURCES · NOT RESPONSIBLE FOR EXTERNAL CONTENT</p>
   </div>
 </footer>
 
+<!-- ══ TICKERS ══ -->
+<div id="tickers">
+  <div class="trow">
+    <div class="tlbl cr">CRYPTO</div>
+    <div class="ttrack"><div class="tinner" id="cti"><span class="tload">LOADING CRYPTO…</span></div></div>
+  </div>
+  <div class="trow">
+    <div class="tlbl st">STOCKS</div>
+    <div class="ttrack"><div class="tinner" id="sti"><span class="tload">LOADING MARKETS…</span></div></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
-<!-- ══════════════════════════════════
-     JAVASCRIPT
-══════════════════════════════════ -->
 <script>
 'use strict';
+/* ══ FEED DATA ══════════════════════════════════════════════ */
+const FEEDS={
+us:[
+  {n:'AP News',u:'https://feeds.apnews.com/rss/apf-topnews',c:'general'},
+  {n:'AP Politics',u:'https://feeds.apnews.com/rss/apf-politics',c:'world'},
+  {n:'NPR',u:'https://feeds.npr.org/1001/rss.xml',c:'general'},
+  {n:'NPR World',u:'https://feeds.npr.org/1004/rss.xml',c:'world'},
+  {n:'NPR Business',u:'https://feeds.npr.org/1006/rss.xml',c:'business'},
+  {n:'NPR Science',u:'https://feeds.npr.org/1007/rss.xml',c:'science'},
+  {n:'NPR Health',u:'https://feeds.npr.org/1128/rss.xml',c:'health'},
+  {n:'CNN',u:'http://rss.cnn.com/rss/edition.rss',c:'general'},
+  {n:'CNN World',u:'http://rss.cnn.com/rss/edition_world.rss',c:'world'},
+  {n:'CNN Business',u:'http://rss.cnn.com/rss/edition_business.rss',c:'business'},
+  {n:'CNN Tech',u:'http://rss.cnn.com/rss/edition_technology.rss',c:'technology'},
+  {n:'CBS News',u:'https://www.cbsnews.com/latest/rss/main',c:'general'},
+  {n:'ABC News',u:'https://abcnews.go.com/abcnews/topstories',c:'general'},
+  {n:'PBS NewsHour',u:'https://www.pbs.org/newshour/feeds/rss/headlines',c:'general'},
+  {n:'The Hill',u:'https://thehill.com/homenews/feed/',c:'general'},
+  {n:'Wired',u:'https://www.wired.com/feed/rss',c:'technology'},
+  {n:'TechCrunch',u:'https://techcrunch.com/feed',c:'technology'},
+  {n:'Ars Technica',u:'http://feeds.arstechnica.com/arstechnica/index/',c:'technology'},
+  {n:'The Verge',u:'https://www.theverge.com/rss/index.xml',c:'technology'},
+  {n:'VentureBeat',u:'https://venturebeat.com/feed/',c:'technology'},
+  {n:'ESPN',u:'https://www.espn.com/espn/rss/news',c:'sports'},
+  {n:'MarketWatch',u:'https://www.marketwatch.com/rss/topstories',c:'business'},
+  {n:'The Economist',u:'https://www.economist.com/latest/rss.xml',c:'business'},
+],
+gb:[
+  {n:'BBC News',u:'http://feeds.bbci.co.uk/news/rss.xml',c:'general'},
+  {n:'BBC World',u:'http://feeds.bbci.co.uk/news/world/rss.xml',c:'world'},
+  {n:'BBC Business',u:'http://feeds.bbci.co.uk/news/business/rss.xml',c:'business'},
+  {n:'BBC Tech',u:'http://feeds.bbci.co.uk/news/technology/rss.xml',c:'technology'},
+  {n:'BBC Science',u:'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml',c:'science'},
+  {n:'BBC Health',u:'http://feeds.bbci.co.uk/news/health/rss.xml',c:'health'},
+  {n:'BBC Sport',u:'http://feeds.bbci.co.uk/sport/rss.xml',c:'sports'},
+  {n:'BBC Politics',u:'http://feeds.bbci.co.uk/news/politics/rss.xml',c:'world'},
+  {n:'The Guardian',u:'https://www.theguardian.com/uk/rss',c:'general'},
+  {n:'Guardian World',u:'https://www.theguardian.com/world/rss',c:'world'},
+  {n:'Guardian Tech',u:'https://www.theguardian.com/technology/rss',c:'technology'},
+  {n:'Guardian Science',u:'https://www.theguardian.com/science/rss',c:'science'},
+  {n:'Sky News',u:'https://feeds.skynews.com/feeds/rss/home.xml',c:'general'},
+  {n:'Sky World',u:'https://feeds.skynews.com/feeds/rss/world.xml',c:'world'},
+  {n:'The Register',u:'https://www.theregister.com/headlines.atom',c:'technology'},
+],
+ca:[
+  {n:'CBC Top',u:'https://www.cbc.ca/cmlink/rss-topstories',c:'general'},
+  {n:'CBC World',u:'https://www.cbc.ca/cmlink/rss-world',c:'world'},
+  {n:'CBC Business',u:'https://www.cbc.ca/cmlink/rss-business',c:'business'},
+  {n:'CBC Tech',u:'https://www.cbc.ca/cmlink/rss-technology',c:'technology'},
+  {n:'CBC Sports',u:'https://www.cbc.ca/cmlink/rss-sports',c:'sports'},
+  {n:'CBC Health',u:'https://www.cbc.ca/cmlink/rss-health',c:'health'},
+  {n:'Globe & Mail',u:'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/',c:'general'},
+],
+au:[
+  {n:'ABC Australia',u:'https://www.abc.net.au/news/feed/51120/rss.xml',c:'general'},
+  {n:'ABC World',u:'https://www.abc.net.au/news/feed/51892/rss.xml',c:'world'},
+  {n:'ABC Science',u:'https://www.abc.net.au/news/feed/52498/rss.xml',c:'science'},
+  {n:'ABC Sport',u:'https://www.abc.net.au/news/feed/52278/rss.xml',c:'sports'},
+  {n:'ABC Business',u:'https://www.abc.net.au/news/feed/52309/rss.xml',c:'business'},
+  {n:'SBS News',u:'https://www.sbs.com.au/news/feed',c:'general'},
+],
+de:[
+  {n:'DW Top',u:'https://rss.dw.com/rdf/rss-en-all',c:'general'},
+  {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
+  {n:'DW World',u:'https://rss.dw.com/xml/rss-en-world',c:'world'},
+  {n:'DW Business',u:'https://rss.dw.com/xml/rss-en-eco',c:'business'},
+  {n:'DW Science',u:'https://rss.dw.com/xml/rss-en-sci',c:'science'},
+  {n:'DW Sport',u:'https://rss.dw.com/xml/rss-en-sport',c:'sports'},
+],
+fr:[
+  {n:'France 24',u:'https://www.france24.com/en/rss',c:'general'},
+  {n:'France 24 World',u:'https://www.france24.com/en/world/rss',c:'world'},
+  {n:'France 24 Economy',u:'https://www.france24.com/en/economy/rss',c:'business'},
+  {n:'France 24 Tech',u:'https://www.france24.com/en/tech-science/rss',c:'technology'},
+  {n:'France 24 Sport',u:'https://www.france24.com/en/sport/rss',c:'sports'},
+  {n:'RFI English',u:'https://en.rfi.fr/rss',c:'general'},
+],
+jp:[
+  {n:'NHK World',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/all.xml',c:'general'},
+  {n:'NHK Business',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/business.xml',c:'business'},
+  {n:'NHK Science',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/science.xml',c:'science'},
+  {n:'Japan Times',u:'https://www.japantimes.co.jp/feed',c:'general'},
+  {n:'Diplomat Japan',u:'https://thediplomat.com/regions/japan/feed',c:'world'},
+],
+in:[
+  {n:'The Hindu',u:'https://www.thehindu.com/feeder/default.rss',c:'general'},
+  {n:'Hindu Business',u:'https://www.thehindu.com/business/feeder/default.rss',c:'business'},
+  {n:'Hindu Science',u:'https://www.thehindu.com/sci-tech/science/feeder/default.rss',c:'science'},
+  {n:'Times of India',u:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms',c:'general'},
+  {n:'Economic Times',u:'https://economictimes.indiatimes.com/rssfeedstopstories.cms',c:'business'},
+  {n:'NDTV',u:'https://feeds.feedburner.com/ndtvnews-top-stories',c:'general'},
+],
+sg:[
+  {n:'CNA',u:'https://www.channelnewsasia.com/rssfeeds/8395884',c:'general'},
+  {n:'CNA Asia',u:'https://www.channelnewsasia.com/rssfeeds/8395910',c:'world'},
+  {n:'CNA Business',u:'https://www.channelnewsasia.com/rssfeeds/8395952',c:'business'},
+  {n:'CNA Tech',u:'https://www.channelnewsasia.com/rssfeeds/8395968',c:'technology'},
+  {n:'Diplomat SE Asia',u:'https://thediplomat.com/regions/southeast-asia/feed',c:'world'},
+],
+ae:[
+  {n:'Gulf News',u:'https://gulfnews.com/rss/news',c:'general'},
+  {n:'The National',u:'https://www.thenationalnews.com/rss/home.xml',c:'general'},
+  {n:'Khaleej Times',u:'https://www.khaleejtimes.com/rss',c:'general'},
+],
+za:[
+  {n:'Daily Maverick',u:'https://www.dailymaverick.co.za/feed',c:'general'},
+  {n:'News24',u:'https://feeds.news24.com/articles/news24/TopStories/rss',c:'general'},
+],
+ng:[
+  {n:'Punch Nigeria',u:'https://punchng.com/feed',c:'general'},
+  {n:'Vanguard NG',u:'https://www.vanguardngr.com/feed',c:'general'},
+  {n:'Premium Times',u:'https://www.premiumtimesng.com/feed',c:'general'},
+],
+ke:[{n:'Nation Africa',u:'https://nation.africa/kenya/rss.xml',c:'general'}],
+it:[
+  {n:'ANSA English',u:'https://www.ansa.it/sito/ansait_rss.xml',c:'general'},
+  {n:'The Local Italy',u:'https://feeds.thelocal.com/rss/it',c:'general'},
+],
+es:[
+  {n:'El País English',u:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada',c:'general'},
+  {n:'The Local Spain',u:'https://feeds.thelocal.com/rss/es',c:'general'},
+],
+nl:[
+  {n:'DutchNews.nl',u:'https://www.dutchnews.nl/feed',c:'general'},
+  {n:'The Local NL',u:'https://feeds.thelocal.com/rss/nl',c:'general'},
+],
+se:[{n:'The Local SE',u:'https://feeds.thelocal.com/rss/se',c:'general'}],
+no:[
+  {n:'Norway Today',u:'https://norwaytoday.info/feed',c:'general'},
+  {n:'The Local NO',u:'https://feeds.thelocal.com/rss/no',c:'general'},
+],
+nz:[
+  {n:'RNZ',u:'https://www.rnz.co.nz/rss/national.xml',c:'general'},
+  {n:'RNZ World',u:'https://www.rnz.co.nz/rss/world.xml',c:'world'},
+  {n:'Stuff NZ',u:'https://www.stuff.co.nz/rss',c:'general'},
+],
+cn:[
+  {n:'SCMP China',u:'https://www.scmp.com/rss/4/feed',c:'general'},
+  {n:'SCMP HK',u:'https://www.scmp.com/rss/2/feed',c:'general'},
+  {n:'BBC China',u:'http://feeds.bbci.co.uk/news/world/asia/china/rss.xml',c:'world'},
+  {n:'Diplomat China',u:'https://thediplomat.com/regions/east-asia/feed',c:'world'},
+],
+ru:[
+  {n:'Moscow Times',u:'https://www.themoscowtimes.com/rss/news',c:'general'},
+  {n:'BBC Europe',u:'http://feeds.bbci.co.uk/news/world/europe/rss.xml',c:'world'},
+  {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
+],
+br:[
+  {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general'},
+  {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
+],
+mx:[
+  {n:'Mexico News Daily',u:'https://mexiconewsdaily.com/feed',c:'general'},
+  {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
+],
+ar:[
+  {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general'},
+  {n:'Buenos Aires Herald',u:'https://buenosairesherald.com/feed',c:'general'},
+],
+eg:[
+  {n:'Al-Ahram',u:'https://english.ahram.org.eg/RSS/1.aspx',c:'general'},
+  {n:'Egypt Independent',u:'https://www.egyptindependent.com/feed',c:'general'},
+],
+_world:[
+  {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'},
+  {n:'Al Jazeera Sport',u:'https://www.aljazeera.com/xml/rss/sport.xml',c:'sports'},
+  {n:'BBC World',u:'http://feeds.bbci.co.uk/news/world/rss.xml',c:'world'},
+  {n:'AP Intl',u:'https://feeds.apnews.com/rss/apf-intlnews',c:'world'},
+  {n:'Reuters World',u:'https://feeds.reuters.com/reuters/worldNews',c:'world'},
+  {n:'France 24 Top',u:'https://www.france24.com/en/top-stories/rss',c:'general'},
+  {n:'DW World',u:'https://rss.dw.com/xml/rss-en-world',c:'world'},
+  {n:'The Economist',u:'https://www.economist.com/latest/rss.xml',c:'business'},
+  {n:'VOA News',u:'https://www.voanews.com/api/zmorq$epiqy',c:'world'},
+  {n:'Global Voices',u:'https://globalvoices.org/feed',c:'world'},
+  {n:'RFE/RL',u:'https://www.rferl.org/api/zyr$piv',c:'world'},
+]};
 
-/*
-  FEED QUALITY RATINGS (shown to users):
-  'strong'  = dedicated local English-language RSS, very reliable
-  'good'    = well-known international outlet covering that country reliably
-  'limited' = best available but coverage is thinner — shown honestly
-*/
-
-const FEEDS = {
-
-  // ── TIER 1: STRONG dedicated English RSS ─────────────────────────────
-  us:[
-    {name:'AP News',       url:'https://feeds.apnews.com/rss/apf-topnews',                   cat:'general'},
-    {name:'NPR',           url:'https://feeds.npr.org/1001/rss.xml',                         cat:'general'},
-    {name:'Reuters US',    url:'https://feeds.reuters.com/reuters/domesticNews',              cat:'general'},
-    {name:'CBS News',      url:'https://www.cbsnews.com/latest/rss/main',                    cat:'general'},
-    {name:'CNN',           url:'http://rss.cnn.com/rss/edition.rss',                         cat:'general'},
-    {name:'TechCrunch',    url:'https://techcrunch.com/feed',                                cat:'technology'},
-    {name:'ESPN',          url:'https://www.espn.com/espn/rss/news',                         cat:'sports'},
-    {name:'Wired',         url:'https://www.wired.com/feed/rss',                             cat:'technology'},
-  ],
-
-  gb:[
-    {name:'BBC News',      url:'http://feeds.bbci.co.uk/news/rss.xml',                       cat:'general'},
-    {name:'BBC World',     url:'http://feeds.bbci.co.uk/news/world/rss.xml',                 cat:'world'},
-    {name:'BBC Sport',     url:'http://feeds.bbci.co.uk/sport/rss.xml',                      cat:'sports'},
-    {name:'BBC Business',  url:'http://feeds.bbci.co.uk/news/business/rss.xml',              cat:'business'},
-    {name:'The Guardian',  url:'https://www.theguardian.com/uk/rss',                         cat:'general'},
-    {name:'Guardian World',url:'https://www.theguardian.com/world/rss',                      cat:'world'},
-    {name:'Sky News',      url:'https://feeds.skynews.com/feeds/rss/home.xml',               cat:'general'},
-    {name:'Reuters UK',    url:'https://feeds.reuters.com/reuters/UKdomesticNews',           cat:'general'},
-  ],
-
-  ca:[
-    {name:'CBC Top Stories',url:'https://www.cbc.ca/cmlink/rss-topstories',                  cat:'general'},
-    {name:'CBC World',     url:'https://www.cbc.ca/cmlink/rss-world',                        cat:'world'},
-    {name:'CBC Business',  url:'https://www.cbc.ca/cmlink/rss-business',                     cat:'business'},
-    {name:'CBC Technology',url:'https://www.cbc.ca/cmlink/rss-technology',                   cat:'technology'},
-    {name:'CBC Sports',    url:'https://www.cbc.ca/cmlink/rss-sports',                       cat:'sports'},
-    {name:'Globe and Mail',url:'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/', cat:'general'},
-  ],
-
-  au:[
-    {name:'ABC Australia', url:'https://www.abc.net.au/news/feed/51120/rss.xml',             cat:'general'},
-    {name:'ABC World',     url:'https://www.abc.net.au/news/feed/51892/rss.xml',             cat:'world'},
-    {name:'ABC Sport',     url:'https://www.abc.net.au/news/feed/52278/rss.xml',             cat:'sports'},
-    {name:'ABC Science',   url:'https://www.abc.net.au/news/feed/52498/rss.xml',             cat:'science'},
-    {name:'SBS News',      url:'https://www.sbs.com.au/news/feed',                           cat:'general'},
-    {name:'Reuters AU',    url:'https://feeds.reuters.com/reuters/australiaNews',            cat:'general'},
-  ],
-
-  de:[
-    {name:'DW Top Stories',url:'https://rss.dw.com/rdf/rss-en-all',                         cat:'general'},
-    {name:'DW Europe',     url:'https://rss.dw.com/xml/rss-en-eu',                          cat:'world'},
-    {name:'DW Business',   url:'https://rss.dw.com/xml/rss-en-eco',                         cat:'business'},
-    {name:'DW Science',    url:'https://rss.dw.com/xml/rss-en-sci',                         cat:'science'},
-    {name:'DW World',      url:'https://rss.dw.com/xml/rss-en-world',                       cat:'world'},
-  ],
-
-  fr:[
-    {name:'France 24',         url:'https://www.france24.com/en/rss',                       cat:'general'},
-    {name:'France 24 World',   url:'https://www.france24.com/en/world/rss',                 cat:'world'},
-    {name:'France 24 Economy', url:'https://www.france24.com/en/economy/rss',               cat:'business'},
-    {name:'France 24 Sport',   url:'https://www.france24.com/en/sport/rss',                 cat:'sports'},
-    {name:'RFI English',       url:'https://en.rfi.fr/rss',                                 cat:'general'},
-  ],
-
-  jp:[
-    {name:'NHK World',         url:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/all.xml', cat:'general'},
-    {name:'NHK Business',      url:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/business.xml', cat:'business'},
-    {name:'Japan Times',       url:'https://www.japantimes.co.jp/feed',                     cat:'general'},
-    {name:'The Diplomat – Japan',url:'https://thediplomat.com/regions/japan/feed',          cat:'world'},
-  ],
-
-  // ── TIER 2: GOOD — reliable internationally-focused English coverage ──
-  in:[
-    {name:'The Hindu',         url:'https://www.thehindu.com/feeder/default.rss',           cat:'general'},
-    {name:'Times of India',    url:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms', cat:'general'},
-    {name:'Economic Times',    url:'https://economictimes.indiatimes.com/rssfeedstopstories.cms', cat:'business'},
-    {name:'NDTV',              url:'https://feeds.feedburner.com/ndtvnews-top-stories',     cat:'general'},
-    {name:'Reuters India',     url:'https://feeds.reuters.com/reuters/INtopNews',           cat:'general'},
-  ],
-
-  sg:[
-    {name:'CNA',               url:'https://www.channelnewsasia.com/rssfeeds/8395884',      cat:'general'},
-    {name:'CNA Asia',          url:'https://www.channelnewsasia.com/rssfeeds/8395910',      cat:'world'},
-    {name:'Straits Times',     url:'https://www.straitstimes.com/news/singapore/rss.xml',  cat:'general'},
-    {name:'The Diplomat – SE Asia',url:'https://thediplomat.com/regions/southeast-asia/feed', cat:'world'},
-  ],
-
-  ae:[
-    {name:'Gulf News',         url:'https://gulfnews.com/rss/news',                        cat:'general'},
-    {name:'The National',      url:'https://www.thenationalnews.com/rss/home.xml',         cat:'general'},
-    {name:'Khaleej Times',     url:'https://www.khaleejtimes.com/rss',                     cat:'general'},
-    {name:'Reuters Gulf',      url:'https://feeds.reuters.com/reuters/MiddleEastNews',     cat:'world'},
-  ],
-
-  za:[
-    {name:'Daily Maverick',    url:'https://www.dailymaverick.co.za/feed',                 cat:'general'},
-    {name:'News24',            url:'https://feeds.news24.com/articles/news24/TopStories/rss', cat:'general'},
-    {name:'Reuters Africa',    url:'https://feeds.reuters.com/reuters/AfricaNews',         cat:'world'},
-  ],
-
-  ng:[
-    {name:'Punch Nigeria',     url:'https://punchng.com/feed',                             cat:'general'},
-    {name:'Vanguard Nigeria',  url:'https://www.vanguardngr.com/feed',                     cat:'general'},
-    {name:'Premium Times NG',  url:'https://www.premiumtimesng.com/feed',                  cat:'general'},
-    {name:'Reuters Africa',    url:'https://feeds.reuters.com/reuters/AfricaNews',         cat:'world'},
-  ],
-
-  ke:[
-    {name:'Nation Africa',     url:'https://nation.africa/kenya/rss.xml',                  cat:'general'},
-    {name:'Daily Nation Kenya',url:'https://nation.africa/rss.xml',                        cat:'general'},
-    {name:'Reuters Africa',    url:'https://feeds.reuters.com/reuters/AfricaNews',         cat:'world'},
-  ],
-
-  it:[
-    {name:'ANSA English',      url:'https://www.ansa.it/sito/ansait_rss.xml',              cat:'general'},
-    {name:'The Local Italy',   url:'https://feeds.thelocal.com/rss/it',                   cat:'general'},
-    {name:'Reuters EU',        url:'https://feeds.reuters.com/reuters/EuropeanNewsHome',   cat:'world'},
-  ],
-
-  es:[
-    {name:'El País English',   url:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada', cat:'general'},
-    {name:'The Local Spain',   url:'https://feeds.thelocal.com/rss/es',                   cat:'general'},
-    {name:'Reuters EU',        url:'https://feeds.reuters.com/reuters/EuropeanNewsHome',   cat:'world'},
-  ],
-
-  nl:[
-    {name:'DutchNews.nl',      url:'https://www.dutchnews.nl/feed',                        cat:'general'},
-    {name:'The Local NL',      url:'https://feeds.thelocal.com/rss/nl',                   cat:'general'},
-    {name:'Reuters EU',        url:'https://feeds.reuters.com/reuters/EuropeanNewsHome',   cat:'world'},
-  ],
-
-  se:[
-    {name:'The Local Sweden',  url:'https://feeds.thelocal.com/rss/se',                   cat:'general'},
-    {name:'Radio Sweden',      url:'https://sverigesradio.se/topsy/rss/srapi/program/4916', cat:'general'},
-    {name:'Reuters EU',        url:'https://feeds.reuters.com/reuters/EuropeanNewsHome',   cat:'world'},
-  ],
-
-  no:[
-    {name:'Norway Today',      url:'https://norwaytoday.info/feed',                        cat:'general'},
-    {name:'The Local Norway',  url:'https://feeds.thelocal.com/rss/no',                   cat:'general'},
-    {name:'Reuters EU',        url:'https://feeds.reuters.com/reuters/EuropeanNewsHome',   cat:'world'},
-  ],
-
-  nz:[
-    {name:'RNZ',               url:'https://www.rnz.co.nz/rss/national.xml',              cat:'general'},
-    {name:'RNZ World',         url:'https://www.rnz.co.nz/rss/world.xml',                 cat:'world'},
-    {name:'Stuff.co.nz',       url:'https://www.stuff.co.nz/rss',                         cat:'general'},
-  ],
-
-  // ── TIER 3: LIMITED — honest regional coverage ────────────────────────
-  // China: SCMP (Hong Kong, independent, best English source on China)
-  // + BBC China + The Diplomat. Note: mainland state feeds are unreliable.
-  cn:[
-    {name:'S. China Morning Post', url:'https://www.scmp.com/rss/4/feed',                  cat:'general'},
-    {name:'SCMP Hong Kong',    url:'https://www.scmp.com/rss/2/feed',                      cat:'general'},
-    {name:'BBC China',         url:'http://feeds.bbci.co.uk/news/world/asia/china/rss.xml',cat:'world'},
-    {name:'The Diplomat China',url:'https://thediplomat.com/regions/east-asia/feed',       cat:'world'},
-  ],
-
-  // Russia: Using Reuters + BBC + DW. RT/TASS feeds are often blocked by proxies.
-  ru:[
-    {name:'Reuters Russia',    url:'https://feeds.reuters.com/reuters/worldNews',          cat:'world'},
-    {name:'BBC Russia News',   url:'http://feeds.bbci.co.uk/news/world/europe/rss.xml',    cat:'world'},
-    {name:'The Moscow Times',  url:'https://www.themoscowtimes.com/rss/news',              cat:'general'},
-    {name:'DW Europe',         url:'https://rss.dw.com/xml/rss-en-eu',                    cat:'world'},
-  ],
-
-  // Brazil: Reuters + MercoPress + AP Latin America
-  br:[
-    {name:'Reuters Brazil',    url:'https://feeds.reuters.com/reuters/worldNews',          cat:'general'},
-    {name:'MercoPress',        url:'https://en.mercopress.com/rss',                        cat:'general'},
-    {name:'Latin Dispatch',    url:'https://latindispatch.com/feed',                       cat:'general'},
-    {name:'AP Latin America',  url:'https://feeds.apnews.com/rss/apf-intlnews',           cat:'world'},
-  ],
-
-  // Mexico: Reuters + Latin Dispatch + AP
-  mx:[
-    {name:'Reuters Mexico',    url:'https://feeds.reuters.com/reuters/worldNews',          cat:'general'},
-    {name:'Mexico News Daily', url:'https://mexiconewsdaily.com/feed',                     cat:'general'},
-    {name:'Latin Dispatch',    url:'https://latindispatch.com/feed',                       cat:'general'},
-  ],
-
-  // Argentina: MercoPress (dedicated South America outlet) + Reuters
-  ar:[
-    {name:'MercoPress',        url:'https://en.mercopress.com/rss',                        cat:'general'},
-    {name:'Buenos Aires Herald',url:'https://buenosairesherald.com/feed',                  cat:'general'},
-    {name:'Reuters LatAm',     url:'https://feeds.reuters.com/reuters/worldNews',          cat:'world'},
-  ],
-
-  // Egypt: Al-Ahram + Egypt Independent + Reuters
-  eg:[
-    {name:'Al-Ahram Weekly',   url:'https://english.ahram.org.eg/RSS/1.aspx',              cat:'general'},
-    {name:'Egypt Independent', url:'https://www.egyptindependent.com/feed',                cat:'general'},
-    {name:'Reuters Middle East',url:'https://feeds.reuters.com/reuters/MiddleEastNews',    cat:'world'},
-  ],
-
-  // ── WORLD pool mixed into every country ──────────────────────────────
-  _world:[
-    {name:'Al Jazeera',        url:'https://www.aljazeera.com/xml/rss/all.xml',            cat:'world'},
-    {name:'Al Jazeera Sport',  url:'https://www.aljazeera.com/xml/rss/sport.xml',         cat:'sports'},
-    {name:'BBC World',         url:'http://feeds.bbci.co.uk/news/world/rss.xml',           cat:'world'},
-    {name:'Reuters World',     url:'https://feeds.reuters.com/reuters/worldNews',          cat:'world'},
-    {name:'AP International',  url:'https://feeds.apnews.com/rss/apf-intlnews',           cat:'world'},
-    {name:'France 24 Top',     url:'https://www.france24.com/en/top-stories/rss',         cat:'general'},
-    {name:'DW World',          url:'https://rss.dw.com/xml/rss-en-world',                 cat:'world'},
-  ],
-};
-
-// Coverage quality per country (shown to users in sidebar + status bar)
-const COVERAGE = {
-  us:'strong', gb:'strong', ca:'strong', au:'strong', de:'strong',
-  fr:'strong', jp:'strong', in:'good',   sg:'good',   ae:'good',
-  za:'good',   ng:'good',   ke:'good',   it:'good',   es:'good',
-  nl:'good',   se:'good',   no:'good',   nz:'strong',
-  cn:'limited', ru:'limited', br:'limited', mx:'limited', ar:'limited', eg:'limited',
-};
-
-const COVERAGE_NOTE = {
-  cn:'Coverage via South China Morning Post (HK), BBC & The Diplomat. Mainland state feeds are unreliable.',
-  ru:'Coverage via Reuters, BBC Europe, The Moscow Times & DW. RT/TASS feeds are blocked by most proxies.',
-  br:'Coverage via Reuters, MercoPress & AP. Major Brazilian papers publish in Portuguese only.',
-  mx:'Coverage via Reuters, Mexico News Daily & Latin Dispatch.',
-  ar:'Coverage via MercoPress (dedicated South America outlet) & Buenos Aires Herald.',
-  eg:'Coverage via Al-Ahram English, Egypt Independent & Reuters Middle East.',
-};
-
-const COUNTRIES = [
-  {code:'us',name:'USA 🇺🇸',q:'strong'},
-  {code:'gb',name:'UK 🇬🇧',q:'strong'},
-  {code:'ca',name:'Canada 🇨🇦',q:'strong'},
-  {code:'au',name:'Australia 🇦🇺',q:'strong'},
-  {code:'nz',name:'New Zealand 🇳🇿',q:'strong'},
-  {code:'de',name:'Germany 🇩🇪',q:'strong'},
-  {code:'fr',name:'France 🇫🇷',q:'strong'},
-  {code:'jp',name:'Japan 🇯🇵',q:'strong'},
-  {code:'sg',name:'Singapore 🇸🇬',q:'good'},
-  {code:'in',name:'India 🇮🇳',q:'good'},
-  {code:'ae',name:'UAE 🇦🇪',q:'good'},
-  {code:'it',name:'Italy 🇮🇹',q:'good'},
-  {code:'es',name:'Spain 🇪🇸',q:'good'},
-  {code:'nl',name:'Netherlands 🇳🇱',q:'good'},
-  {code:'se',name:'Sweden 🇸🇪',q:'good'},
-  {code:'no',name:'Norway 🇳🇴',q:'good'},
-  {code:'za',name:'S. Africa 🇿🇦',q:'good'},
-  {code:'ng',name:'Nigeria 🇳🇬',q:'good'},
-  {code:'ke',name:'Kenya 🇰🇪',q:'good'},
-  {code:'cn',name:'China 🇨🇳',q:'limited'},
-  {code:'ru',name:'Russia 🇷🇺',q:'limited'},
-  {code:'br',name:'Brazil 🇧🇷',q:'limited'},
-  {code:'mx',name:'Mexico 🇲🇽',q:'limited'},
-  {code:'ar',name:'Argentina 🇦🇷',q:'limited'},
+const COV={us:'strong',gb:'strong',ca:'strong',au:'strong',de:'strong',fr:'strong',jp:'strong',nz:'strong',in:'good',sg:'good',ae:'good',za:'good',ng:'good',ke:'good',it:'good',es:'good',nl:'good',se:'good',no:'good',cn:'limited',ru:'limited',br:'limited',mx:'limited',ar:'limited',eg:'limited'};
+const COVNOTE={cn:'SCMP, BBC & The Diplomat. Mainland state feeds unreliable via public proxies.',ru:'Moscow Times, BBC Europe & DW. RT/TASS blocked by most CORS proxies.',br:'MercoPress & Latin Dispatch. Major Brazilian papers publish in Portuguese only.',mx:'Mexico News Daily & Latin Dispatch.',ar:'MercoPress & Buenos Aires Herald.',eg:'Al-Ahram English & Egypt Independent.'};
+const COUNTRIES=[
+  {code:'us',name:'USA 🇺🇸',q:'strong'},{code:'gb',name:'UK 🇬🇧',q:'strong'},
+  {code:'ca',name:'Canada 🇨🇦',q:'strong'},{code:'au',name:'Australia 🇦🇺',q:'strong'},
+  {code:'nz',name:'New Zealand 🇳🇿',q:'strong'},{code:'de',name:'Germany 🇩🇪',q:'strong'},
+  {code:'fr',name:'France 🇫🇷',q:'strong'},{code:'jp',name:'Japan 🇯🇵',q:'strong'},
+  {code:'sg',name:'Singapore 🇸🇬',q:'good'},{code:'in',name:'India 🇮🇳',q:'good'},
+  {code:'ae',name:'UAE 🇦🇪',q:'good'},{code:'it',name:'Italy 🇮🇹',q:'good'},
+  {code:'es',name:'Spain 🇪🇸',q:'good'},{code:'nl',name:'Netherlands 🇳🇱',q:'good'},
+  {code:'se',name:'Sweden 🇸🇪',q:'good'},{code:'no',name:'Norway 🇳🇴',q:'good'},
+  {code:'za',name:'S. Africa 🇿🇦',q:'good'},{code:'ng',name:'Nigeria 🇳🇬',q:'good'},
+  {code:'ke',name:'Kenya 🇰🇪',q:'good'},{code:'cn',name:'China 🇨🇳',q:'limited'},
+  {code:'ru',name:'Russia 🇷🇺',q:'limited'},{code:'br',name:'Brazil 🇧🇷',q:'limited'},
+  {code:'mx',name:'Mexico 🇲🇽',q:'limited'},{code:'ar',name:'Argentina 🇦🇷',q:'limited'},
   {code:'eg',name:'Egypt 🇪🇬',q:'limited'},
 ];
 
-const toRss2json   = url => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
-const toAllOrigins = url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+let S={country:localStorage.getItem('hn_country')||'us',theme:localStorage.getItem('hn_theme')||'dark',query:'',category:'general',source:'all',articles:[],filtered:[],loading:false,feedResults:[]};
 
-let S = {
-  country:  localStorage.getItem('hn_country') || 'us',
-  theme:    localStorage.getItem('hn_theme')   || 'light',
-  query:'', category:'general', source:'all',
-  articles:[], filtered:[], loading:false,
-  feedResults: [], // tracks which feeds loaded
-};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-const $ = id => document.getElementById(id);
-const grid=$('headlines-grid'), spinner=$('loading-spinner'), noRes=$('no-results'),
-      cLabel=$('country-label'), aCount=$('article-count'), sCred=$('source-credit'),
-      toast=$('toast'), drawer=$('nav-drawer'), overlay=$('nav-overlay'),
-      statusBar=$('feed-status-bar');
+/* ── FETCH ── */
+const p1=u=>`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`;
+const p2=u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`;
+function sh(h){const d=document.createElement('div');d.innerHTML=h;return(d.textContent||'').replace(/\s+/g,' ').trim();}
+function xi(h){const m=(h||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?m[1]:'';}
 
-/* ── Drawer ── */
-function openDrawer()  { drawer.classList.add('open');  overlay.classList.add('open');  document.body.style.overflow='hidden'; }
-function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow=''; }
-$('hamburger').addEventListener('click', openDrawer);
-$('nav-close').addEventListener('click', closeDrawer);
-overlay.addEventListener('click', closeDrawer);
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });
-
-/* ── Fetch one feed, try rss2json then allorigins ── */
-async function fetchFeed(feed) {
-  try {
-    const r = await fetch(toRss2json(feed.url), {signal:AbortSignal.timeout(8000)});
-    if (r.ok) {
-      const d = await r.json();
-      if (d.status==='ok' && d.items?.length) return { items: d.items.map(i=>fromRss2json(i,feed.name,feed.cat)), ok:true };
-    }
-  } catch(_) {}
-  try {
-    const r = await fetch(toAllOrigins(feed.url), {signal:AbortSignal.timeout(8000)});
-    if (r.ok) {
-      const items = parseXML(await r.text(), feed.name, feed.cat);
-      if (items.length) return { items, ok:true };
-    }
-  } catch(_) {}
-  return { items:[], ok:false };
+async function fetchFeed(feed){
+  try{const r=await fetch(p1(feed.u),{signal:AbortSignal.timeout(8000)});if(r.ok){const d=await r.json();if(d.status==='ok'&&d.items?.length)return{items:d.items.map(i=>fr2j(i,feed.n,feed.c)),ok:true};}}catch(_){}
+  try{const r=await fetch(p2(feed.u),{signal:AbortSignal.timeout(8000)});if(r.ok){const items=pxml(await r.text(),feed.n,feed.c);if(items.length)return{items,ok:true};}}catch(_){}
+  return{items:[],ok:false};
+}
+function fr2j(i,src,cat){const img=i.enclosure?.link||i.thumbnail||xi(i.content||'')||xi(i.description||'');return{title:(i.title||'').trim(),desc:sh(i.description||'').slice(0,210),url:i.link||'#',img:img||'',date:i.pubDate||'',src,cat};}
+function pxml(xml,src,cat){
+  try{const doc=new DOMParser().parseFromString(xml,'application/xml');return Array.from(doc.querySelectorAll('item')).slice(0,30).map(el=>{const t=s=>el.querySelector(s)?.textContent?.trim()||'';const img=el.querySelector('[url]')?.getAttribute('url')||el.querySelector('enclosure')?.getAttribute('url')||xi(t('description'));return{title:t('title'),desc:sh(t('description')).slice(0,210),url:t('link')||t('guid')||'#',img:img||'',date:t('pubDate')||'',src,cat};}).filter(a=>a.title.length>3);}catch(_){return[];}
 }
 
-function fromRss2json(item, src, cat) {
-  const img = item.enclosure?.link||item.thumbnail||extractImg(item.content||'')||extractImg(item.description||'');
-  return { title:(item.title||'').trim(), description:stripHtml(item.description||'').slice(0,240), url:item.link||'#', urlToImage:img||'', publishedAt:item.pubDate||new Date().toISOString(), source:{name:src}, category:cat };
-}
-
-function parseXML(xml, src, cat) {
-  try {
-    const doc = new DOMParser().parseFromString(xml,'application/xml');
-    return Array.from(doc.querySelectorAll('item')).slice(0,30).map(item => {
-      const t = s => item.querySelector(s)?.textContent?.trim()||'';
-      const img = item.querySelector('[url]')?.getAttribute('url')||item.querySelector('enclosure')?.getAttribute('url')||extractImg(t('description'));
-      return { title:t('title'), description:stripHtml(t('description')).slice(0,240), url:t('link')||t('guid')||'#', urlToImage:img||'', publishedAt:t('pubDate')||new Date().toISOString(), source:{name:src}, category:cat };
-    }).filter(a=>a.title.length>2);
-  } catch(_){ return []; }
-}
-
-function stripHtml(h){ const d=document.createElement('div');d.innerHTML=h;return(d.textContent||d.innerText||'').replace(/\s+/g,' ').trim(); }
-function extractImg(h){ const m=(h||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?m[1]:''; }
-
-async function loadHeadlines() {
-  if (S.loading) return;
-  S.loading=true; S.articles=[]; S.feedResults=[];
-  grid.innerHTML=''; noRes.style.display='none'; $('source-bar').innerHTML=''; statusBar.innerHTML='';
-  showSpinner(true);
-
-  const pool = [...(FEEDS[S.country]||FEEDS.us), ...(FEEDS._world||[])];
-  const sel  = S.category==='general' ? pool : pool.filter(f=>f.cat===S.category||f.cat==='general');
-  const toFetch = sel.slice(0, 8); // fetch up to 8 feeds
-
-  const results = await Promise.allSettled(toFetch.map(f => fetchFeed(f).then(r => ({feed:f, ...r}))));
-
-  let all = [];
-  results.forEach(r => {
-    if (r.status==='fulfilled') {
-      S.feedResults.push({name:r.value.feed.name, ok:r.value.ok});
-      if (r.value.ok) all = all.concat(r.value.items);
-    }
-  });
-
-  // Deduplicate
-  const seen = new Set();
-  all = all.filter(a => {
-    const k=(a.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,50);
-    if(!k||seen.has(k)) return false; seen.add(k); return true;
-  });
-  all.sort((a,b)=>new Date(b.publishedAt)-new Date(a.publishedAt));
-
+/* ── LOAD NEWS ── */
+async function loadNews(){
+  if(S.loading)return;S.loading=true;S.articles=[];S.feedResults=[];
+  $('grid').innerHTML='';$('nores').style.display='none';$('srcbar').innerHTML='';$('fsb').innerHTML='';$('covn').style.display='none';
+  showSpin(true);
+  const pool=[...(FEEDS[S.country]||FEEDS.us),...FEEDS._world];
+  const sel=S.category==='general'?pool:pool.filter(f=>f.c===S.category||f.c==='general');
+  const res=await Promise.allSettled(sel.slice(0,12).map(f=>fetchFeed(f).then(r=>({f,...r}))));
+  let all=[];
+  res.forEach(r=>{if(r.status==='fulfilled'){S.feedResults.push({name:r.value.f.n,ok:r.value.ok});if(r.value.ok)all=all.concat(r.value.items);}});
+  const seen=new Set();
+  all=all.filter(a=>{const k=(a.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,55);if(!k||seen.has(k))return false;seen.add(k);return true;});
+  all.sort((a,b)=>new Date(b.date)-new Date(a.date));
   S.articles=all;
-  buildStatusBar();
-  buildSourceBar();
-  applyFilters();
-  renderCards();
-  updateMeta();
-  showSpinner(false);
-  S.loading=false;
-
-  if (!all.length) {
-    showToast('All feeds unavailable — try refreshing');
-    noRes.style.display='block';
-  }
+  buildStatus();buildSrcBar();applyFilters();renderCards();updateMeta();
+  showSpin(false);S.loading=false;
+  if(!all.length){toast('⚠ All feeds unavailable — retry');$('nores').style.display='block';}
 }
 
-function buildStatusBar() {
-  const country = COUNTRIES.find(c=>c.code===S.country);
-  const note = COVERAGE_NOTE[S.country];
-  const ok   = S.feedResults.filter(f=>f.ok);
-  const fail = S.feedResults.filter(f=>!f.ok);
-
-  let html = `<span style="font-size:.7rem;color:var(--ink-muted);font-weight:600;margin-right:.25rem">Sources:</span>`;
-
-  ok.forEach(f => {
-    html += `<span class="fs-badge fs-ok">✓ ${escHtml(f.name)}</span>`;
-  });
-  fail.forEach(f => {
-    html += `<span class="fs-badge fs-fail">✗ ${escHtml(f.name)}</span>`;
-  });
-
-  if (note) {
-    html += `<div style="width:100%;margin-top:.4rem;font-size:.7rem;color:var(--ink-muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.4rem .7rem">
-      ℹ️ <strong>Coverage note:</strong> ${escHtml(note)}
-    </div>`;
-  }
-
-  statusBar.innerHTML = html;
+function buildStatus(){
+  const ok=S.feedResults.filter(f=>f.ok),fail=S.feedResults.filter(f=>!f.ok);
+  let h=`<span style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-right:.2rem">SOURCES:</span>`;
+  ok.forEach(f=>{h+=`<span class="fb fok">✓ ${esc(f.name)}</span>`;});
+  fail.forEach(f=>{h+=`<span class="fb ffail">✗ ${esc(f.name)}</span>`;});
+  $('fsb').innerHTML=h;
+  const note=COVNOTE[S.country];
+  const cn=$('covn');
+  if(note){cn.textContent='ℹ Coverage note: '+note;cn.style.display='block';}
 }
 
-function applyFilters() {
+function buildSrcBar(){
+  const bar=$('srcbar');
+  const srcs=[...new Set(S.articles.map(a=>a.src).filter(Boolean))];
+  if(srcs.length<2){bar.innerHTML='';return;}
+  let h=`<button class="fp on" data-src="all" style="font-size:.62rem;min-height:26px;padding:.2rem .6rem">ALL</button>`;
+  srcs.slice(0,12).forEach(s=>{h+=`<button class="fp" data-src="${esc(s)}" style="font-size:.62rem;min-height:26px;padding:.2rem .6rem">${esc(s)}</button>`;});
+  bar.innerHTML=h;
+  bar.querySelectorAll('[data-src]').forEach(btn=>{
+    btn.addEventListener('click',()=>{bar.querySelectorAll('[data-src]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');S.source=btn.dataset.src;applyFilters();renderCards();updateMeta();});
+  });
+}
+
+function applyFilters(){
   const q=S.query.toLowerCase().trim();
-  S.filtered=S.articles.filter(a => {
-    const mQ=!q||(a.title||'').toLowerCase().includes(q)||(a.description||'').toLowerCase().includes(q);
-    const mS=S.source==='all'||(a.source?.name||'')===S.source;
+  S.filtered=S.articles.filter(a=>{
+    const mQ=!q||(a.title||'').toLowerCase().includes(q)||(a.desc||'').toLowerCase().includes(q);
+    const mS=S.source==='all'||a.src===S.source;
     return mQ&&mS;
   });
 }
 
-function buildSourceBar() {
-  const bar=$('source-bar');
-  const srcs=[...new Set(S.articles.map(a=>a.source?.name).filter(Boolean))];
-  if(srcs.length<2){bar.innerHTML='';return;}
-  let h=`<button class="filter-pill active" data-src="all" style="font-size:.7rem;min-height:30px;padding:.28rem .75rem">All sources</button>`;
-  srcs.slice(0,10).forEach(s=>{h+=`<button class="filter-pill" data-src="${escHtml(s)}" style="font-size:.7rem;min-height:30px;padding:.28rem .75rem">${escHtml(s)}</button>`;});
-  bar.innerHTML=h;
-  bar.querySelectorAll('[data-src]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      bar.querySelectorAll('[data-src]').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active'); S.source=btn.dataset.src; applyFilters(); renderCards(); updateMeta();
-    });
+const FB=['https://picsum.photos/seed/hn1/600/380','https://picsum.photos/seed/hn2/600/380','https://picsum.photos/seed/hn3/600/380','https://picsum.photos/seed/hn4/600/380','https://picsum.photos/seed/hn5/600/380','https://picsum.photos/seed/hn6/600/380'];
+
+function renderCards(){
+  const grid=$('grid');grid.innerHTML='';
+  if(!S.filtered.length){$('nores').style.display='block';return;}
+  $('nores').style.display='none';
+  S.filtered.forEach((art,i)=>{
+    const fb=FB[i%FB.length];
+    const img=(art.img&&/^https?:\/\//.test(art.img))?art.img:fb;
+    const el=document.createElement('article');
+    el.className='card';el.style.animationDelay=`${(i%16)*28}ms`;
+    el.innerHTML=`<a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer" style="display:block"><img src="${esc(img)}" alt="${esc(art.title)}" class="ci" loading="lazy" onerror="this.src='${fb}';this.onerror=null"/></a>
+<div class="cb">
+  <div class="cs">${esc(art.src)}</div>
+  <h2 class="ct"><a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer">${esc(art.title)}</a></h2>
+  ${art.desc?`<p class="cd">${esc(art.desc)}</p>`:''}
+  <div class="cf"><span>${tago(art.date)}</span><a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer" class="rbtn">READ →</a></div>
+</div>`;
+    grid.appendChild(el);
   });
 }
 
-const FALLBACKS=['https://picsum.photos/seed/hn1a/600/400','https://picsum.photos/seed/hn2b/600/400','https://picsum.photos/seed/hn3c/600/400','https://picsum.photos/seed/hn4d/600/400','https://picsum.photos/seed/hn5e/600/400','https://picsum.photos/seed/hn6f/600/400'];
-
-function renderCards() {
-  grid.innerHTML='';
-  if(!S.filtered.length){noRes.style.display='block';return;}
-  noRes.style.display='none';
-  S.filtered.forEach((art,i) => {
-    const fb=FALLBACKS[i%FALLBACKS.length];
-    const img=(art.urlToImage&&/^https?:\/\//.test(art.urlToImage))?art.urlToImage:fb;
-    const card=document.createElement('article');
-    card.className='news-card'; card.style.animationDelay=`${(i%12)*35}ms`;
-    card.innerHTML=`
-      <a href="${escHtml(art.url)}" target="_blank" rel="noopener noreferrer" tabindex="-1">
-        <img src="${escHtml(img)}" alt="${escHtml(art.title)}" loading="lazy" onerror="this.src='${fb}';this.onerror=null"/>
-      </a>
-      <div class="ncb">
-        <div class="nc-source">${escHtml(art.source?.name||'News')}</div>
-        <h2 class="nc-title"><a href="${escHtml(art.url)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none" class="hover:underline">${escHtml(art.title)}</a></h2>
-        ${art.description?`<p class="nc-desc">${escHtml(art.description)}</p>`:''}
-        <div class="nc-footer">
-          <span>${escHtml(getTimeAgo(art.publishedAt))}</span>
-          <a href="${escHtml(art.url)}" target="_blank" rel="noopener noreferrer" class="read-btn">Read →</a>
-        </div>
-      </div>`;
-    grid.appendChild(card);
-  });
-
-  // Update schema
-  const items=S.filtered.slice(0,5).map((a,i)=>({'@type':'NewsArticle','position':i+1,'name':a.title,'url':a.url,'datePublished':a.publishedAt,'publisher':{'@type':'Organization','name':a.source?.name||'News'}}));
-  $('schema-jsonld').textContent=JSON.stringify({'@context':'https://schema.org','@type':'ItemList','itemListElement':items},null,2);
-}
-
-function updateMeta() {
+function updateMeta(){
   const c=COUNTRIES.find(x=>x.code===S.country);
-  cLabel.textContent=`${c?c.name:'Top'} — Headlines`;
-  aCount.textContent=`${S.filtered.length} article${S.filtered.length!==1?'s':''}`;
-  const loaded=S.feedResults.filter(f=>f.ok).map(f=>f.name).slice(0,3);
-  sCred.textContent=loaded.length?`· ${loaded.join(', ')}${loaded.length<S.feedResults.filter(f=>f.ok).length?' + more':''}`:'';
+  $('clbl').textContent=(c?c.name.replace(/[^\w ]/g,'').trim().toUpperCase():'TOP')+' HEADLINES';
+  $('acnt').textContent=`${S.filtered.length} articles · ${S.feedResults.filter(f=>f.ok).length}/${S.feedResults.length} sources loaded`;
 }
 
-function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function getTimeAgo(iso){if(!iso)return'';const d=Math.floor((Date.now()-new Date(iso).getTime())/1000);if(d<60)return`${d}s ago`;if(d<3600)return`${Math.floor(d/60)}m ago`;if(d<86400)return`${Math.floor(d/3600)}h ago`;return`${Math.floor(d/86400)}d ago`;}
-function showSpinner(v){spinner.style.display=v?'flex':'none';}
-function showToast(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),3200);}
+function tago(iso){if(!iso)return'';const d=Math.floor((Date.now()-new Date(iso).getTime())/1000);if(isNaN(d)||d<0)return'';if(d<60)return d+'s ago';if(d<3600)return Math.floor(d/60)+'m ago';if(d<86400)return Math.floor(d/3600)+'h ago';return Math.floor(d/86400)+'d ago';}
+function showSpin(v){$('lsp').style.display=v?'flex':'none';}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 
-function populateUI() {
-  const sel=$('country-select'), msel=$('country-select-mobile');
-  COUNTRIES.forEach(c => {
-    [sel,msel].forEach(el => {
-      const o=document.createElement('option');
-      o.value=c.code; o.textContent=c.name;
-      if(c.code===S.country) o.selected=true;
-      el.appendChild(o);
-    });
+/* ── THEME ── */
+function applyTheme(){
+  const d=S.theme==='dark';
+  document.documentElement.classList.toggle('dark',d);
+  document.documentElement.classList.toggle('light',!d);
+  $('thicon').textContent=d?'☀️':'🌙';
+  const di=$('theme-drw-icon');if(di)di.textContent=d?'☀️':'🌙';
+}
+
+/* ── POPULATE ── */
+function populateUI(){
+  const sel=$('csel'),msel=$('csel-m');
+  COUNTRIES.forEach(c=>{
+    [sel,msel].forEach(el=>{const o=document.createElement('option');o.value=c.code;o.textContent=c.name;if(c.code===S.country)o.selected=true;el.appendChild(o);});
   });
-
-  // Sidebar country list with quality badges
-  const list=$('country-list');
-  COUNTRIES.forEach(c => {
+  const list=$('clist');
+  COUNTRIES.forEach(c=>{
     const btn=document.createElement('button');
-    btn.className='country-chip';
-    const qClass = c.q==='strong'?'q-strong':c.q==='good'?'q-good':'q-limited';
-    const qLabel = c.q==='strong'?'Strong':c.q==='good'?'Good':'Limited';
-    btn.innerHTML=`<span>${escHtml(c.name)}</span><span class="chip-quality ${qClass}">${qLabel}</span>`;
-    btn.onclick=()=>{ S.country=c.code; S.source='all'; sel.value=c.code; msel.value=c.code; localStorage.setItem('hn_country',c.code); loadHeadlines(); };
+    btn.className='cc'+(c.code===S.country?' on':'');
+    const qc=c.q==='strong'?'qs':c.q==='good'?'qg':'ql';
+    const ql=c.q==='strong'?'STR':c.q==='good'?'GD':'LTD';
+    btn.innerHTML=`<span>${esc(c.name)}</span><span class="qb ${qc}">${ql}</span>`;
+    btn.onclick=()=>{list.querySelectorAll('.cc').forEach(b=>b.classList.remove('on'));btn.classList.add('on');S.country=c.code;S.source='all';sel.value=c.code;msel.value=c.code;localStorage.setItem('hn_country',c.code);loadNews();};
     list.appendChild(btn);
   });
 }
 
-function applyTheme(){
-  const dark=S.theme==='dark';
-  document.documentElement.classList.toggle('dark',dark);
-  $('dark-toggle').textContent=dark?'☀️':'🌙';
-  const ni=$('theme-nav-icon'); if(ni) ni.textContent=dark?'☀️':'🌙';
+/* ── DRAWER ── */
+const drw=$('drw'),ovl=$('ovl');
+function openDrw(){drw.classList.add('open');ovl.classList.add('open');document.body.style.overflow='hidden';}
+function closeDrw(){drw.classList.remove('open');ovl.classList.remove('open');document.body.style.overflow='';}
+$('ham').addEventListener('click',openDrw);
+$('drw-close').addEventListener('click',closeDrw);
+ovl.addEventListener('click',closeDrw);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrw();});
+
+/* ── EVENTS ── */
+function toggleTheme(){S.theme=S.theme==='dark'?'light':'dark';localStorage.setItem('hn_theme',S.theme);applyTheme();}
+$('thbtn').addEventListener('click',toggleTheme);
+$('theme-drw-btn').addEventListener('click',()=>{closeDrw();toggleTheme();});
+$('csel').addEventListener('change',e=>{S.country=e.target.value;S.source='all';$('csel-m').value=e.target.value;localStorage.setItem('hn_country',S.country);loadNews();});
+$('csel-m').addEventListener('change',e=>{S.country=e.target.value;S.source='all';$('csel').value=e.target.value;localStorage.setItem('hn_country',S.country);loadNews();});
+function doSearch(){S.query=$('si').value;applyFilters();renderCards();updateMeta();}
+$('sb').addEventListener('click',doSearch);
+$('si').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+$('si').addEventListener('input',e=>{if(!e.target.value){S.query='';applyFilters();renderCards();updateMeta();}});
+document.querySelectorAll('[data-cat]').forEach(p=>{
+  p.addEventListener('click',()=>{document.querySelectorAll('[data-cat]').forEach(x=>x.classList.remove('on'));p.classList.add('on');S.category=p.dataset.cat;S.source='all';loadNews();});
+});
+$('rfbtn').addEventListener('click',()=>{toast('🔄 REFRESHING…');loadNews();});
+$('rstbtn').addEventListener('click',()=>{S.query='';S.category='general';S.source='all';$('si').value='';document.querySelectorAll('[data-cat]').forEach((p,i)=>p.classList.toggle('on',i===0));loadNews();});
+
+/* ══════════════════════════════════════
+   CRYPTO TICKER — CoinGecko (no key)
+══════════════════════════════════════ */
+const CRYPTOS=[
+  {id:'bitcoin',sym:'BTC'},{id:'ethereum',sym:'ETH'},{id:'solana',sym:'SOL'},
+  {id:'binancecoin',sym:'BNB'},{id:'ripple',sym:'XRP'},{id:'cardano',sym:'ADA'},
+  {id:'dogecoin',sym:'DOGE'},{id:'polkadot',sym:'DOT'},{id:'chainlink',sym:'LINK'},
+  {id:'avalanche-2',sym:'AVAX'},{id:'matic-network',sym:'MATIC'},{id:'litecoin',sym:'LTC'},
+  {id:'uniswap',sym:'UNI'},{id:'stellar',sym:'XLM'},{id:'the-open-network',sym:'TON'},
+  {id:'shiba-inu',sym:'SHIB'},{id:'tron',sym:'TRX'},{id:'near',sym:'NEAR'},
+];
+
+async function loadCrypto(){
+  try{
+    const ids=CRYPTOS.map(c=>c.id).join(',');
+    const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,{signal:AbortSignal.timeout(10000)});
+    if(!r.ok)throw 0;
+    const d=await r.json();
+    const items=CRYPTOS.map(c=>{const v=d[c.id];if(!v)return null;return{sym:c.sym,price:v.usd,chg:v.usd_24h_change};}).filter(Boolean);
+    renderTicker('cti',items,true);
+  }catch(_){$('cti').innerHTML=`<span class="tload">CRYPTO UNAVAILABLE</span>`;}
 }
 
-// Events
-$('dark-toggle').addEventListener('click',()=>{S.theme=S.theme==='dark'?'light':'dark';localStorage.setItem('hn_theme',S.theme);applyTheme();});
-$('country-select').addEventListener('change',e=>{S.country=e.target.value;S.source='all';$('country-select-mobile').value=e.target.value;localStorage.setItem('hn_country',S.country);loadHeadlines();});
-$('country-select-mobile').addEventListener('change',e=>{S.country=e.target.value;S.source='all';$('country-select').value=e.target.value;localStorage.setItem('hn_country',S.country);loadHeadlines();});
-function doSearch(){S.query=$('search-input').value;applyFilters();renderCards();updateMeta();}
-$('search-btn').addEventListener('click',doSearch);
-$('search-input').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
-$('search-input').addEventListener('input',e=>{if(!e.target.value){S.query='';applyFilters();renderCards();updateMeta();}});
-document.querySelectorAll('[data-cat]').forEach(pill=>{
-  pill.addEventListener('click',()=>{
-    document.querySelectorAll('[data-cat]').forEach(p=>p.classList.remove('active'));
-    pill.classList.add('active'); S.category=pill.dataset.cat; S.source='all'; loadHeadlines();
-  });
-});
-$('refresh-btn').addEventListener('click',()=>{showToast('🔄 Refreshing feeds…');loadHeadlines();});
-$('reset-btn').addEventListener('click',()=>{
-  S.query='';S.category='general';S.source='all';$('search-input').value='';
-  document.querySelectorAll('[data-cat]').forEach((p,i)=>p.classList.toggle('active',i===0));
-  loadHeadlines();
-});
+/* ══════════════════════════════════════
+   STOCK TICKER — stooq.com live quotes
+   Shows prices during market hours only.
+   Displays friendly closed message off-hours.
+══════════════════════════════════════ */
 
-// Boot
+const STOCKS=[
+  {stooq:'aapl.us',  name:'Apple'},
+  {stooq:'msft.us',  name:'Microsoft'},
+  {stooq:'nvda.us',  name:'NVIDIA'},
+  {stooq:'googl.us', name:'Google'},
+  {stooq:'amzn.us',  name:'Amazon'},
+  {stooq:'meta.us',  name:'Meta'},
+  {stooq:'tsla.us',  name:'Tesla'},
+  {stooq:'jpm.us',   name:'JPMorgan'},
+  {stooq:'v.us',     name:'Visa'},
+  {stooq:'nflx.us',  name:'Netflix'},
+  {stooq:'xom.us',   name:'ExxonMobil'},
+  {stooq:'wmt.us',   name:'Walmart'},
+  {stooq:'^spx',     name:'S&P 500'},
+  {stooq:'^djt',     name:'Dow Jones'},
+  {stooq:'^ndq',     name:'NASDAQ'},
+  {stooq:'gld.us',   name:'Gold ETF'},
+];
+
+/* Check if US market is currently open (Mon–Fri 9:30am–4pm ET) */
+function isMarketOpen(){
+  const now=new Date();
+  const et=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const day=et.getDay(); // 0=Sun,6=Sat
+  if(day===0||day===6) return false;
+  const h=et.getHours(), m=et.getMinutes();
+  const mins=h*60+m;
+  return mins>=570 && mins<960; // 9:30am=570, 4:00pm=960
+}
+
+async function fetchStooqSymbol(stock){
+  const url=`https://stooq.com/q/l/?s=${stock.stooq}&f=sd2t2ohlcvn&h&e=csv`;
+  const proxies=[
+    ()=>fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)}),
+    ()=>fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)}),
+  ];
+  for(const attempt of proxies){
+    try{
+      const r=await attempt();
+      if(!r.ok) continue;
+      let text=await r.text();
+      if(text.trim().startsWith('{')){try{text=JSON.parse(text).contents||text;}catch(_){}}
+      const lines=text.trim().split('\n');
+      if(lines.length<2) continue;
+      const cols=lines[1].split(',');
+      const close=parseFloat(cols[6]);
+      const open=parseFloat(cols[3]);
+      if(!close||isNaN(close)||close<=0) continue;
+      const chg=open ? ((close-open)/open*100) : 0;
+      return{sym:stock.name, price:close, chg};
+    }catch(_){}
+  }
+  return null;
+}
+
+async function loadStocks(){
+  if(!isMarketOpen()){
+    // Show friendly closed message that scrolls in the ticker
+    const closed=[
+      {sym:'NYSE',price:null,chg:null,label:'MARKET CLOSED'},
+      {sym:'Mon–Fri',price:null,chg:null,label:'9:30AM – 4:00PM ET'},
+      {sym:'NASDAQ',price:null,chg:null,label:'LIVE PRICES DURING TRADING HOURS'},
+      {sym:'S&P 500',price:null,chg:null,label:'CHECK BACK WHEN OPEN'},
+    ];
+    const html=closed.map(i=>`<div class="ti"><span class="tsym">${esc(i.sym)}</span><span class="tprc" style="color:var(--ink-faint)">${i.label}</span></div>`).join('');
+    $('sti').innerHTML=html+html;
+    // Retry in 5 min in case market opens
+    setTimeout(()=>loadStocks(), 300000);
+    return;
+  }
+
+  $('sti').innerHTML=`<span class="tload">LOADING MARKETS…</span>`;
+  const fetches=STOCKS.map(s=>fetchStooqSymbol(s));
+  const results=(await Promise.allSettled(fetches)).map(r=>r.status==='fulfilled'?r.value:null).filter(Boolean);
+  if(results.length>=3){
+    renderTicker('sti',results,false);
+  } else {
+    $('sti').innerHTML=`<span class="tload">MARKET DATA LOADING — CHECK BACK SHORTLY</span>`;
+    setTimeout(()=>loadStocks(), 60000);
+  }
+}
+
+function renderTicker(id,items,isCrypto){
+  const fmtPrice=(v)=>{if(v==null)return'—';if(isCrypto){if(v>=1000)return'$'+Math.round(v).toLocaleString();if(v>=1)return'$'+v.toFixed(2);return'$'+v.toFixed(5);}return'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};
+  const row=items.map(item=>{const up=(item.chg||0)>=0;const cs=item.chg!=null?`${up?'+':''}${item.chg.toFixed(2)}%`:'—';return`<div class="ti"><span class="tsym">${esc(item.sym)}</span><span class="tprc">${fmtPrice(item.price)}</span><span class="${up?'tup':'tdn'}">${cs}</span></div>`;}).join('');
+  // Double for seamless loop
+  $(id).innerHTML=row+row;
+}
+
+function refreshTickers(){loadCrypto();loadStocks();}
+
+/* ══ BOOT ══ */
 applyTheme();
 populateUI();
-$('country-select').value=S.country;
-$('country-select-mobile').value=S.country;
-loadHeadlines();
+$('csel').value=S.country;$('csel-m').value=S.country;
+loadNews();
+refreshTickers();
+setInterval(refreshTickers,90000);
 </script>
 </body>
 </html>
