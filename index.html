@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<!--
+  =====================================================
+  NETLIFY.TOML (create as /netlify.toml alongside this file)
+  =====================================================
+  [build]
+    publish = "."
+    command = ""
+
+  [[redirects]]
+    from = "/*"
+    to = "/index.html"
+    status = 200
+
+  [[headers]]
+    for = "/*"
+    [headers.values]
+      X-Frame-Options = "DENY"
+      X-XSS-Protection = "1; mode=block"
+      Content-Security-Policy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src * data:;"
+  =====================================================
+  NO API KEYS REQUIRED — free public RSS feeds
+  ADS — Google Auto Ads only (replace YOUR_PUBLISHER_ID)
+  =====================================================
+-->
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hatty's News — World Headlines</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231E40AF'/><text x='4' y='24' font-size='22' font-family='serif' fill='white'>H</text></svg>" />
+
+  <meta property="og:type"        content="website" />
+  <meta property="og:title"       content="Hatty's News: World Headlines" />
+  <meta property="og:description" content="Real news from around the world — free, no sign-up required." />
+  <meta property="og:url"         content="https://your-site.netlify.app" />
+  <meta property="og:image"       content="news-hero.png" />
+  <meta name="twitter:card"       content="summary_large_image" />
+  <meta name="description"        content="Hatty's News — Real global headlines from BBC, Reuters, AP, Al Jazeera and more. 25+ countries, completely free." />
+
+  <!-- Google Auto Ads — replace YOUR_PUBLISHER_ID with your ca-pub-XXXXXXXXXXXXXXXX -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: { brand: { 50:'#eff6ff',100:'#dbeafe',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a' } },
+          fontFamily: { serif:['"Playfair Display"','Georgia','serif'], sans:['"DM Sans"','system-ui','sans-serif'] }
+        }
+      }
+    }
+  </script>
+
+  <script type="application/ld+json" id="schema-jsonld">
+  {"@context":"https://schema.org","@type":"WebSite","name":"Hatty's News","url":"https://your-site.netlify.app"}
+  </script>
+
+  <style>
+    :root {
+      --brand:#1E40AF; --brand-light:#3b82f6;
+      --ink:#0f172a; --ink-muted:#475569;
+      --surface:#ffffff; --surface-2:#f8fafc;
+      --border:#e2e8f0; --card-r:16px;
+      --t:0.22s cubic-bezier(0.4,0,0.2,1);
+    }
+    .dark {
+      --ink:#f1f5f9; --ink-muted:#94a3b8;
+      --surface:#0f172a; --surface-2:#1e293b; --border:#334155;
+    }
+
+    *,*::before,*::after { box-sizing:border-box }
+    html { font-family:'DM Sans',system-ui,sans-serif }
+    body { background:var(--surface-2); color:var(--ink); transition:background var(--t),color var(--t); min-height:100vh }
+
+    ::-webkit-scrollbar { width:5px; height:5px }
+    ::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:99px }
+    .dark ::-webkit-scrollbar-thumb { background:#475569 }
+
+    /* ── Header ── */
+    #site-header { background:var(--brand); position:sticky; top:0; z-index:50; box-shadow:0 2px 20px rgba(30,64,175,.28) }
+    .logo-text { font-family:'Playfair Display',serif; font-weight:900; letter-spacing:-.03em }
+
+    /* ── Side Drawer ── */
+    #nav-drawer {
+      position:fixed; top:0; left:0; bottom:0; width:280px; z-index:100;
+      background:var(--surface);
+      box-shadow:4px 0 32px rgba(0,0,0,.18);
+      transform:translateX(-100%);
+      transition:transform .3s cubic-bezier(.4,0,.2,1);
+      display:flex; flex-direction:column;
+      overflow-y:auto;
+    }
+    #nav-drawer.open { transform:translateX(0) }
+    #nav-overlay {
+      position:fixed; inset:0; z-index:99;
+      background:rgba(15,23,42,.45); backdrop-filter:blur(2px);
+      opacity:0; pointer-events:none; transition:opacity .3s;
+    }
+    #nav-overlay.open { opacity:1; pointer-events:auto }
+
+    .nav-link {
+      display:flex; align-items:center; gap:.75rem;
+      padding:.85rem 1.25rem; font-size:.9rem; font-weight:500;
+      color:var(--ink); text-decoration:none; border-radius:10px;
+      transition:background var(--t),color var(--t); margin:0 .5rem;
+      border:none; cursor:pointer; background:none; width:calc(100% - 1rem); text-align:left;
+    }
+    .nav-link:hover { background:var(--surface-2); color:var(--brand) }
+    .nav-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.1rem }
+    .nav-divider { height:1px; background:var(--border); margin:.5rem 1rem }
+
+    /* ── Search ── */
+    #search-input { background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.25); color:#fff; transition:all var(--t) }
+    #search-input::placeholder { color:rgba(255,255,255,.6) }
+    #search-input:focus { background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.6); outline:none }
+
+    /* ── Country Select ── */
+    .country-sel { background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.25); color:#fff; cursor:pointer; transition:all var(--t) }
+    .country-sel option { background:#1e3a8a; color:#fff }
+    .country-sel:focus { outline:none; border-color:rgba(255,255,255,.6) }
+
+    /* ── Cards ── */
+    .news-card { background:var(--surface); border-radius:var(--card-r); box-shadow:0 2px 16px rgba(30,64,175,.08); overflow:hidden; display:flex; flex-direction:column; transition:transform var(--t),box-shadow var(--t); border:1px solid var(--border); animation:fadeUp .38s ease both }
+    .news-card:hover { transform:translateY(-4px); box-shadow:0 8px 32px rgba(30,64,175,.18) }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    .news-card img { width:100%; height:196px; object-fit:cover; display:block; background:var(--surface-2) }
+    .ncb { padding:1.1rem 1.25rem 1.25rem; flex:1; display:flex; flex-direction:column }
+    .nc-source { font-size:.69rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--brand-light); margin-bottom:.35rem }
+    .nc-title { font-family:'Playfair Display',serif; font-size:1.03rem; font-weight:700; line-height:1.35; color:var(--ink); margin-bottom:.45rem; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden }
+    .nc-desc { font-size:.81rem; color:var(--ink-muted); line-height:1.55; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; flex:1 }
+    .nc-footer { display:flex; align-items:center; justify-content:space-between; margin-top:.9rem; padding-top:.7rem; border-top:1px solid var(--border); font-size:.72rem; color:var(--ink-muted) }
+    .read-btn { background:var(--brand); color:#fff; padding:.32rem .85rem; border-radius:99px; font-size:.72rem; font-weight:600; transition:background var(--t),transform var(--t); white-space:nowrap; min-height:30px; display:inline-flex; align-items:center; text-decoration:none }
+    .read-btn:hover { background:#1d4ed8; transform:scale(1.04) }
+
+    /* ── Filter pills ── */
+    .filter-pill { padding:.38rem .95rem; border-radius:99px; font-size:.76rem; font-weight:600; border:1.5px solid var(--border); background:var(--surface); color:var(--ink-muted); cursor:pointer; transition:all var(--t); white-space:nowrap; min-height:36px; line-height:1 }
+    .filter-pill.active,.filter-pill:hover { border-color:var(--brand); background:var(--brand); color:#fff }
+
+    /* ── Grid ── */
+    #headlines-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(278px,1fr)); gap:1.2rem }
+
+    /* ── Country chips (sidebar) ── */
+    .country-chip { display:flex; align-items:center; padding:.45rem .7rem; border-radius:10px; cursor:pointer; font-size:.81rem; transition:background var(--t),color var(--t); background:var(--surface-2); color:var(--ink); border:none; width:100%; text-align:left }
+    .country-chip:hover { background:#dbeafe; color:var(--brand) }
+    .dark .country-chip:hover { background:#1e3a8a; color:#93c5fd }
+
+    /* ── Hamburger ── */
+    #hamburger { background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:9px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background var(--t); flex-shrink:0 }
+    #hamburger:hover { background:rgba(255,255,255,.25) }
+
+    /* ── Dark toggle ── */
+    #dark-toggle { background:rgba(255,255,255,.15); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background var(--t); border:none; color:#fff; font-size:1.1rem; flex-shrink:0 }
+    #dark-toggle:hover { background:rgba(255,255,255,.25) }
+
+    /* ── Source bar ── */
+    #source-bar { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem }
+
+    /* ── Live dot ── */
+    .live-dot { width:7px; height:7px; background:#22c55e; border-radius:50%; animation:pulsedot 1.8s ease infinite; flex-shrink:0 }
+    @keyframes pulsedot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.6)} }
+
+    /* ── Toast ── */
+    #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:#0f172a; color:#fff; padding:.6rem 1.2rem; border-radius:99px; font-size:.79rem; font-weight:500; opacity:0; pointer-events:none; transition:opacity .3s,transform .3s; z-index:70; white-space:nowrap; border:1px solid rgba(255,255,255,.1) }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0) }
+
+    /* ── Skeleton shimmer ── */
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    button,a,select { min-height:44px }
+    .scrollbar-hide::-webkit-scrollbar { display:none }
+    .scrollbar-hide { -ms-overflow-style:none; scrollbar-width:none }
+  </style>
+</head>
+
+<body class="font-sans">
+
+<!-- ══════════ OVERLAY ══════════ -->
+<div id="nav-overlay"></div>
+
+<!-- ══════════ SIDE DRAWER ══════════ -->
+<nav id="nav-drawer" aria-label="Site navigation">
+
+  <div style="background:var(--brand);padding:1.25rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div>
+      <div class="logo-text" style="color:#fff;font-size:1.15rem">Hatty's Network</div>
+      <div style="color:rgba(255,255,255,.65);font-size:.7rem;margin-top:2px">All sites in one place</div>
+    </div>
+    <button id="nav-close" aria-label="Close menu" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;min-height:0">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div style="padding:.75rem 0;flex:1">
+
+    <div style="padding:.3rem .75rem .2rem;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted)">Hatty's Sites</div>
+
+    <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" class="nav-link">
+      <div class="nav-icon" style="background:#dbeafe">🏠</div>
+      <div><div style="font-weight:600">Home</div><div style="font-size:.72rem;color:var(--ink-muted)">earnwithhatty.com</div></div>
+    </a>
+
+    <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" class="nav-link">
+      <div class="nav-icon" style="background:#dcfce7">🛠️</div>
+      <div><div style="font-weight:600">Hatty's Tools</div><div style="font-size:.72rem;color:var(--ink-muted)">Useful online tools</div></div>
+    </a>
+
+    <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" class="nav-link">
+      <div class="nav-icon" style="background:#fef3c7">🔒</div>
+      <div><div style="font-weight:600">Privacy Gadgets</div><div style="font-size:.72rem;color:var(--ink-muted)">Stay private online</div></div>
+    </a>
+
+    <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" class="nav-link">
+      <div class="nav-icon" style="background:#ede9fe">🌌</div>
+      <div><div style="font-weight:600">Hatty's Universe</div><div style="font-size:.72rem;color:var(--ink-muted)">Explore the universe</div></div>
+    </a>
+
+    <div class="nav-divider"></div>
+
+    <div style="padding:.3rem .75rem .2rem;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted)">Settings</div>
+
+    <button class="nav-link" onclick="closeDrawer();document.getElementById('dark-toggle').click()">
+      <div class="nav-icon" style="background:#f1f5f9" id="theme-nav-icon">🌙</div>
+      <div><div style="font-weight:600">Toggle Dark Mode</div><div style="font-size:.72rem;color:var(--ink-muted)">Switch light / dark</div></div>
+    </button>
+
+  </div>
+
+  <div style="padding:1rem;border-top:1px solid var(--border);flex-shrink:0">
+    <p style="font-size:.7rem;color:var(--ink-muted);text-align:center">© 2026 Hatty's Network</p>
+  </div>
+</nav>
+
+<!-- ══════════ HEADER ══════════ -->
+<header id="site-header">
+  <div class="max-w-7xl mx-auto px-4 py-3">
+    <div class="flex items-center gap-3">
+
+      <button id="hamburger" aria-label="Open menu">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <a href="/" class="flex items-center gap-2 shrink-0" style="min-height:0;text-decoration:none">
+        <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 4h14v1.5H3V4zm0 3.5h10V9H3V7.5zm0 3.5h14v1.5H3V11zm0 3.5h8V16H3v-1.5z" fill="white"/></svg>
+        </div>
+        <span class="logo-text text-white text-xl hidden sm:block">Hatty's <span style="opacity:.7">News</span></span>
+      </a>
+
+      <div class="hidden sm:flex items-center gap-1.5 text-xs" style="color:rgba(255,255,255,.7)">
+        <div class="live-dot"></div>
+        <span>Live RSS</span>
+      </div>
+
+      <div class="flex-1 flex gap-2 mx-1">
+        <input id="search-input" type="search" placeholder="Search headlines…" autocomplete="off"
+          class="flex-1 rounded-xl px-4 py-2 text-sm" style="min-height:44px" />
+        <button id="search-btn" aria-label="Search"
+          class="bg-white text-blue-800 font-semibold text-sm rounded-xl px-4 shrink-0 hover:bg-blue-50 transition-colors"
+          style="min-height:44px">
+          <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select id="country-select" class="country-sel rounded-xl px-3 py-2 text-sm font-medium hidden sm:block" style="min-height:44px" aria-label="Select country"></select>
+        <button id="dark-toggle" aria-label="Toggle dark mode">🌙</button>
+      </div>
+
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ MAIN ══════════ -->
+<div class="max-w-7xl mx-auto px-4 py-6">
+  <div class="flex gap-6">
+
+    <main class="flex-1 min-w-0">
+
+      <!-- Mobile country picker -->
+      <div class="sm:hidden mb-4">
+        <select id="country-select-mobile" class="w-full rounded-xl px-3 py-2 text-sm font-medium border" style="min-height:44px;background:var(--surface);border-color:var(--border);color:var(--ink)" aria-label="Select country"></select>
+      </div>
+
+      <!-- Page title row -->
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <h1 id="country-label" class="font-serif text-2xl font-bold" style="color:var(--ink)">Top Headlines</h1>
+          <p class="text-xs mt-0.5" style="color:var(--ink-muted)">
+            <span id="article-count">Loading…</span>
+            <span id="source-credit"></span>
+          </p>
+        </div>
+        <button id="refresh-btn"
+          style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:.4rem .8rem;cursor:pointer;color:var(--ink-muted);font-size:.75rem;font-weight:600;min-height:36px;display:flex;align-items:center;gap:.4rem;transition:all var(--t)"
+          onmouseover="this.style.borderColor='var(--brand)';this.style.color='var(--brand)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--ink-muted)'">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Category pills -->
+      <div class="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
+        <button class="filter-pill active" data-cat="general">🌍 Top Stories</button>
+        <button class="filter-pill" data-cat="world">🗺 World</button>
+        <button class="filter-pill" data-cat="business">💼 Business</button>
+        <button class="filter-pill" data-cat="technology">💻 Tech</button>
+        <button class="filter-pill" data-cat="sports">⚽ Sports</button>
+        <button class="filter-pill" data-cat="health">🏥 Health</button>
+        <button class="filter-pill" data-cat="entertainment">🎬 Entertainment</button>
+        <button class="filter-pill" data-cat="science">🔬 Science</button>
+      </div>
+
+      <!-- Source filter bar -->
+      <div id="source-bar"></div>
+
+      <!-- Grid -->
+      <div id="headlines-grid" aria-live="polite" aria-label="News headlines"></div>
+
+      <!-- Spinner -->
+      <div id="loading-spinner" style="display:none;justify-content:center;padding:3rem">
+        <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite"></div>
+      </div>
+
+      <div id="scroll-sentinel" style="height:1px;margin-top:2rem"></div>
+
+      <!-- No results -->
+      <div id="no-results" style="display:none;text-align:center;padding:4rem 1rem">
+        <div style="font-size:3rem">📭</div>
+        <p class="font-serif text-xl mt-3" style="color:var(--ink)">No headlines found</p>
+        <p class="text-sm mt-1" style="color:var(--ink-muted)">Try a different country, category, or clear your search.</p>
+        <button id="reset-btn" class="read-btn mt-4" style="min-height:44px;padding:.6rem 1.4rem;font-size:.84rem">Reset filters</button>
+      </div>
+    </main>
+
+    <!-- ══════════ SIDEBAR ══════════ -->
+    <aside class="w-64 shrink-0 hidden lg:block">
+
+      <!-- Hatty's sites -->
+      <div style="background:var(--surface);border-radius:var(--card-r);padding:1.25rem;border:1px solid var(--border);margin-bottom:1.25rem">
+        <h2 class="font-serif text-base font-bold mb-3" style="color:var(--ink)">🔗 Hatty's Sites</h2>
+        <div class="flex flex-col gap-1">
+          <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" class="sidebar-link"
+            style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;text-decoration:none;color:var(--ink);font-size:.82rem;font-weight:500;transition:background var(--t)"
+            onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+            🏠 <span>EarnWithHatty</span>
+          </a>
+          <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer"
+            style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;text-decoration:none;color:var(--ink);font-size:.82rem;font-weight:500;transition:background var(--t)"
+            onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+            🛠️ <span>Hatty's Tools</span>
+          </a>
+          <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer"
+            style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;text-decoration:none;color:var(--ink);font-size:.82rem;font-weight:500;transition:background var(--t)"
+            onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+            🔒 <span>Privacy Gadgets</span>
+          </a>
+          <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer"
+            style="display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;text-decoration:none;color:var(--ink);font-size:.82rem;font-weight:500;transition:background var(--t)"
+            onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'">
+            🌌 <span>Hatty's Universe</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Browse by country -->
+      <div style="background:var(--surface);border-radius:var(--card-r);padding:1.25rem;border:1px solid var(--border);margin-bottom:1.25rem">
+        <h2 class="font-serif text-base font-bold mb-3" style="color:var(--ink)">🌐 Browse Countries</h2>
+        <div id="country-list" class="flex flex-col gap-0.5 max-h-72 overflow-y-auto scrollbar-hide"></div>
+      </div>
+
+      <!-- About box -->
+      <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:var(--card-r);padding:1.25rem;border:1px solid #bfdbfe">
+        <h3 class="font-serif text-sm font-bold mb-1" style="color:#1e3a8a">📡 Real news, no spin</h3>
+        <p style="font-size:.74rem;color:#1e40af;line-height:1.6">Live RSS feeds direct from BBC, Reuters, AP, Al Jazeera, The Guardian, NPR and more. No algorithms, no paywalls — just the news.</p>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer style="background:var(--surface);border-top:1px solid var(--border);margin-top:3rem;padding:2rem 0">
+  <div class="max-w-7xl mx-auto px-4">
+
+    <div class="flex flex-wrap justify-center gap-4 mb-5">
+      <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:underline" style="color:var(--brand)">🏠 EarnWithHatty</a>
+      <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:underline" style="color:var(--brand)">🛠️ Hatty's Tools</a>
+      <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:underline" style="color:var(--brand)">🔒 Privacy Gadgets</a>
+      <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" class="text-sm font-medium hover:underline" style="color:var(--brand)">🌌 Hatty's Universe</a>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="logo-text" style="color:var(--brand);font-size:1.2rem">Hatty's News</span>
+        <span class="text-xs" style="color:var(--ink-muted)">© 2026 All rights reserved.</span>
+      </div>
+      <nav class="flex gap-4 text-sm flex-wrap justify-center" style="color:var(--ink-muted)">
+        <a href="#" style="color:inherit" class="hover:underline">About</a>
+        <a href="#" style="color:inherit" class="hover:underline">Privacy Policy</a>
+        <a href="#" style="color:inherit" class="hover:underline">Contact</a>
+      </nav>
+    </div>
+
+    <p class="text-xs mt-4 text-center" style="color:var(--ink-muted)">
+      Headlines sourced from free public RSS feeds including BBC, Reuters, AP, Al Jazeera, The Guardian, NPR and more.
+      Hatty's News is not responsible for the content of external sites.
+    </p>
+  </div>
+</footer>
+
+<div id="toast"></div>
+
+<!-- ══════════ JAVASCRIPT ══════════ -->
+<script>
+'use strict';
+
+const FEEDS = {
+  us:[
+    {name:'AP News',      url:'https://feeds.apnews.com/rss/apf-topnews',            cat:'general'},
+    {name:'NPR',          url:'https://feeds.npr.org/1001/rss.xml',                  cat:'general'},
+    {name:'CBS News',     url:'https://www.cbsnews.com/latest/rss/main',             cat:'general'},
+    {name:'TechCrunch',   url:'https://techcrunch.com/feed',                         cat:'technology'},
+    {name:'ESPN',         url:'https://www.espn.com/espn/rss/news',                  cat:'sports'},
+    {name:'Wired',        url:'https://www.wired.com/feed/rss',                      cat:'technology'},
+    {name:'Ars Technica', url:'https://feeds.arstechnica.com/arstechnica/index',     cat:'technology'},
+    {name:'Healthline',   url:'https://www.healthline.com/rss/news',                 cat:'health'},
+  ],
+  gb:[
+    {name:'BBC News',     url:'http://feeds.bbci.co.uk/news/rss.xml',                cat:'general'},
+    {name:'BBC World',    url:'http://feeds.bbci.co.uk/news/world/rss.xml',          cat:'world'},
+    {name:'BBC Sport',    url:'http://feeds.bbci.co.uk/sport/rss.xml',               cat:'sports'},
+    {name:'Guardian',     url:'https://www.theguardian.com/world/rss',               cat:'world'},
+    {name:'Guardian Tech',url:'https://www.theguardian.com/uk/technology/rss',      cat:'technology'},
+    {name:'Guardian Biz', url:'https://www.theguardian.com/uk/business/rss',        cat:'business'},
+    {name:'Sky News',     url:'https://feeds.skynews.com/feeds/rss/home.xml',        cat:'general'},
+    {name:'Independent',  url:'https://www.independent.co.uk/news/rss',             cat:'general'},
+  ],
+  ca:[
+    {name:'CBC Top',      url:'https://www.cbc.ca/cmlink/rss-topstories',           cat:'general'},
+    {name:'CBC World',    url:'https://www.cbc.ca/cmlink/rss-world',                cat:'world'},
+    {name:'CBC Business', url:'https://www.cbc.ca/cmlink/rss-business',             cat:'business'},
+    {name:'CBC Tech',     url:'https://www.cbc.ca/cmlink/rss-technology',           cat:'technology'},
+    {name:'CBC Sports',   url:'https://www.cbc.ca/cmlink/rss-sports',               cat:'sports'},
+  ],
+  au:[
+    {name:'ABC Australia',url:'https://www.abc.net.au/news/feed/51120/rss.xml',     cat:'general'},
+    {name:'ABC World',    url:'https://www.abc.net.au/news/feed/51892/rss.xml',     cat:'world'},
+    {name:'ABC Sport',    url:'https://www.abc.net.au/news/feed/52278/rss.xml',     cat:'sports'},
+    {name:'ABC Science',  url:'https://www.abc.net.au/news/feed/52498/rss.xml',     cat:'science'},
+    {name:'SBS News',     url:'https://www.sbs.com.au/news/feed',                   cat:'general'},
+  ],
+  de:[
+    {name:'DW News',      url:'https://rss.dw.com/rdf/rss-en-all',                  cat:'general'},
+    {name:'DW Europe',    url:'https://rss.dw.com/xml/rss-en-eu',                   cat:'world'},
+    {name:'DW Business',  url:'https://rss.dw.com/xml/rss-en-eco',                  cat:'business'},
+    {name:'DW Science',   url:'https://rss.dw.com/xml/rss-en-sci',                  cat:'science'},
+  ],
+  fr:[
+    {name:'France 24',      url:'https://www.france24.com/en/rss',                  cat:'general'},
+    {name:'France 24 World',url:'https://www.france24.com/en/world/rss',            cat:'world'},
+    {name:'France 24 Eco',  url:'https://www.france24.com/en/economy/rss',          cat:'business'},
+    {name:'RFI',            url:'https://en.rfi.fr/rss',                             cat:'general'},
+  ],
+  in:[
+    {name:'Times of India', url:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms', cat:'general'},
+    {name:'The Hindu',      url:'https://www.thehindu.com/feeder/default.rss',       cat:'general'},
+    {name:'Economic Times', url:'https://economictimes.indiatimes.com/rssfeedstopstories.cms',cat:'business'},
+    {name:'NDTV',           url:'https://feeds.feedburner.com/ndtvnews-top-stories', cat:'general'},
+  ],
+  br:[
+    {name:'Brazil Report',url:'https://brazilreport.com/feed',  cat:'general'},
+    {name:'Rio Times',    url:'https://riotimesonline.com/feed', cat:'general'},
+  ],
+  jp:[
+    {name:'Japan Times',  url:'https://www.japantimes.co.jp/feed',                              cat:'general'},
+    {name:'NHK World',    url:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/all.xml',           cat:'general'},
+    {name:'NHK Business', url:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/business.xml',     cat:'business'},
+  ],
+  cn:[
+    {name:'CGTN',       url:'https://www.cgtn.com/subscribe/rss/section/world.xml', cat:'world'},
+    {name:'China Daily',url:'https://www.chinadailyhk.com/rss/china.xml',           cat:'general'},
+  ],
+  ru:[
+    {name:'RT',  url:'https://www.rt.com/rss/news',  cat:'general'},
+    {name:'TASS',url:'https://tass.com/rss/v2.xml',  cat:'general'},
+  ],
+  za:[
+    {name:'Daily Maverick',url:'https://www.dailymaverick.co.za/feed',                          cat:'general'},
+    {name:'News24',        url:'https://feeds.news24.com/articles/news24/TopStories/rss',       cat:'general'},
+  ],
+  mx:[{name:'Mexico News Daily',url:'https://mexiconewsdaily.com/feed', cat:'general'}],
+  ar:[
+    {name:'MercoPress',url:'https://en.mercopress.com/rss',       cat:'general'},
+    {name:'BA Herald', url:'https://buenosairesherald.com/feed',  cat:'general'},
+  ],
+  eg:[
+    {name:'Egypt Independent',url:'https://www.egyptindependent.com/feed',  cat:'general'},
+    {name:'Al-Ahram',         url:'https://english.ahram.org.eg/RSS/1.aspx', cat:'general'},
+  ],
+  ng:[
+    {name:'Punch Nigeria',url:'https://punchng.com/feed',            cat:'general'},
+    {name:'Vanguard',     url:'https://www.vanguardngr.com/feed',     cat:'general'},
+  ],
+  ke:[
+    {name:'Nation Africa',url:'https://nation.africa/kenya/rss.xml', cat:'general'},
+    {name:'The Star KE',  url:'https://www.the-star.co.ke/rss',      cat:'general'},
+  ],
+  it:[
+    {name:'ANSA English',url:'https://www.ansa.it/sito/ansait_rss.xml', cat:'general'},
+    {name:'The Local IT',url:'https://feeds.thelocal.com/rss/it',       cat:'general'},
+  ],
+  es:[
+    {name:'El País EN',  url:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada', cat:'general'},
+    {name:'The Local ES',url:'https://feeds.thelocal.com/rss/es', cat:'general'},
+  ],
+  nl:[
+    {name:'DutchNews.nl',url:'https://www.dutchnews.nl/feed',     cat:'general'},
+    {name:'The Local NL',url:'https://feeds.thelocal.com/rss/nl', cat:'general'},
+  ],
+  se:[
+    {name:'The Local SE',url:'https://feeds.thelocal.com/rss/se',                              cat:'general'},
+    {name:'Radio Sweden',url:'https://sverigesradio.se/topsy/rss/srapi/program/4916',          cat:'general'},
+  ],
+  no:[
+    {name:'Norway Today',url:'https://norwaytoday.info/feed',     cat:'general'},
+    {name:'The Local NO',url:'https://feeds.thelocal.com/rss/no', cat:'general'},
+  ],
+  nz:[
+    {name:'RNZ',        url:'https://www.rnz.co.nz/rss/national.xml', cat:'general'},
+    {name:'Stuff.co.nz',url:'https://www.stuff.co.nz/rss',            cat:'general'},
+  ],
+  sg:[
+    {name:'CNA',          url:'https://www.channelnewsasia.com/rssfeeds/8395884',    cat:'general'},
+    {name:'Straits Times',url:'https://www.straitstimes.com/news/singapore/rss.xml', cat:'general'},
+  ],
+  ae:[
+    {name:'Gulf News',    url:'https://gulfnews.com/rss/news',                    cat:'general'},
+    {name:'The National', url:'https://www.thenationalnews.com/rss/home.xml',     cat:'general'},
+    {name:'Khaleej Times',url:'https://www.khaleejtimes.com/rss',                 cat:'general'},
+  ],
+  _world:[
+    {name:'Al Jazeera',      url:'https://www.aljazeera.com/xml/rss/all.xml',      cat:'world'},
+    {name:'Al Jazeera Sport',url:'https://www.aljazeera.com/xml/rss/sport.xml',   cat:'sports'},
+    {name:'DW World',        url:'https://rss.dw.com/xml/rss-en-world',           cat:'world'},
+    {name:'France24 Top',    url:'https://www.france24.com/en/top-stories/rss',   cat:'general'},
+    {name:'BBC World',       url:'http://feeds.bbci.co.uk/news/world/rss.xml',     cat:'world'},
+  ],
+};
+
+const COUNTRIES = [
+  {code:'us',name:'USA 🇺🇸'},{code:'gb',name:'UK 🇬🇧'},{code:'ca',name:'Canada 🇨🇦'},
+  {code:'au',name:'Australia 🇦🇺'},{code:'de',name:'Germany 🇩🇪'},{code:'fr',name:'France 🇫🇷'},
+  {code:'in',name:'India 🇮🇳'},{code:'br',name:'Brazil 🇧🇷'},{code:'jp',name:'Japan 🇯🇵'},
+  {code:'cn',name:'China 🇨🇳'},{code:'ru',name:'Russia 🇷🇺'},{code:'za',name:'S. Africa 🇿🇦'},
+  {code:'mx',name:'Mexico 🇲🇽'},{code:'ar',name:'Argentina 🇦🇷'},{code:'eg',name:'Egypt 🇪🇬'},
+  {code:'ng',name:'Nigeria 🇳🇬'},{code:'ke',name:'Kenya 🇰🇪'},{code:'it',name:'Italy 🇮🇹'},
+  {code:'es',name:'Spain 🇪🇸'},{code:'nl',name:'Netherlands 🇳🇱'},{code:'se',name:'Sweden 🇸🇪'},
+  {code:'no',name:'Norway 🇳🇴'},{code:'nz',name:'New Zealand 🇳🇿'},{code:'sg',name:'Singapore 🇸🇬'},
+  {code:'ae',name:'UAE 🇦🇪'},
+];
+
+const toRss2json   = url => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+const toAllOrigins = url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+
+let S = {
+  country:  localStorage.getItem('hn_country') || 'us',
+  theme:    localStorage.getItem('hn_theme')   || 'light',
+  query:'', category:'general', source:'all',
+  articles:[], filtered:[], loading:false,
+};
+
+const $ = id => document.getElementById(id);
+const grid=$('headlines-grid'), spinner=$('loading-spinner'), noRes=$('no-results'),
+      cLabel=$('country-label'), aCount=$('article-count'), sCred=$('source-credit'),
+      toast=$('toast'), drawer=$('nav-drawer'), overlay=$('nav-overlay');
+
+/* ── Drawer ── */
+function openDrawer()  { drawer.classList.add('open');  overlay.classList.add('open');  document.body.style.overflow='hidden'; }
+function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); document.body.style.overflow=''; }
+$('hamburger').addEventListener('click', openDrawer);
+$('nav-close').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeDrawer(); });
+
+/* ── RSS fetch ── */
+async function fetchFeed(feed) {
+  try {
+    const r = await fetch(toRss2json(feed.url), {signal:AbortSignal.timeout(7000)});
+    if (r.ok) { const d=await r.json(); if(d.status==='ok'&&d.items?.length) return d.items.map(i=>fromRss2json(i,feed.name,feed.cat)); }
+  } catch(_) {}
+  try {
+    const r = await fetch(toAllOrigins(feed.url), {signal:AbortSignal.timeout(7000)});
+    if (r.ok) return parseXML(await r.text(), feed.name, feed.cat);
+  } catch(_) {}
+  return [];
+}
+
+function fromRss2json(item, src, cat) {
+  const img = item.enclosure?.link||item.thumbnail||extractImg(item.content||'')||extractImg(item.description||'');
+  return { title:(item.title||'').trim(), description:stripHtml(item.description||'').slice(0,240), url:item.link||'#', urlToImage:img||'', publishedAt:item.pubDate||new Date().toISOString(), source:{name:src}, category:cat };
+}
+
+function parseXML(xml, src, cat) {
+  try {
+    const doc=new DOMParser().parseFromString(xml,'application/xml');
+    return Array.from(doc.querySelectorAll('item')).slice(0,30).map(item=>{
+      const t=s=>item.querySelector(s)?.textContent?.trim()||'';
+      const img=item.querySelector('[url]')?.getAttribute('url')||item.querySelector('enclosure')?.getAttribute('url')||extractImg(t('description'));
+      return {title:t('title'),description:stripHtml(t('description')).slice(0,240),url:t('link')||t('guid')||'#',urlToImage:img||'',publishedAt:t('pubDate')||new Date().toISOString(),source:{name:src},category:cat};
+    }).filter(a=>a.title.length>2);
+  } catch(_){return[];}
+}
+
+function stripHtml(h){const d=document.createElement('div');d.innerHTML=h;return(d.textContent||d.innerText||'').replace(/\s+/g,' ').trim();}
+function extractImg(h){const m=(h||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?m[1]:'';}
+
+async function loadHeadlines() {
+  if(S.loading)return;
+  S.loading=true; S.articles=[];
+  grid.innerHTML=''; noRes.style.display='none'; $('source-bar').innerHTML='';
+  showSpinner(true);
+
+  const pool=[...(FEEDS[S.country]||FEEDS.us),...(FEEDS._world||[])];
+  const sel=S.category==='general'?pool:pool.filter(f=>f.cat===S.category||f.cat==='general');
+  const res=await Promise.allSettled(sel.slice(0,6).map(fetchFeed));
+
+  let all=[];
+  res.forEach(r=>{if(r.status==='fulfilled')all=all.concat(r.value);});
+
+  const seen=new Set();
+  all=all.filter(a=>{const k=(a.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,50);if(!k||seen.has(k))return false;seen.add(k);return true;});
+  all.sort((a,b)=>new Date(b.publishedAt)-new Date(a.publishedAt));
+
+  S.articles=all; buildSourceBar(); applyFilters(); renderCards(); updateMeta();
+  showSpinner(false); S.loading=false;
+  if(!all.length){showToast('Feeds unavailable — try refreshing');noRes.style.display='block';}
+}
+
+function applyFilters(){
+  const q=S.query.toLowerCase().trim();
+  S.filtered=S.articles.filter(a=>{
+    const mQ=!q||(a.title||'').toLowerCase().includes(q)||(a.description||'').toLowerCase().includes(q);
+    const mS=S.source==='all'||(a.source?.name||'')===S.source;
+    return mQ&&mS;
+  });
+}
+
+function buildSourceBar(){
+  const bar=$('source-bar');
+  const srcs=[...new Set(S.articles.map(a=>a.source?.name).filter(Boolean))];
+  if(srcs.length<2){bar.innerHTML='';return;}
+  let h=`<button class="filter-pill active" data-src="all" style="font-size:.7rem;min-height:30px;padding:.28rem .75rem">All sources</button>`;
+  srcs.slice(0,9).forEach(s=>{h+=`<button class="filter-pill" data-src="${escHtml(s)}" style="font-size:.7rem;min-height:30px;padding:.28rem .75rem">${escHtml(s)}</button>`;});
+  bar.innerHTML=h;
+  bar.querySelectorAll('[data-src]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      bar.querySelectorAll('[data-src]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active'); S.source=btn.dataset.src; applyFilters(); renderCards(); updateMeta();
+    });
+  });
+}
+
+const FALLBACKS=['https://picsum.photos/seed/hn1a/600/400','https://picsum.photos/seed/hn2b/600/400','https://picsum.photos/seed/hn3c/600/400','https://picsum.photos/seed/hn4d/600/400','https://picsum.photos/seed/hn5e/600/400','https://picsum.photos/seed/hn6f/600/400'];
+
+function renderCards(){
+  grid.innerHTML='';
+  if(!S.filtered.length){noRes.style.display='block';return;}
+  noRes.style.display='none';
+  S.filtered.forEach((art,i)=>{
+    const fb=FALLBACKS[i%FALLBACKS.length];
+    const img=(art.urlToImage&&/^https?:\/\//.test(art.urlToImage))?art.urlToImage:fb;
+    const card=document.createElement('article');
+    card.className='news-card'; card.style.animationDelay=`${(i%12)*35}ms`;
+    card.innerHTML=`
+      <a href="${escHtml(art.url)}" target="_blank" rel="noopener noreferrer" tabindex="-1">
+        <img src="${escHtml(img)}" alt="${escHtml(art.title)}" loading="lazy" onerror="this.src='${fb}';this.onerror=null"/>
+      </a>
+      <div class="ncb">
+        <div class="nc-source">${escHtml(art.source?.name||'News')}</div>
+        <h2 class="nc-title"><a href="${escHtml(art.url)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none" class="hover:underline">${escHtml(art.title)}</a></h2>
+        ${art.description?`<p class="nc-desc">${escHtml(art.description)}</p>`:''}
+        <div class="nc-footer">
+          <span>${escHtml(getTimeAgo(art.publishedAt))}</span>
+          <a href="${escHtml(art.url)}" target="_blank" rel="noopener noreferrer" class="read-btn">Read →</a>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  const items=S.filtered.slice(0,5).map((a,i)=>({'@type':'NewsArticle','position':i+1,'name':a.title,'url':a.url,'datePublished':a.publishedAt,'publisher':{'@type':'Organization','name':a.source?.name||'News'}}));
+  $('schema-jsonld').textContent=JSON.stringify({'@context':'https://schema.org','@type':'ItemList','itemListElement':items},null,2);
+}
+
+function updateMeta(){
+  const c=COUNTRIES.find(x=>x.code===S.country);
+  cLabel.textContent=`${c?c.name:'Top'} — Headlines`;
+  aCount.textContent=`${S.filtered.length} article${S.filtered.length!==1?'s':''}`;
+  const srcs=[...new Set(S.articles.map(a=>a.source?.name).filter(Boolean))].slice(0,3);
+  sCred.textContent=srcs.length?`· ${srcs.join(', ')}`:'';
+}
+
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function getTimeAgo(iso){if(!iso)return'';const d=Math.floor((Date.now()-new Date(iso).getTime())/1000);if(d<60)return`${d}s ago`;if(d<3600)return`${Math.floor(d/60)}m ago`;if(d<86400)return`${Math.floor(d/3600)}h ago`;return`${Math.floor(d/86400)}d ago`;}
+function showSpinner(v){spinner.style.display=v?'flex':'none';}
+function showToast(msg){toast.textContent=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),3200);}
+
+function populateUI(){
+  const sel=$('country-select'), msel=$('country-select-mobile');
+  COUNTRIES.forEach(c=>{
+    [sel,msel].forEach(el=>{const o=document.createElement('option');o.value=c.code;o.textContent=c.name;if(c.code===S.country)o.selected=true;el.appendChild(o);});
+  });
+  const list=$('country-list');
+  COUNTRIES.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='country-chip';btn.textContent=c.name;
+    btn.onclick=()=>{S.country=c.code;S.source='all';sel.value=c.code;msel.value=c.code;localStorage.setItem('hn_country',c.code);loadHeadlines();};
+    list.appendChild(btn);
+  });
+}
+
+function applyTheme(){
+  const dark=S.theme==='dark';
+  document.documentElement.classList.toggle('dark',dark);
+  $('dark-toggle').textContent=dark?'☀️':'🌙';
+  const ni=$('theme-nav-icon');if(ni)ni.textContent=dark?'☀️':'🌙';
+}
+
+$('dark-toggle').addEventListener('click',()=>{S.theme=S.theme==='dark'?'light':'dark';localStorage.setItem('hn_theme',S.theme);applyTheme();});
+$('country-select').addEventListener('change',e=>{S.country=e.target.value;S.source='all';$('country-select-mobile').value=e.target.value;localStorage.setItem('hn_country',S.country);loadHeadlines();});
+$('country-select-mobile').addEventListener('change',e=>{S.country=e.target.value;S.source='all';$('country-select').value=e.target.value;localStorage.setItem('hn_country',S.country);loadHeadlines();});
+
+function doSearch(){S.query=$('search-input').value;applyFilters();renderCards();updateMeta();}
+$('search-btn').addEventListener('click',doSearch);
+$('search-input').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+$('search-input').addEventListener('input',e=>{if(!e.target.value){S.query='';applyFilters();renderCards();updateMeta();}});
+
+document.querySelectorAll('[data-cat]').forEach(pill=>{
+  pill.addEventListener('click',()=>{
+    document.querySelectorAll('[data-cat]').forEach(p=>p.classList.remove('active'));
+    pill.classList.add('active');S.category=pill.dataset.cat;S.source='all';loadHeadlines();
+  });
+});
+
+$('refresh-btn').addEventListener('click',()=>{showToast('🔄 Refreshing feeds…');loadHeadlines();});
+$('reset-btn').addEventListener('click',()=>{
+  S.query='';S.category='general';S.source='all';$('search-input').value='';
+  document.querySelectorAll('[data-cat]').forEach((p,i)=>p.classList.toggle('active',i===0));
+  loadHeadlines();
+});
+
+applyTheme();
+populateUI();
+$('country-select').value=S.country;
+$('country-select-mobile').value=S.country;
+loadHeadlines();
+</script>
+</body>
+</html>
