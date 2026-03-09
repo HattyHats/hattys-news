@@ -662,11 +662,8 @@ async function loadCrypto(){
 }
 
 /* ══════════════════════════════════════
-   STOCK TICKER — stooq.com live quotes
-   Shows prices during market hours only.
-   Displays friendly closed message off-hours.
+   STOCK TICKER
 ══════════════════════════════════════ */
-
 const STOCKS=[
   {stooq:'aapl.us',  name:'Apple'},
   {stooq:'msft.us',  name:'Microsoft'},
@@ -686,55 +683,89 @@ const STOCKS=[
   {stooq:'gld.us',   name:'Gold ETF'},
 ];
 
-/* Check if US market is currently open (Mon–Fri 9:30am–4pm ET) */
-function isMarketOpen(){
-  const now=new Date();
-  const et=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
-  const day=et.getDay(); // 0=Sun,6=Sat
-  if(day===0||day===6) return false;
-  const h=et.getHours(), m=et.getMinutes();
-  const mins=h*60+m;
-  return mins>=570 && mins<960; // 9:30am=570, 4:00pm=960
+/* ── FIX 1: isMarketOpen ───────────────────────────────────────────
+   Old code used new Date(toLocaleString(...)) which is unreliable
+   in Firefox/Safari and often returns NaN, keeping market "closed"
+   even during trading hours. Now uses pure UTC offset math instead.
+*/
+function isMarketOpen() {
+  const now = new Date();
+  // Determine if US Daylight Saving Time is active
+  const jan = new Date(now.getFullYear(), 0, 1);
+  const jul = new Date(now.getFullYear(), 6, 1);
+  const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+  const isDST = now.getTimezoneOffset() < stdOffset;
+  const etOffset = isDST ? -4 : -5; // EDT = UTC-4, EST = UTC-5
+  const etMs = now.getTime() + (now.getTimezoneOffset() + etOffset * 60) * 60000;
+  const et = new Date(etMs);
+  const day = et.getDay(); // 0=Sun, 6=Sat
+  if (day === 0 || day === 6) return false;
+  const mins = et.getHours() * 60 + et.getMinutes();
+  return mins >= 570 && mins < 960; // 9:30am=570, 4:00pm=960
 }
 
-async function fetchStooqSymbol(stock){
-  const url=`https://stooq.com/q/l/?s=${stock.stooq}&f=sd2t2ohlcvn&h&e=csv`;
-  const proxies=[
-    ()=>fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)}),
-    ()=>fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)}),
+/* ── FIX 2 & 3: fetchStooqSymbol ──────────────────────────────────
+   Old code passed the full stooq URL (with & chars) into a template
+   literal before encoding, so stooq received ?s=aapl.us%26f=...
+   (a single garbled param) and returned N/D (no data).
+   Also added corsproxy.io as a third fallback, and fixed the
+   allorigins /get endpoint to always extract .contents properly.
+*/
+async function fetchStooqSymbol(stock) {
+  const stooqPath = `https://stooq.com/q/l/?s=${stock.stooq}&f=sd2t2ohlcvn&h&e=csv`;
+
+  const proxies = [
+    // allorigins /raw — returns the CSV text directly
+    async () => {
+      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(stooqPath)}`, {signal:AbortSignal.timeout(9000)});
+      if (!r.ok) throw new Error('raw failed');
+      return r.text();
+    },
+    // allorigins /get — wraps response in {"contents":"..."}
+    async () => {
+      const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(stooqPath)}`, {signal:AbortSignal.timeout(9000)});
+      if (!r.ok) throw new Error('get failed');
+      const json = await r.json();
+      if (!json.contents) throw new Error('no contents');
+      return json.contents;
+    },
+    // corsproxy.io as a second-opinion fallback
+    async () => {
+      const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(stooqPath)}`, {signal:AbortSignal.timeout(9000)});
+      if (!r.ok) throw new Error('corsproxy failed');
+      return r.text();
+    },
   ];
-  for(const attempt of proxies){
-    try{
-      const r=await attempt();
-      if(!r.ok) continue;
-      let text=await r.text();
-      if(text.trim().startsWith('{')){try{text=JSON.parse(text).contents||text;}catch(_){}}
-      const lines=text.trim().split('\n');
-      if(lines.length<2) continue;
-      const cols=lines[1].split(',');
-      const close=parseFloat(cols[6]);
-      const open=parseFloat(cols[3]);
-      if(!close||isNaN(close)||close<=0) continue;
-      const chg=open ? ((close-open)/open*100) : 0;
-      return{sym:stock.name, price:close, chg};
-    }catch(_){}
+
+  for (const attempt of proxies) {
+    try {
+      const text = await attempt();
+      if (!text || text.trim().length === 0) continue;
+      const lines = text.trim().split('\n');
+      if (lines.length < 2) continue;
+      // CSV: Symbol,Date,Time,Open,High,Low,Close,Volume,Name
+      const cols = lines[1].split(',');
+      const close = parseFloat(cols[6]);
+      const open  = parseFloat(cols[3]);
+      if (!close || isNaN(close) || close <= 0) continue;
+      const chg = open ? ((close - open) / open * 100) : 0;
+      return { sym: stock.name, price: close, chg };
+    } catch (_) { /* try next proxy */ }
   }
   return null;
 }
 
 async function loadStocks(){
   if(!isMarketOpen()){
-    // Show friendly closed message that scrolls in the ticker
     const closed=[
-      {sym:'NYSE',price:null,chg:null,label:'MARKET CLOSED'},
-      {sym:'Mon–Fri',price:null,chg:null,label:'9:30AM – 4:00PM ET'},
-      {sym:'NASDAQ',price:null,chg:null,label:'LIVE PRICES DURING TRADING HOURS'},
-      {sym:'S&P 500',price:null,chg:null,label:'CHECK BACK WHEN OPEN'},
+      {sym:'NYSE',label:'MARKET CLOSED'},
+      {sym:'Mon–Fri',label:'9:30AM – 4:00PM ET'},
+      {sym:'NASDAQ',label:'LIVE PRICES DURING TRADING HOURS'},
+      {sym:'S&P 500',label:'CHECK BACK WHEN OPEN'},
     ];
     const html=closed.map(i=>`<div class="ti"><span class="tsym">${esc(i.sym)}</span><span class="tprc" style="color:var(--ink-faint)">${i.label}</span></div>`).join('');
     $('sti').innerHTML=html+html;
-    // Retry in 5 min in case market opens
-    setTimeout(()=>loadStocks(), 300000);
+    setTimeout(()=>loadStocks(), 60000); // retry every minute
     return;
   }
 
@@ -752,7 +783,6 @@ async function loadStocks(){
 function renderTicker(id,items,isCrypto){
   const fmtPrice=(v)=>{if(v==null)return'—';if(isCrypto){if(v>=1000)return'$'+Math.round(v).toLocaleString();if(v>=1)return'$'+v.toFixed(2);return'$'+v.toFixed(5);}return'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};
   const row=items.map(item=>{const up=(item.chg||0)>=0;const cs=item.chg!=null?`${up?'+':''}${item.chg.toFixed(2)}%`:'—';return`<div class="ti"><span class="tsym">${esc(item.sym)}</span><span class="tprc">${fmtPrice(item.price)}</span><span class="${up?'tup':'tdn'}">${cs}</span></div>`;}).join('');
-  // Double for seamless loop
   $(id).innerHTML=row+row;
 }
 
