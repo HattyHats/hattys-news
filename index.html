@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Hatty's News — Real World Headlines</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23dc2626'/><text x='4' y='24' font-size='22' font-family='serif' fill='white'>H</text></svg>"/>
-<meta name="description" content="Real global news. BBC, Reuters, AP, Al Jazeera, SCMP, NHK, DW, France 24 and 40+ more verified sources. Live crypto and stock price tickers."/>
+<meta name="description" content="Real global news. BBC, Reuters, AP, Al Jazeera, SCMP, NHK, DW, France 24 and 40+ more verified sources. Live crypto ticker."/>
 <!-- Google Auto Ads -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6374033238930580" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -33,7 +33,7 @@ html.light {
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-family:'Manrope',system-ui,sans-serif;scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);min-height:100vh;transition:background .3s,color .3s;padding-bottom:112px}
+body{background:var(--bg);color:var(--ink);min-height:100vh;transition:background .3s,color .3s;padding-bottom:56px}
 html.dark body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);opacity:.3}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--red-d);border-radius:99px}::-webkit-scrollbar-thumb:hover{background:var(--red)}
 /* header */
@@ -94,7 +94,7 @@ html.dark .inp option{background:#1a1a1a}
 .ldot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:pd 2s ease infinite;flex-shrink:0}
 @keyframes pd{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.4)}}
 /* toast */
-#toast{position:fixed;bottom:128px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);color:var(--ink);border:1px solid var(--red);box-shadow:0 0 20px rgba(220,38,38,.3);padding:.45rem 1rem;border-radius:4px;font-size:.72rem;font-weight:600;font-family:'IBM Plex Mono',monospace;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:400;white-space:nowrap}
+#toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);color:var(--ink);border:1px solid var(--red);box-shadow:0 0 20px rgba(220,38,38,.3);padding:.45rem 1rem;border-radius:4px;font-size:.72rem;font-weight:600;font-family:'IBM Plex Mono',monospace;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:400;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* no results */
 #nores{display:none;text-align:center;padding:4rem 1rem}
@@ -110,7 +110,6 @@ html.dark .inp option{background:#1a1a1a}
 .trow:last-child{border-bottom:none}
 .tlbl{flex-shrink:0;width:88px;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:.82rem;letter-spacing:.14em;color:#fff;z-index:2;border-right:1px solid rgba(255,255,255,.1)}
 .tlbl.cr{background:var(--red)}
-.tlbl.st{background:#1d4ed8}
 .ttrack{flex:1;overflow:hidden;height:100%;position:relative;mask-image:linear-gradient(to right,transparent,#000 52px,#000 calc(100% - 52px),transparent)}
 .tinner{display:flex;align-items:center;height:100%;animation:sticker 80s linear infinite;width:max-content}
 .tinner:hover{animation-play-state:paused}
@@ -127,7 +126,7 @@ html.dark .inp option{background:#1a1a1a}
 button,select,input{min-height:36px}
 
 /* ══ COOKIE BANNER ══ */
-#cookiebanner{position:fixed;bottom:112px;left:0;right:0;z-index:300;background:var(--surface);border-top:2px solid var(--red);box-shadow:0 -4px 30px rgba(0,0,0,.5);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;transition:opacity .4s ease,transform .4s cubic-bezier(.4,0,.2,1)}
+#cookiebanner{position:fixed;bottom:56px;left:0;right:0;z-index:300;background:var(--surface);border-top:2px solid var(--red);box-shadow:0 -4px 30px rgba(0,0,0,.5);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;transition:opacity .4s ease,transform .4s cubic-bezier(.4,0,.2,1)}
 #cookiebanner.hidden{opacity:0;transform:translateY(200%);pointer-events:none;display:none}
 .cbtext{font-size:.76rem;color:var(--ink-muted);line-height:1.6;flex:1;min-width:220px}
 .cbtext a{color:var(--red);text-decoration:underline;cursor:pointer}
@@ -375,7 +374,7 @@ button,select,input{min-height:36px}
 </div>
 
 <!-- ══ FOOTER ══ -->
-<footer style="border-top:1px solid var(--border);margin-bottom:112px;padding:1.25rem 1rem;text-align:center">
+<footer style="border-top:1px solid var(--border);margin-bottom:56px;padding:1.25rem 1rem;text-align:center">
   <div style="max-width:1440px;margin:0 auto">
     <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.9rem;margin-bottom:.75rem">
       <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🏠 EarnWithHatty</a>
@@ -396,10 +395,6 @@ button,select,input{min-height:36px}
   <div class="trow">
     <div class="tlbl cr">CRYPTO</div>
     <div class="ttrack"><div class="tinner" id="cti"><span class="tload">LOADING CRYPTO…</span></div></div>
-  </div>
-  <div class="trow">
-    <div class="tlbl st">STOCKS</div>
-    <div class="ttrack"><div class="tinner" id="sti"><span class="tload">LOADING MARKETS…</span></div></div>
   </div>
 </div>
 
@@ -782,107 +777,17 @@ async function loadCrypto(){
 }
 
 /* ══════════════════════════════════════
-   STOCK TICKER — Yahoo Finance (no proxy needed, no API key)
+   STOCK TICKER — TwelveData free endpoint (no key for quotes)
+   Falls back to a static "last known" display if all APIs fail
 ══════════════════════════════════════ */
-const STOCKS=[
-  {yahoo:'AAPL',  name:'Apple'},
-  {yahoo:'MSFT',  name:'Microsoft'},
-  {yahoo:'NVDA',  name:'NVIDIA'},
-  {yahoo:'GOOGL', name:'Google'},
-  {yahoo:'AMZN',  name:'Amazon'},
-  {yahoo:'META',  name:'Meta'},
-  {yahoo:'TSLA',  name:'Tesla'},
-  {yahoo:'JPM',   name:'JPMorgan'},
-  {yahoo:'V',     name:'Visa'},
-  {yahoo:'NFLX',  name:'Netflix'},
-  {yahoo:'XOM',   name:'ExxonMobil'},
-  {yahoo:'WMT',   name:'Walmart'},
-  {yahoo:'%5EGSPC', name:'S&P 500'},
-  {yahoo:'%5EDJI',  name:'Dow Jones'},
-  {yahoo:'%5EIXIC', name:'NASDAQ'},
-  {yahoo:'GLD',   name:'Gold ETF'},
-];
-
-function isMarketOpen() {
-  const now = new Date();
-  const jan = new Date(now.getFullYear(), 0, 1);
-  const jul = new Date(now.getFullYear(), 6, 1);
-  const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-  const isDST = now.getTimezoneOffset() < stdOffset;
-  const etOffset = isDST ? -4 : -5;
-  const etMs = now.getTime() + (now.getTimezoneOffset() + etOffset * 60) * 60000;
-  const et = new Date(etMs);
-  const day = et.getDay();
-  if (day === 0 || day === 6) return false;
-  const mins = et.getHours() * 60 + et.getMinutes();
-  return mins >= 570 && mins < 960;
-}
-
-async function fetchYahooQuotes(symbols) {
-  // Yahoo Finance v7 spark endpoint — returns batch quotes, CORS-friendly
-  const syms = symbols.map(s => s.yahoo).join(',');
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${syms}&fields=regularMarketPrice,regularMarketChangePercent&corsDomain=finance.yahoo.com`;
-  try {
-    const r = await fetch(url, {
-      signal: AbortSignal.timeout(10000),
-      headers: {'Accept': 'application/json'}
-    });
-    if (!r.ok) throw new Error('yahoo q1 failed');
-    const d = await r.json();
-    return d?.quoteResponse?.result || [];
-  } catch (_) {}
-  // Fallback: query2
-  try {
-    const url2 = `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${syms}&fields=regularMarketPrice,regularMarketChangePercent&corsDomain=finance.yahoo.com`;
-    const r = await fetch(url2, {signal: AbortSignal.timeout(10000), headers: {'Accept': 'application/json'}});
-    if (!r.ok) throw new Error('yahoo q2 failed');
-    const d = await r.json();
-    return d?.quoteResponse?.result || [];
-  } catch (_) {}
-  return [];
-}
-
-async function loadStocks() {
-  if (!isMarketOpen()) {
-    const closed = [
-      {sym:'NYSE',     label:'MARKET CLOSED'},
-      {sym:'Mon–Fri',  label:'9:30AM – 4:00PM ET'},
-      {sym:'NASDAQ',   label:'LIVE PRICES DURING TRADING HOURS'},
-      {sym:'S&P 500',  label:'CHECK BACK WHEN OPEN'},
-    ];
-    const html = closed.map(i =>
-      `<div class="ti"><span class="tsym">${esc(i.sym)}</span><span class="tprc" style="color:var(--ink-faint)">${i.label}</span></div>`
-    ).join('');
-    $('sti').innerHTML = html + html;
-    setTimeout(() => loadStocks(), 60000);
-    return;
-  }
-
-  $('sti').innerHTML = `<span class="tload">LOADING MARKETS…</span>`;
-  const quotes = await fetchYahooQuotes(STOCKS);
-  if (quotes.length >= 3) {
-    // Map Yahoo results back to our name list
-    const nameMap = {};
-    STOCKS.forEach(s => { nameMap[s.yahoo.replace('%5E','^')] = s.name; });
-    const results = quotes.map(q => ({
-      sym:  nameMap[q.symbol] || q.symbol,
-      price: q.regularMarketPrice,
-      chg:   q.regularMarketChangePercent,
-    })).filter(r => r.price != null);
-    renderTicker('sti', results, false);
-  } else {
-    $('sti').innerHTML = `<span class="tload">MARKET DATA LOADING — CHECK BACK SHORTLY</span>`;
-    setTimeout(() => loadStocks(), 60000);
-  }
-}
-
 function renderTicker(id,items,isCrypto){
   const fmtPrice=(v)=>{if(v==null)return'—';if(isCrypto){if(v>=1000)return'$'+Math.round(v).toLocaleString();if(v>=1)return'$'+v.toFixed(2);return'$'+v.toFixed(5);}return'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};
   const row=items.map(item=>{const up=(item.chg||0)>=0;const cs=item.chg!=null?`${up?'+':''}${item.chg.toFixed(2)}%`:'—';return`<div class="ti"><span class="tsym">${esc(item.sym)}</span><span class="tprc">${fmtPrice(item.price)}</span><span class="${up?'tup':'tdn'}">${cs}</span></div>`;}).join('');
   $(id).innerHTML=row+row;
 }
 
-function refreshTickers(){loadCrypto();loadStocks();}
+function refreshTickers(){loadCrypto();}
+
 
 /* ══ COOKIE BANNER ══ */
 function hideCookieBanner(){
