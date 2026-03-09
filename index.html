@@ -782,121 +782,97 @@ async function loadCrypto(){
 }
 
 /* ══════════════════════════════════════
-   STOCK TICKER
+   STOCK TICKER — Yahoo Finance (no proxy needed, no API key)
 ══════════════════════════════════════ */
 const STOCKS=[
-  {stooq:'aapl.us',  name:'Apple'},
-  {stooq:'msft.us',  name:'Microsoft'},
-  {stooq:'nvda.us',  name:'NVIDIA'},
-  {stooq:'googl.us', name:'Google'},
-  {stooq:'amzn.us',  name:'Amazon'},
-  {stooq:'meta.us',  name:'Meta'},
-  {stooq:'tsla.us',  name:'Tesla'},
-  {stooq:'jpm.us',   name:'JPMorgan'},
-  {stooq:'v.us',     name:'Visa'},
-  {stooq:'nflx.us',  name:'Netflix'},
-  {stooq:'xom.us',   name:'ExxonMobil'},
-  {stooq:'wmt.us',   name:'Walmart'},
-  {stooq:'^spx',     name:'S&P 500'},
-  {stooq:'^djt',     name:'Dow Jones'},
-  {stooq:'^ndq',     name:'NASDAQ'},
-  {stooq:'gld.us',   name:'Gold ETF'},
+  {yahoo:'AAPL',  name:'Apple'},
+  {yahoo:'MSFT',  name:'Microsoft'},
+  {yahoo:'NVDA',  name:'NVIDIA'},
+  {yahoo:'GOOGL', name:'Google'},
+  {yahoo:'AMZN',  name:'Amazon'},
+  {yahoo:'META',  name:'Meta'},
+  {yahoo:'TSLA',  name:'Tesla'},
+  {yahoo:'JPM',   name:'JPMorgan'},
+  {yahoo:'V',     name:'Visa'},
+  {yahoo:'NFLX',  name:'Netflix'},
+  {yahoo:'XOM',   name:'ExxonMobil'},
+  {yahoo:'WMT',   name:'Walmart'},
+  {yahoo:'%5EGSPC', name:'S&P 500'},
+  {yahoo:'%5EDJI',  name:'Dow Jones'},
+  {yahoo:'%5EIXIC', name:'NASDAQ'},
+  {yahoo:'GLD',   name:'Gold ETF'},
 ];
 
-/* ── FIX 1: isMarketOpen ───────────────────────────────────────────
-   Old code used new Date(toLocaleString(...)) which is unreliable
-   in Firefox/Safari and often returns NaN, keeping market "closed"
-   even during trading hours. Now uses pure UTC offset math instead.
-*/
 function isMarketOpen() {
   const now = new Date();
-  // Determine if US Daylight Saving Time is active
   const jan = new Date(now.getFullYear(), 0, 1);
   const jul = new Date(now.getFullYear(), 6, 1);
   const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
   const isDST = now.getTimezoneOffset() < stdOffset;
-  const etOffset = isDST ? -4 : -5; // EDT = UTC-4, EST = UTC-5
+  const etOffset = isDST ? -4 : -5;
   const etMs = now.getTime() + (now.getTimezoneOffset() + etOffset * 60) * 60000;
   const et = new Date(etMs);
-  const day = et.getDay(); // 0=Sun, 6=Sat
+  const day = et.getDay();
   if (day === 0 || day === 6) return false;
   const mins = et.getHours() * 60 + et.getMinutes();
-  return mins >= 570 && mins < 960; // 9:30am=570, 4:00pm=960
+  return mins >= 570 && mins < 960;
 }
 
-/* ── FIX 2 & 3: fetchStooqSymbol ──────────────────────────────────
-   Old code passed the full stooq URL (with & chars) into a template
-   literal before encoding, so stooq received ?s=aapl.us%26f=...
-   (a single garbled param) and returned N/D (no data).
-   Also added corsproxy.io as a third fallback, and fixed the
-   allorigins /get endpoint to always extract .contents properly.
-*/
-async function fetchStooqSymbol(stock) {
-  const stooqPath = `https://stooq.com/q/l/?s=${stock.stooq}&f=sd2t2ohlcvn&h&e=csv`;
-
-  const proxies = [
-    // allorigins /raw — returns the CSV text directly
-    async () => {
-      const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(stooqPath)}`, {signal:AbortSignal.timeout(9000)});
-      if (!r.ok) throw new Error('raw failed');
-      return r.text();
-    },
-    // allorigins /get — wraps response in {"contents":"..."}
-    async () => {
-      const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(stooqPath)}`, {signal:AbortSignal.timeout(9000)});
-      if (!r.ok) throw new Error('get failed');
-      const json = await r.json();
-      if (!json.contents) throw new Error('no contents');
-      return json.contents;
-    },
-    // corsproxy.io as a second-opinion fallback
-    async () => {
-      const r = await fetch(`https://corsproxy.io/?${encodeURIComponent(stooqPath)}`, {signal:AbortSignal.timeout(9000)});
-      if (!r.ok) throw new Error('corsproxy failed');
-      return r.text();
-    },
-  ];
-
-  for (const attempt of proxies) {
-    try {
-      const text = await attempt();
-      if (!text || text.trim().length === 0) continue;
-      const lines = text.trim().split('\n');
-      if (lines.length < 2) continue;
-      // CSV: Symbol,Date,Time,Open,High,Low,Close,Volume,Name
-      const cols = lines[1].split(',');
-      const close = parseFloat(cols[6]);
-      const open  = parseFloat(cols[3]);
-      if (!close || isNaN(close) || close <= 0) continue;
-      const chg = open ? ((close - open) / open * 100) : 0;
-      return { sym: stock.name, price: close, chg };
-    } catch (_) { /* try next proxy */ }
-  }
-  return null;
+async function fetchYahooQuotes(symbols) {
+  // Yahoo Finance v7 spark endpoint — returns batch quotes, CORS-friendly
+  const syms = symbols.map(s => s.yahoo).join(',');
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${syms}&fields=regularMarketPrice,regularMarketChangePercent&corsDomain=finance.yahoo.com`;
+  try {
+    const r = await fetch(url, {
+      signal: AbortSignal.timeout(10000),
+      headers: {'Accept': 'application/json'}
+    });
+    if (!r.ok) throw new Error('yahoo q1 failed');
+    const d = await r.json();
+    return d?.quoteResponse?.result || [];
+  } catch (_) {}
+  // Fallback: query2
+  try {
+    const url2 = `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${syms}&fields=regularMarketPrice,regularMarketChangePercent&corsDomain=finance.yahoo.com`;
+    const r = await fetch(url2, {signal: AbortSignal.timeout(10000), headers: {'Accept': 'application/json'}});
+    if (!r.ok) throw new Error('yahoo q2 failed');
+    const d = await r.json();
+    return d?.quoteResponse?.result || [];
+  } catch (_) {}
+  return [];
 }
 
-async function loadStocks(){
-  if(!isMarketOpen()){
-    const closed=[
-      {sym:'NYSE',label:'MARKET CLOSED'},
-      {sym:'Mon–Fri',label:'9:30AM – 4:00PM ET'},
-      {sym:'NASDAQ',label:'LIVE PRICES DURING TRADING HOURS'},
-      {sym:'S&P 500',label:'CHECK BACK WHEN OPEN'},
+async function loadStocks() {
+  if (!isMarketOpen()) {
+    const closed = [
+      {sym:'NYSE',     label:'MARKET CLOSED'},
+      {sym:'Mon–Fri',  label:'9:30AM – 4:00PM ET'},
+      {sym:'NASDAQ',   label:'LIVE PRICES DURING TRADING HOURS'},
+      {sym:'S&P 500',  label:'CHECK BACK WHEN OPEN'},
     ];
-    const html=closed.map(i=>`<div class="ti"><span class="tsym">${esc(i.sym)}</span><span class="tprc" style="color:var(--ink-faint)">${i.label}</span></div>`).join('');
-    $('sti').innerHTML=html+html;
-    setTimeout(()=>loadStocks(), 60000); // retry every minute
+    const html = closed.map(i =>
+      `<div class="ti"><span class="tsym">${esc(i.sym)}</span><span class="tprc" style="color:var(--ink-faint)">${i.label}</span></div>`
+    ).join('');
+    $('sti').innerHTML = html + html;
+    setTimeout(() => loadStocks(), 60000);
     return;
   }
 
-  $('sti').innerHTML=`<span class="tload">LOADING MARKETS…</span>`;
-  const fetches=STOCKS.map(s=>fetchStooqSymbol(s));
-  const results=(await Promise.allSettled(fetches)).map(r=>r.status==='fulfilled'?r.value:null).filter(Boolean);
-  if(results.length>=3){
-    renderTicker('sti',results,false);
+  $('sti').innerHTML = `<span class="tload">LOADING MARKETS…</span>`;
+  const quotes = await fetchYahooQuotes(STOCKS);
+  if (quotes.length >= 3) {
+    // Map Yahoo results back to our name list
+    const nameMap = {};
+    STOCKS.forEach(s => { nameMap[s.yahoo.replace('%5E','^')] = s.name; });
+    const results = quotes.map(q => ({
+      sym:  nameMap[q.symbol] || q.symbol,
+      price: q.regularMarketPrice,
+      chg:   q.regularMarketChangePercent,
+    })).filter(r => r.price != null);
+    renderTicker('sti', results, false);
   } else {
-    $('sti').innerHTML=`<span class="tload">MARKET DATA LOADING — CHECK BACK SHORTLY</span>`;
-    setTimeout(()=>loadStocks(), 60000);
+    $('sti').innerHTML = `<span class="tload">MARKET DATA LOADING — CHECK BACK SHORTLY</span>`;
+    setTimeout(() => loadStocks(), 60000);
   }
 }
 
