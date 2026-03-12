@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Hatty's News — Real World Headlines</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23dc2626'/><text x='4' y='24' font-size='22' font-family='serif' fill='white'>H</text></svg>"/>
-<meta name="description" content="Real global news. BBC, Reuters, AP, Al Jazeera, SCMP, NHK, DW, France 24 and 40+ more verified sources. Live crypto ticker."/>
+<meta name="description" content="Real global news. Country-specific RSS feeds from BBC, Reuters, AP, Al Jazeera, Google News, and 60+ verified sources."/>
 <!-- Google Auto Ads -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6374033238930580" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -14,7 +14,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{display:['"Bebas Neue"','Impact','sans-serif'],mono:['"IBM Plex Mono"','monospace'],body:['Manrope','system-ui','sans-serif']}}}}</script>
 <style>
-/* ══ DARK THEME (default) ══ */
 :root {
   --bg:#050505; --bg2:#0d0d0d; --surface:#141414; --surface2:#1a1a1a;
   --border:#252525; --ink:#f0f0f0; --ink-muted:#888; --ink-faint:#3a3a3a;
@@ -33,21 +32,25 @@ html.light {
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-family:'Manrope',system-ui,sans-serif;scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);min-height:100vh;transition:background .3s,color .3s;padding-bottom:56px}
+body{background:var(--bg);color:var(--ink);min-height:100vh;transition:background .3s,color .3s;padding-bottom:60px}
 html.dark body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);opacity:.3}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--red-d);border-radius:99px}::-webkit-scrollbar-thumb:hover{background:var(--red)}
-/* header */
+
+/* ── HEADER ── */
 #hdr{position:sticky;top:0;z-index:80;background:var(--bg);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(220,38,38,.18)}
 .logo{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.06em;color:var(--red);line-height:1;text-shadow:0 0 22px rgba(220,38,38,.5)}
-/* inputs */
+
+/* ── INPUTS ── */
 .inp{background:var(--surface);border:1px solid var(--border);color:var(--ink);font-family:'Manrope',sans-serif;transition:border-color var(--t),box-shadow var(--t)}
 .inp:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 2px rgba(220,38,38,.18)}
 .inp::placeholder{color:var(--ink-faint)}
 html.dark .inp option{background:#1a1a1a}
-/* icon btns */
-.ibtn{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:var(--ink);border-radius:6px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--t);flex-shrink:0}
+
+/* ── ICON BTNS ── */
+.ibtn{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:var(--ink);border-radius:6px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--t);flex-shrink:0}
 .ibtn:hover{background:rgba(220,38,38,.25);border-color:var(--red);color:var(--red)}
-/* drawer */
+
+/* ── DRAWER ── */
 #drw{position:fixed;top:0;left:0;bottom:0;width:272px;z-index:200;background:var(--surface);border-right:1px solid var(--border);box-shadow:4px 0 40px rgba(220,38,38,.1);transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto}
 #drw.open{transform:translateX(0)}
 #ovl{position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s}
@@ -55,7 +58,8 @@ html.dark .inp option{background:#1a1a1a}
 .nl{display:flex;align-items:center;gap:.65rem;padding:.7rem .9rem;font-size:.83rem;font-weight:600;color:var(--ink);text-decoration:none;border-radius:7px;margin:0 .4rem;border:none;cursor:pointer;background:none;width:calc(100% - .8rem);text-align:left;transition:background var(--t),color var(--t)}
 .nl:hover{background:rgba(220,38,38,.1);color:var(--red)}
 .ni{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:rgba(220,38,38,.1);font-size:.95rem;flex-shrink:0}
-/* news cards */
+
+/* ── CARDS ── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--glow);transition:box-shadow .25s,transform .25s,border-color .25s;animation:fu .38s ease both}
 .card:hover{box-shadow:var(--glow-h);border-color:rgba(220,38,38,.5);transform:translateY(-3px)}
 @keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -65,49 +69,48 @@ html.dark .inp option{background:#1a1a1a}
 .ct{font-weight:700;font-size:.95rem;line-height:1.4;color:var(--ink);margin-bottom:.35rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .ct a{color:inherit;text-decoration:none}.ct a:hover{color:var(--red)}
 .cd{font-size:.76rem;color:var(--ink-muted);line-height:1.6;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.cf{display:flex;align-items:center;justify-content:space-between;margin-top:.8rem;padding-top:.6rem;border-top:1px solid var(--border);font-size:.67rem;color:var(--ink-faint)}
+.cf{display:flex;align-items:center;justify-content:flex-end;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)}
+.card-time{display:flex;align-items:center;gap:.3rem;margin-top:.65rem;padding:.3rem .5rem;background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.1);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--ink-muted);line-height:1}
+.card-time-rel{font-weight:700;color:var(--red);letter-spacing:.02em}
+.card-time-sep{color:var(--ink-faint)}
+.card-time-abs{color:var(--ink-muted);letter-spacing:.01em}
 .rbtn{background:var(--red);color:#fff;padding:.25rem .75rem;border-radius:3px;font-size:.67rem;font-weight:700;letter-spacing:.04em;transition:background var(--t),transform var(--t);text-decoration:none;white-space:nowrap;font-family:'IBM Plex Mono',monospace}
 .rbtn:hover{background:var(--red-b);transform:scale(1.04)}
-/* grid */
+
+/* ── GRID ── */
 #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:1rem}
-/* filter pills */
-.fp{padding:.3rem .8rem;border-radius:4px;font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--border);background:transparent;color:var(--ink-muted);cursor:pointer;transition:all var(--t);white-space:nowrap;font-family:'IBM Plex Mono',monospace}
+
+/* ── FILTER PILLS ── */
+.fp{padding:.28rem .7rem;border-radius:4px;font-size:.67rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--border);background:transparent;color:var(--ink-muted);cursor:pointer;transition:all var(--t);white-space:nowrap;font-family:'IBM Plex Mono',monospace;min-height:30px}
 .fp.on,.fp:hover{border-color:var(--red);background:var(--red);color:#fff}
-/* sidebar */
+
+/* ── SIDEBAR ── */
 .sbox{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:.9rem;box-shadow:var(--glow)}
 .stitle{font-family:'Bebas Neue',Impact,sans-serif;font-size:.95rem;letter-spacing:.1em;color:var(--red);margin-bottom:.65rem;text-shadow:0 0 10px rgba(220,38,38,.35)}
-.slink{display:flex;align-items:center;gap:.45rem;padding:.38rem .45rem;border-radius:5px;text-decoration:none;color:var(--ink-muted);font-size:.78rem;font-weight:600;transition:all var(--t)}
-.slink:hover{color:var(--red);background:rgba(220,38,38,.08)}
-/* country chips */
 .cc{display:flex;align-items:center;justify-content:space-between;padding:.38rem .55rem;border-radius:5px;cursor:pointer;font-size:.76rem;font-weight:600;transition:all var(--t);background:transparent;color:var(--ink-muted);border:none;width:100%;text-align:left}
 .cc:hover,.cc.on{background:rgba(220,38,38,.1);color:var(--red)}
 .qb{font-size:.56rem;font-weight:800;padding:2px 5px;border-radius:3px;flex-shrink:0;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
 .qs{background:rgba(34,197,94,.15);color:#22c55e}.qg{background:rgba(59,130,246,.15);color:#60a5fa}.ql{background:rgba(234,179,8,.15);color:#eab308}
-/* feed status */
+
+/* ── FEED STATUS ── */
 #fsb{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.75rem;align-items:center}
 .fb{padding:.16rem .45rem;border-radius:3px;font-size:.6rem;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
 .fok{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.2)}
 .ffail{background:rgba(220,38,38,.1);color:#ef4444;border:1px solid rgba(220,38,38,.2)}
-/* cov note */
 .covn{background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.12);border-radius:6px;padding:.5rem .7rem;font-size:.67rem;color:var(--ink-muted);line-height:1.6;margin-bottom:.75rem}
-/* live dot */
 .ldot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:pd 2s ease infinite;flex-shrink:0}
 @keyframes pd{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.4)}}
-/* toast */
+
+/* ── TOAST ── */
 #toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);color:var(--ink);border:1px solid var(--red);box-shadow:0 0 20px rgba(220,38,38,.3);padding:.45rem 1rem;border-radius:4px;font-size:.72rem;font-weight:600;font-family:'IBM Plex Mono',monospace;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:400;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-/* no results */
 #nores{display:none;text-align:center;padding:4rem 1rem}
-/* spinner */
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{width:34px;height:34px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .6s linear infinite}
 
-/* ══════════════════════════════════
-   TICKER BARS
-══════════════════════════════════ */
+/* ── CRYPTO TICKER ── */
 #tickers{position:fixed;bottom:0;left:0;right:0;z-index:90;background:var(--ticker);border-top:1px solid var(--border);box-shadow:0 -1px 0 rgba(220,38,38,.15),0 -6px 24px rgba(0,0,0,.5)}
-.trow{height:54px;display:flex;align-items:center;overflow:hidden;border-bottom:1px solid #222;position:relative}
-.trow:last-child{border-bottom:none}
+.trow{height:58px;display:flex;align-items:center;overflow:hidden;position:relative}
 .tlbl{flex-shrink:0;width:88px;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:.82rem;letter-spacing:.14em;color:#fff;z-index:2;border-right:1px solid rgba(255,255,255,.1)}
 .tlbl.cr{background:var(--red)}
 .ttrack{flex:1;overflow:hidden;height:100%;position:relative;mask-image:linear-gradient(to right,transparent,#000 52px,#000 calc(100% - 52px),transparent)}
@@ -123,10 +126,20 @@ html.dark .inp option{background:#1a1a1a}
 .tload{color:#555;font-size:.7rem;padding:0 1rem;font-family:'IBM Plex Mono',monospace;animation:blink 1.2s ease infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
-button,select,input{min-height:36px}
+/* ── MOBILE COUNTRY BAR ── */
+#mobile-country-bar{display:none;overflow-x:auto;padding:.5rem 1rem;gap:.4rem;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border);background:var(--bg);scrollbar-width:none}
+#mobile-country-bar::-webkit-scrollbar{display:none}
+.mcbtn{flex-shrink:0;padding:.3rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;font-family:'IBM Plex Mono',monospace;border:1px solid var(--border);background:transparent;color:var(--ink-muted);cursor:pointer;transition:all var(--t);white-space:nowrap}
+.mcbtn.on,.mcbtn:hover{background:var(--red);border-color:var(--red);color:#fff}
 
-/* ══ COOKIE BANNER ══ */
-#cookiebanner{position:fixed;bottom:56px;left:0;right:0;z-index:300;background:var(--surface);border-top:2px solid var(--red);box-shadow:0 -4px 30px rgba(0,0,0,.5);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;transition:opacity .4s ease,transform .4s cubic-bezier(.4,0,.2,1)}
+@media(max-width:768px){
+  #mobile-country-bar{display:flex}
+  body{padding-bottom:60px}
+  #grid{grid-template-columns:1fr}
+}
+
+/* ── COOKIE BANNER ── */
+#cookiebanner{position:fixed;bottom:58px;left:0;right:0;z-index:300;background:var(--surface);border-top:2px solid var(--red);box-shadow:0 -4px 30px rgba(0,0,0,.5);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;transition:opacity .4s ease,transform .4s cubic-bezier(.4,0,.2,1)}
 #cookiebanner.hidden{opacity:0;transform:translateY(200%);pointer-events:none;display:none}
 .cbtext{font-size:.76rem;color:var(--ink-muted);line-height:1.6;flex:1;min-width:220px}
 .cbtext a{color:var(--red);text-decoration:underline;cursor:pointer}
@@ -135,7 +148,7 @@ button,select,input{min-height:36px}
 .cbbtn.outline{background:transparent;border:1px solid var(--border);color:var(--ink-muted);margin-right:.4rem}
 .cbbtn.outline:hover{border-color:var(--red);color:var(--red)}
 
-/* ══ MODALS ══ */
+/* ── MODALS ── */
 .modal-wrap{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .3s}
 .modal-wrap.open{opacity:1;pointer-events:auto}
 .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:680px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(220,38,38,.15)}
@@ -150,103 +163,61 @@ button,select,input{min-height:36px}
 .modal-body ul{padding-left:1.2rem;margin-bottom:.75rem}
 .modal-body ul li{margin-bottom:.3rem}
 .modal-body a{color:var(--red)}
+
+/* ── BREAKING NEWS BANNER ── */
+#breaking-bar{background:var(--red);color:#fff;padding:.35rem 1rem;display:flex;align-items:center;gap:.75rem;overflow:hidden;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;letter-spacing:.04em}
+#breaking-bar .blbl{flex-shrink:0;background:rgba(0,0,0,.3);padding:.1rem .5rem;border-radius:2px;font-size:.65rem;letter-spacing:.1em}
+#breaking-scroll{flex:1;overflow:hidden;white-space:nowrap;mask-image:linear-gradient(to right,transparent,#fff 40px,#fff calc(100% - 40px),transparent)}
+#breaking-inner{display:inline-block;animation:bscroll 40s linear infinite;padding-right:80px}
+@keyframes bscroll{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
 </style>
 </head>
 <body>
 
 <div id="ovl"></div>
 
-<!-- ══ COOKIE BANNER ══ -->
+<!-- COOKIE BANNER -->
 <div id="cookiebanner">
-  <p class="cbtext">
-    🍪 We use cookies and display ads via Google AdSense to keep this site free. By clicking <strong>Accept</strong> you agree to our
-    <a onclick="openModal('privacy')">Privacy Policy</a> and
-    <a onclick="openModal('terms')">Terms of Service</a>.
-  </p>
+  <p class="cbtext">🍪 We use cookies and display ads via Google AdSense to keep this site free. By clicking <strong>Accept</strong> you agree to our <a onclick="openModal('privacy')">Privacy Policy</a> and <a onclick="openModal('terms')">Terms of Service</a>.</p>
   <div style="display:flex;align-items:center;flex-shrink:0">
     <button class="cbbtn outline" onclick="declineCookies()">Decline</button>
     <button class="cbbtn" onclick="acceptCookies()">Accept All</button>
   </div>
 </div>
 
-<!-- ══ PRIVACY POLICY MODAL ══ -->
+<!-- PRIVACY POLICY MODAL -->
 <div class="modal-wrap" id="modal-privacy">
   <div class="modal-box">
-    <div class="modal-head">
-      <div class="modal-title">Privacy Policy</div>
-      <button class="modal-close" onclick="closeModal('privacy')">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
+    <div class="modal-head"><div class="modal-title">Privacy Policy</div><button class="modal-close" onclick="closeModal('privacy')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="modal-body">
       <p><em>Last updated: March 2026</em></p>
-      <h2>1. Who We Are</h2>
-      <p>Hatty's News is operated by Hatty's Network ("we", "us", "our"). We aggregate publicly available RSS news feeds and display live financial data. Our site is available at earnwithhatty.com and its associated Netlify properties.</p>
-      <h2>2. Information We Collect</h2>
-      <p>We do not directly collect personally identifiable information. However, third-party services we use may collect data automatically:</p>
-      <ul>
-        <li><strong>Google AdSense</strong> — displays personalised or non-personalised ads and may use cookies to serve ads based on your prior visits to this or other websites.</li>
-        <li><strong>Google Fonts</strong> — may log your IP address when fonts are loaded.</li>
-        <li><strong>CoinGecko & Stooq</strong> — provide live price data; your browser makes requests directly to these services.</li>
-        <li><strong>RSS proxy services</strong> (rss2json.com, allorigins.win) — used to fetch news feeds; your IP may be logged by these services.</li>
-      </ul>
-      <h2>3. Cookies</h2>
-      <p>We store two small items in your browser's localStorage: your selected country and your theme preference (dark/light). These never leave your device and are not shared with anyone.</p>
-      <p>Google AdSense sets its own cookies to serve and measure ads. You can opt out of personalised ads at <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">google.com/settings/ads</a>.</p>
-      <h2>4. How We Use Information</h2>
-      <p>We use no personal data ourselves. Ad revenue from Google AdSense helps us keep the site free and running.</p>
-      <h2>5. Third-Party Links</h2>
-      <p>All news articles link to external publishers. We are not responsible for the privacy practices or content of those sites.</p>
-      <h2>6. Children's Privacy</h2>
-      <p>This site is not directed at children under 13. We do not knowingly collect data from children.</p>
-      <h2>7. Your Rights</h2>
-      <p>Depending on your location you may have rights under GDPR, CCPA, or other laws regarding your personal data held by third parties such as Google. Please refer to <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a> for details on data they collect.</p>
-      <h2>8. Changes to This Policy</h2>
-      <p>We may update this policy from time to time. Continued use of the site after changes constitutes acceptance of the updated policy.</p>
-      <h2>9. Contact</h2>
-      <p>Questions? Reach us via <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener">earnwithhatty.com</a>.</p>
+      <h2>1. Who We Are</h2><p>Hatty's News is operated by Hatty's Network. We aggregate publicly available RSS news feeds and display live financial data. Available at earnwithhatty.com and associated Netlify properties.</p>
+      <h2>2. Information We Collect</h2><p>We do not directly collect personally identifiable information. Third-party services may collect data automatically:</p>
+      <ul><li><strong>Google AdSense</strong> — displays personalised or non-personalised ads and may use cookies.</li><li><strong>Google Fonts & Google News</strong> — may log your IP address when content is loaded.</li><li><strong>CoinGecko</strong> — provides live crypto price data; your browser makes direct requests.</li><li><strong>RSS proxy services</strong> (rss2json.com, allorigins.win) — used to fetch news feeds; your IP may be logged.</li></ul>
+      <h2>3. Cookies</h2><p>We store two small items in your browser's localStorage: your selected country and your theme preference. These never leave your device. Google AdSense sets its own cookies. You can opt out at <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">google.com/settings/ads</a>.</p>
+      <h2>4. Your Rights</h2><p>Depending on your location you may have rights under GDPR, CCPA, or other laws. Please refer to <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a> for details on data they collect.</p>
+      <h2>5. Contact</h2><p>Questions? Reach us via <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener">earnwithhatty.com</a>.</p>
     </div>
   </div>
 </div>
 
-<!-- ══ TERMS OF SERVICE MODAL ══ -->
+<!-- TERMS OF SERVICE MODAL -->
 <div class="modal-wrap" id="modal-terms">
   <div class="modal-box">
-    <div class="modal-head">
-      <div class="modal-title">Terms of Service</div>
-      <button class="modal-close" onclick="closeModal('terms')">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
+    <div class="modal-head"><div class="modal-title">Terms of Service</div><button class="modal-close" onclick="closeModal('terms')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="modal-body">
       <p><em>Last updated: March 2026</em></p>
-      <h2>1. Acceptance of Terms</h2>
-      <p>By accessing or using Hatty's News you agree to be bound by these Terms of Service. If you do not agree, please do not use the site.</p>
-      <h2>2. Description of Service</h2>
-      <p>Hatty's News is a free news aggregator that fetches and displays publicly available RSS feeds from third-party publishers alongside live cryptocurrency and stock market data. We do not produce original news content.</p>
-      <h2>3. Content & Copyright</h2>
-      <p>All news headlines, summaries, and images are the property of their respective publishers. We display them via public RSS feeds in accordance with standard syndication practices. If you are a publisher and wish to have your feed removed, please contact us via earnwithhatty.com.</p>
-      <h2>4. Advertising</h2>
-      <p>This site displays advertisements served by Google AdSense. We are not responsible for the content of those advertisements. Ad revenue supports the continued operation of this free service.</p>
-      <h2>5. Financial Data Disclaimer</h2>
-      <p>Cryptocurrency and stock prices shown are for informational purposes only and may be delayed or inaccurate. Nothing on this site constitutes financial advice. Always consult a qualified financial adviser before making investment decisions.</p>
-      <h2>6. No Warranties</h2>
-      <p>This site is provided "as is" without warranties of any kind. We do not guarantee the accuracy, completeness, or availability of any content, data, or feeds displayed.</p>
-      <h2>7. Limitation of Liability</h2>
-      <p>To the fullest extent permitted by law, Hatty's Network shall not be liable for any indirect, incidental, or consequential damages arising from your use of this site.</p>
-      <h2>8. External Links</h2>
-      <p>We link to external news publishers and other Hatty's Network sites. We are not responsible for the content or availability of those external sites.</p>
-      <h2>9. Modifications</h2>
-      <p>We reserve the right to modify or discontinue the service at any time. We may update these terms; continued use of the site after changes constitutes acceptance.</p>
-      <h2>10. Governing Law</h2>
-      <p>These terms are governed by applicable law. Any disputes shall be resolved in the appropriate jurisdiction.</p>
-      <h2>11. Contact</h2>
-      <p>Questions about these terms? Contact us at <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener">earnwithhatty.com</a>.</p>
+      <h2>1. Acceptance of Terms</h2><p>By accessing or using Hatty's News you agree to be bound by these Terms. If you do not agree, please do not use the site.</p>
+      <h2>2. Description of Service</h2><p>Hatty's News is a free news aggregator that fetches and displays publicly available RSS feeds from third-party publishers alongside live cryptocurrency data. We do not produce original news content.</p>
+      <h2>3. Content & Copyright</h2><p>All news headlines, summaries, and images are the property of their respective publishers. We display them via public RSS feeds in accordance with standard syndication practices.</p>
+      <h2>4. Financial Data Disclaimer</h2><p>Cryptocurrency prices shown are for informational purposes only. Nothing on this site constitutes financial advice.</p>
+      <h2>5. No Warranties</h2><p>This site is provided "as is" without warranties of any kind. We do not guarantee the accuracy, completeness, or availability of any content.</p>
+      <h2>6. Contact</h2><p>Questions? Contact us at <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener">earnwithhatty.com</a>.</p>
     </div>
   </div>
 </div>
 
-<!-- ══ DRAWER ══ -->
+<!-- DRAWER -->
 <nav id="drw" aria-label="Navigation">
   <div style="background:var(--red);padding:1rem .9rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div>
@@ -270,62 +241,65 @@ button,select,input{min-height:36px}
   <div style="padding:.7rem .9rem;border-top:1px solid var(--border);font-size:.62rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;text-align:center">© 2026 HATTY'S NETWORK</div>
 </nav>
 
-<!-- ══ HEADER ══ -->
+<!-- HEADER -->
 <header id="hdr">
-  <div style="max-width:1440px;margin:0 auto;padding:.65rem 1rem">
-    <div style="display:flex;align-items:center;gap:.55rem">
+  <div style="max-width:1440px;margin:0 auto;padding:.55rem 1rem">
+    <!-- Desktop row -->
+    <div style="display:flex;align-items:center;gap:.5rem">
       <button class="ibtn" id="ham" aria-label="Menu">
         <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <a href="/" style="text-decoration:none;flex-shrink:0">
-        <span class="logo" style="font-size:1.45rem">HATTY'S <span style="opacity:.55">NEWS</span></span>
+        <span class="logo" style="font-size:1.4rem">HATTY'S <span style="opacity:.55">NEWS</span></span>
       </a>
-      <div style="display:flex;align-items:center;gap:.35rem;color:var(--ink-muted);font-size:.62rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;flex-shrink:0" class="hidden sm:flex">
-        <div class="ldot"></div>LIVE
+      <div style="display:flex;align-items:center;gap:.3rem;color:var(--ink-muted);font-size:.6rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;flex-shrink:0">
+        <div class="ldot"></div><span class="hidden sm:inline">LIVE</span>
       </div>
-      <div style="width:1px;height:20px;background:var(--border);flex-shrink:0" class="hidden sm:block"></div>
+      <!-- Search — takes remaining space -->
       <div style="flex:1;display:flex;gap:.35rem;min-width:0">
-        <input id="si" type="search" placeholder="Search headlines…" autocomplete="off" class="inp" style="flex:1;min-width:0;border-radius:6px;padding:.4rem .8rem;font-size:.8rem"/>
+        <input id="si" type="search" placeholder="Search headlines…" autocomplete="off" class="inp" style="flex:1;min-width:0;border-radius:6px;padding:.38rem .75rem;font-size:.8rem;height:36px"/>
         <button id="sb" class="ibtn" aria-label="Search">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         </button>
       </div>
-      <div style="display:flex;align-items:center;gap:.4rem;flex-shrink:0">
-        <select id="csel" class="inp" style="padding:.38rem .6rem;font-size:.76rem;border-radius:6px;cursor:pointer" class="hidden sm:block"></select>
-        <button class="ibtn" id="thbtn" aria-label="Theme" title="Toggle theme"><span id="thicon">☀️</span></button>
-        <button class="ibtn" id="rfbtn" aria-label="Refresh" title="Refresh">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        </button>
-      </div>
+      <!-- Desktop-only country select -->
+      <select id="csel" class="inp hidden md:block" style="padding:.35rem .6rem;font-size:.75rem;border-radius:6px;cursor:pointer;height:36px;flex-shrink:0"></select>
+      <button class="ibtn" id="thbtn" aria-label="Toggle theme"><span id="thicon">☀️</span></button>
+      <button class="ibtn" id="rfbtn" aria-label="Refresh">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
     </div>
   </div>
 </header>
 
-<!-- ══ MAIN ══ -->
-<div style="max-width:1440px;margin:0 auto;padding:1.1rem 1rem">
+<!-- BREAKING NEWS BAR -->
+<div id="breaking-bar" style="display:none">
+  <span class="blbl">BREAKING</span>
+  <div id="breaking-scroll"><div id="breaking-inner"></div></div>
+</div>
+
+<!-- MOBILE COUNTRY SCROLL BAR (below header, no overlap) -->
+<div id="mobile-country-bar" role="tablist" aria-label="Select country"></div>
+
+<!-- MAIN -->
+<div style="max-width:1440px;margin:0 auto;padding:1rem 1rem">
   <div style="display:flex;gap:1.1rem;align-items:flex-start">
-
     <main style="flex:1;min-width:0">
-      <!-- mobile picker -->
-      <div class="sm:hidden" style="margin-bottom:.75rem">
-        <select id="csel-m" class="inp" style="width:100%;padding:.4rem .65rem;font-size:.8rem;border-radius:6px;cursor:pointer"></select>
-      </div>
 
-      <!-- title row -->
+      <!-- Title row -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;flex-wrap:wrap;gap:.4rem">
         <div>
-          <h1 id="clbl" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.75rem;letter-spacing:.08em;line-height:1;text-shadow:0 0 18px rgba(220,38,38,.12)">TOP HEADLINES</h1>
+          <h1 id="clbl" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.75rem;letter-spacing:.08em;line-height:1">TOP HEADLINES</h1>
           <p id="acnt" style="font-size:.65rem;color:var(--ink-muted);margin-top:.22rem;font-family:'IBM Plex Mono',monospace"></p>
         </div>
       </div>
 
-      <!-- feed status -->
+      <!-- Feed status -->
       <div id="fsb"></div>
-      <!-- coverage note -->
       <div id="covn" class="covn" style="display:none"></div>
 
-      <!-- category pills -->
-      <div style="display:flex;gap:.35rem;overflow-x:auto;padding-bottom:.45rem;margin-bottom:.45rem;-webkit-overflow-scrolling:touch">
+      <!-- Category pills -->
+      <div style="display:flex;gap:.35rem;overflow-x:auto;padding-bottom:.45rem;margin-bottom:.45rem;-webkit-overflow-scrolling:touch;scrollbar-width:none">
         <button class="fp on" data-cat="general">🌍 ALL</button>
         <button class="fp" data-cat="world">🗺 WORLD</button>
         <button class="fp" data-cat="business">💼 BUSINESS</button>
@@ -336,10 +310,10 @@ button,select,input{min-height:36px}
         <button class="fp" data-cat="entertainment">🎬 ENTS</button>
       </div>
 
-      <!-- source bar -->
+      <!-- Source bar -->
       <div id="srcbar" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem"></div>
 
-      <!-- grid -->
+      <!-- Grid -->
       <div id="grid" aria-live="polite"></div>
       <div id="lsp" style="display:none;justify-content:center;padding:3rem"><div class="spin"></div></div>
       <div id="nores">
@@ -350,31 +324,31 @@ button,select,input{min-height:36px}
       </div>
     </main>
 
-    <!-- ══ SIDEBAR ══ -->
+    <!-- SIDEBAR -->
     <aside style="width:216px;flex-shrink:0" class="hidden lg:block">
       <div class="sbox">
         <div class="stitle">🌐 COUNTRIES</div>
         <p style="font-size:.6rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;margin-bottom:.55rem;letter-spacing:.04em">CLICK TO SWITCH</p>
-        <div id="clist" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:.08rem"></div>
+        <div id="clist" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:.08rem"></div>
         <div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)">
           <div style="font-size:.56rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;margin-bottom:.35rem">COVERAGE KEY</div>
           <div style="display:flex;flex-direction:column;gap:.28rem;font-size:.63rem;color:var(--ink-muted)">
             <span><span class="qb qs" style="margin-right:.25rem">STR</span>Dedicated local English RSS</span>
-            <span><span class="qb qg" style="margin-right:.25rem">GD</span>Reliable int'l coverage</span>
-            <span><span class="qb ql" style="margin-right:.25rem">LTD</span>Best available, noted</span>
+            <span><span class="qb qg" style="margin-right:.25rem">GD</span>Reliable int'l + Google News</span>
+            <span><span class="qb ql" style="margin-right:.25rem">LTD</span>Google News + best available</span>
           </div>
         </div>
       </div>
       <div class="sbox">
         <div class="stitle">📡 SOURCES</div>
-        <p style="font-size:.69rem;color:var(--ink-muted);line-height:1.65">50+ named outlets: BBC, Reuters, AP, Al Jazeera, SCMP, NHK, DW, France 24, CBC, ABC AUS, The Guardian, Sky News, NPR, CNN, The Verge, Wired, Ars Technica, TechCrunch, ESPN, CNA, and more. Feed status shown live after load.</p>
+        <p style="font-size:.69rem;color:var(--ink-muted);line-height:1.65">60+ named outlets including BBC, Reuters, AP, Al Jazeera, NHK, DW, France 24, CBC, ABC AUS, The Guardian, Sky News, NPR, CNN, CNA, Google News per-country RSS, and more. Sources shown live after load.</p>
       </div>
     </aside>
   </div>
 </div>
 
-<!-- ══ FOOTER ══ -->
-<footer style="border-top:1px solid var(--border);margin-bottom:56px;padding:1.25rem 1rem;text-align:center">
+<!-- FOOTER -->
+<footer style="border-top:1px solid var(--border);margin-bottom:60px;padding:1.25rem 1rem;text-align:center">
   <div style="max-width:1440px;margin:0 auto">
     <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.9rem;margin-bottom:.75rem">
       <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🏠 EarnWithHatty</a>
@@ -382,7 +356,7 @@ button,select,input{min-height:36px}
       <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🔒 Privacy Gadgets</a>
       <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🌌 Hatty's Universe</a>
     </div>
-    <p style="font-size:.62rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em">© 2026 HATTY'S NETWORK · 50+ VERIFIED PUBLIC RSS SOURCES · NOT RESPONSIBLE FOR EXTERNAL CONTENT</p>
+    <p style="font-size:.62rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em">© 2026 HATTY'S NETWORK · 60+ VERIFIED PUBLIC RSS SOURCES · NOT RESPONSIBLE FOR EXTERNAL CONTENT</p>
     <div style="display:flex;justify-content:center;gap:1.2rem;margin-top:.6rem">
       <a onclick="openModal('privacy')" style="color:var(--ink-faint);font-size:.62rem;font-family:'IBM Plex Mono',monospace;cursor:pointer;text-decoration:underline">Privacy Policy</a>
       <a onclick="openModal('terms')" style="color:var(--ink-faint);font-size:.62rem;font-family:'IBM Plex Mono',monospace;cursor:pointer;text-decoration:underline">Terms of Service</a>
@@ -390,7 +364,7 @@ button,select,input{min-height:36px}
   </div>
 </footer>
 
-<!-- ══ TICKERS ══ -->
+<!-- CRYPTO TICKER -->
 <div id="tickers">
   <div class="trow">
     <div class="tlbl cr">CRYPTO</div>
@@ -402,434 +376,1059 @@ button,select,input{min-height:36px}
 
 <script>
 'use strict';
-/* ══ FEED DATA ══════════════════════════════════════════════ */
-const FEEDS={
-us:[
-  {n:'AP News',u:'https://feeds.apnews.com/rss/apf-topnews',c:'general'},
-  {n:'AP Politics',u:'https://feeds.apnews.com/rss/apf-politics',c:'world'},
-  {n:'NPR',u:'https://feeds.npr.org/1001/rss.xml',c:'general'},
-  {n:'NPR World',u:'https://feeds.npr.org/1004/rss.xml',c:'world'},
-  {n:'NPR Business',u:'https://feeds.npr.org/1006/rss.xml',c:'business'},
-  {n:'NPR Science',u:'https://feeds.npr.org/1007/rss.xml',c:'science'},
-  {n:'NPR Health',u:'https://feeds.npr.org/1128/rss.xml',c:'health'},
-  {n:'CNN',u:'http://rss.cnn.com/rss/edition.rss',c:'general'},
-  {n:'CNN World',u:'http://rss.cnn.com/rss/edition_world.rss',c:'world'},
-  {n:'CNN Business',u:'http://rss.cnn.com/rss/edition_business.rss',c:'business'},
-  {n:'CNN Tech',u:'http://rss.cnn.com/rss/edition_technology.rss',c:'technology'},
-  {n:'CBS News',u:'https://www.cbsnews.com/latest/rss/main',c:'general'},
-  {n:'ABC News',u:'https://abcnews.go.com/abcnews/topstories',c:'general'},
-  {n:'PBS NewsHour',u:'https://www.pbs.org/newshour/feeds/rss/headlines',c:'general'},
-  {n:'The Hill',u:'https://thehill.com/homenews/feed/',c:'general'},
-  {n:'Wired',u:'https://www.wired.com/feed/rss',c:'technology'},
-  {n:'TechCrunch',u:'https://techcrunch.com/feed',c:'technology'},
-  {n:'Ars Technica',u:'http://feeds.arstechnica.com/arstechnica/index/',c:'technology'},
-  {n:'The Verge',u:'https://www.theverge.com/rss/index.xml',c:'technology'},
-  {n:'VentureBeat',u:'https://venturebeat.com/feed/',c:'technology'},
-  {n:'ESPN',u:'https://www.espn.com/espn/rss/news',c:'sports'},
-  {n:'MarketWatch',u:'https://www.marketwatch.com/rss/topstories',c:'business'},
-  {n:'The Economist',u:'https://www.economist.com/latest/rss.xml',c:'business'},
-],
-gb:[
-  {n:'BBC News',u:'http://feeds.bbci.co.uk/news/rss.xml',c:'general'},
-  {n:'BBC World',u:'http://feeds.bbci.co.uk/news/world/rss.xml',c:'world'},
-  {n:'BBC Business',u:'http://feeds.bbci.co.uk/news/business/rss.xml',c:'business'},
-  {n:'BBC Tech',u:'http://feeds.bbci.co.uk/news/technology/rss.xml',c:'technology'},
-  {n:'BBC Science',u:'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml',c:'science'},
-  {n:'BBC Health',u:'http://feeds.bbci.co.uk/news/health/rss.xml',c:'health'},
-  {n:'BBC Sport',u:'http://feeds.bbci.co.uk/sport/rss.xml',c:'sports'},
-  {n:'BBC Politics',u:'http://feeds.bbci.co.uk/news/politics/rss.xml',c:'world'},
-  {n:'The Guardian',u:'https://www.theguardian.com/uk/rss',c:'general'},
-  {n:'Guardian World',u:'https://www.theguardian.com/world/rss',c:'world'},
-  {n:'Guardian Tech',u:'https://www.theguardian.com/technology/rss',c:'technology'},
-  {n:'Guardian Science',u:'https://www.theguardian.com/science/rss',c:'science'},
-  {n:'Sky News',u:'https://feeds.skynews.com/feeds/rss/home.xml',c:'general'},
-  {n:'Sky World',u:'https://feeds.skynews.com/feeds/rss/world.xml',c:'world'},
-  {n:'The Register',u:'https://www.theregister.com/headlines.atom',c:'technology'},
-],
-ca:[
-  {n:'CBC Top',u:'https://www.cbc.ca/cmlink/rss-topstories',c:'general'},
-  {n:'CBC World',u:'https://www.cbc.ca/cmlink/rss-world',c:'world'},
-  {n:'CBC Business',u:'https://www.cbc.ca/cmlink/rss-business',c:'business'},
-  {n:'CBC Tech',u:'https://www.cbc.ca/cmlink/rss-technology',c:'technology'},
-  {n:'CBC Sports',u:'https://www.cbc.ca/cmlink/rss-sports',c:'sports'},
-  {n:'CBC Health',u:'https://www.cbc.ca/cmlink/rss-health',c:'health'},
-  {n:'Globe & Mail',u:'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/',c:'general'},
-],
-au:[
-  {n:'ABC Australia',u:'https://www.abc.net.au/news/feed/51120/rss.xml',c:'general'},
-  {n:'ABC World',u:'https://www.abc.net.au/news/feed/51892/rss.xml',c:'world'},
-  {n:'ABC Science',u:'https://www.abc.net.au/news/feed/52498/rss.xml',c:'science'},
-  {n:'ABC Sport',u:'https://www.abc.net.au/news/feed/52278/rss.xml',c:'sports'},
-  {n:'ABC Business',u:'https://www.abc.net.au/news/feed/52309/rss.xml',c:'business'},
-  {n:'SBS News',u:'https://www.sbs.com.au/news/feed',c:'general'},
-],
-de:[
-  {n:'DW Top',u:'https://rss.dw.com/rdf/rss-en-all',c:'general'},
-  {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
-  {n:'DW World',u:'https://rss.dw.com/xml/rss-en-world',c:'world'},
-  {n:'DW Business',u:'https://rss.dw.com/xml/rss-en-eco',c:'business'},
-  {n:'DW Science',u:'https://rss.dw.com/xml/rss-en-sci',c:'science'},
-  {n:'DW Sport',u:'https://rss.dw.com/xml/rss-en-sport',c:'sports'},
-],
-fr:[
-  {n:'France 24',u:'https://www.france24.com/en/rss',c:'general'},
-  {n:'France 24 World',u:'https://www.france24.com/en/world/rss',c:'world'},
-  {n:'France 24 Economy',u:'https://www.france24.com/en/economy/rss',c:'business'},
-  {n:'France 24 Tech',u:'https://www.france24.com/en/tech-science/rss',c:'technology'},
-  {n:'France 24 Sport',u:'https://www.france24.com/en/sport/rss',c:'sports'},
-  {n:'RFI English',u:'https://en.rfi.fr/rss',c:'general'},
-],
-jp:[
-  {n:'NHK World',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/all.xml',c:'general'},
-  {n:'NHK Business',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/business.xml',c:'business'},
-  {n:'NHK Science',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/science.xml',c:'science'},
-  {n:'Japan Times',u:'https://www.japantimes.co.jp/feed',c:'general'},
-  {n:'Diplomat Japan',u:'https://thediplomat.com/regions/japan/feed',c:'world'},
-],
-in:[
-  {n:'The Hindu',u:'https://www.thehindu.com/feeder/default.rss',c:'general'},
-  {n:'Hindu Business',u:'https://www.thehindu.com/business/feeder/default.rss',c:'business'},
-  {n:'Hindu Science',u:'https://www.thehindu.com/sci-tech/science/feeder/default.rss',c:'science'},
-  {n:'Times of India',u:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms',c:'general'},
-  {n:'Economic Times',u:'https://economictimes.indiatimes.com/rssfeedstopstories.cms',c:'business'},
-  {n:'NDTV',u:'https://feeds.feedburner.com/ndtvnews-top-stories',c:'general'},
-],
-sg:[
-  {n:'CNA',u:'https://www.channelnewsasia.com/rssfeeds/8395884',c:'general'},
-  {n:'CNA Asia',u:'https://www.channelnewsasia.com/rssfeeds/8395910',c:'world'},
-  {n:'CNA Business',u:'https://www.channelnewsasia.com/rssfeeds/8395952',c:'business'},
-  {n:'CNA Tech',u:'https://www.channelnewsasia.com/rssfeeds/8395968',c:'technology'},
-  {n:'Diplomat SE Asia',u:'https://thediplomat.com/regions/southeast-asia/feed',c:'world'},
-],
-ae:[
-  {n:'Gulf News',u:'https://gulfnews.com/rss/news',c:'general'},
-  {n:'The National',u:'https://www.thenationalnews.com/rss/home.xml',c:'general'},
-  {n:'Khaleej Times',u:'https://www.khaleejtimes.com/rss',c:'general'},
-],
-za:[
-  {n:'Daily Maverick',u:'https://www.dailymaverick.co.za/feed',c:'general'},
-  {n:'News24',u:'https://feeds.news24.com/articles/news24/TopStories/rss',c:'general'},
-],
-ng:[
-  {n:'Punch Nigeria',u:'https://punchng.com/feed',c:'general'},
-  {n:'Vanguard NG',u:'https://www.vanguardngr.com/feed',c:'general'},
-  {n:'Premium Times',u:'https://www.premiumtimesng.com/feed',c:'general'},
-],
-ke:[{n:'Nation Africa',u:'https://nation.africa/kenya/rss.xml',c:'general'}],
-it:[
-  {n:'ANSA English',u:'https://www.ansa.it/sito/ansait_rss.xml',c:'general'},
-  {n:'The Local Italy',u:'https://feeds.thelocal.com/rss/it',c:'general'},
-],
-es:[
-  {n:'El País English',u:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada',c:'general'},
-  {n:'The Local Spain',u:'https://feeds.thelocal.com/rss/es',c:'general'},
-],
-nl:[
-  {n:'DutchNews.nl',u:'https://www.dutchnews.nl/feed',c:'general'},
-  {n:'The Local NL',u:'https://feeds.thelocal.com/rss/nl',c:'general'},
-],
-se:[{n:'The Local SE',u:'https://feeds.thelocal.com/rss/se',c:'general'}],
-no:[
-  {n:'Norway Today',u:'https://norwaytoday.info/feed',c:'general'},
-  {n:'The Local NO',u:'https://feeds.thelocal.com/rss/no',c:'general'},
-],
-nz:[
-  {n:'RNZ',u:'https://www.rnz.co.nz/rss/national.xml',c:'general'},
-  {n:'RNZ World',u:'https://www.rnz.co.nz/rss/world.xml',c:'world'},
-  {n:'Stuff NZ',u:'https://www.stuff.co.nz/rss',c:'general'},
-],
-cn:[
-  {n:'SCMP China',u:'https://www.scmp.com/rss/4/feed',c:'general'},
-  {n:'SCMP HK',u:'https://www.scmp.com/rss/2/feed',c:'general'},
-  {n:'BBC China',u:'http://feeds.bbci.co.uk/news/world/asia/china/rss.xml',c:'world'},
-  {n:'Diplomat China',u:'https://thediplomat.com/regions/east-asia/feed',c:'world'},
-],
-ru:[
-  {n:'Moscow Times',u:'https://www.themoscowtimes.com/rss/news',c:'general'},
-  {n:'BBC Europe',u:'http://feeds.bbci.co.uk/news/world/europe/rss.xml',c:'world'},
-  {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
-],
-br:[
-  {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general'},
-  {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
-],
-mx:[
-  {n:'Mexico News Daily',u:'https://mexiconewsdaily.com/feed',c:'general'},
-  {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
-],
-ar:[
-  {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general'},
-  {n:'Buenos Aires Herald',u:'https://buenosairesherald.com/feed',c:'general'},
-],
-eg:[
-  {n:'Al-Ahram',u:'https://english.ahram.org.eg/RSS/1.aspx',c:'general'},
-  {n:'Egypt Independent',u:'https://www.egyptindependent.com/feed',c:'general'},
-],
-_world:[
-  {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'},
-  {n:'Al Jazeera Sport',u:'https://www.aljazeera.com/xml/rss/sport.xml',c:'sports'},
-  {n:'BBC World',u:'http://feeds.bbci.co.uk/news/world/rss.xml',c:'world'},
-  {n:'AP Intl',u:'https://feeds.apnews.com/rss/apf-intlnews',c:'world'},
-  {n:'Reuters World',u:'https://feeds.reuters.com/reuters/worldNews',c:'world'},
-  {n:'France 24 Top',u:'https://www.france24.com/en/top-stories/rss',c:'general'},
-  {n:'DW World',u:'https://rss.dw.com/xml/rss-en-world',c:'world'},
-  {n:'The Economist',u:'https://www.economist.com/latest/rss.xml',c:'business'},
-  {n:'VOA News',u:'https://www.voanews.com/api/zmorq$epiqy',c:'world'},
-  {n:'Global Voices',u:'https://globalvoices.org/feed',c:'world'},
-  {n:'RFE/RL',u:'https://www.rferl.org/api/zyr$piv',c:'world'},
-]};
 
-const COV={us:'strong',gb:'strong',ca:'strong',au:'strong',de:'strong',fr:'strong',jp:'strong',nz:'strong',in:'good',sg:'good',ae:'good',za:'good',ng:'good',ke:'good',it:'good',es:'good',nl:'good',se:'good',no:'good',cn:'limited',ru:'limited',br:'limited',mx:'limited',ar:'limited',eg:'limited'};
-const COVNOTE={cn:'SCMP, BBC & The Diplomat. Mainland state feeds unreliable via public proxies.',ru:'Moscow Times, BBC Europe & DW. RT/TASS blocked by most CORS proxies.',br:'MercoPress & Latin Dispatch. Major Brazilian papers publish in Portuguese only.',mx:'Mexico News Daily & Latin Dispatch.',ar:'MercoPress & Buenos Aires Herald.',eg:'Al-Ahram English & Egypt Independent.'};
-const COUNTRIES=[
+/* ══════════════════════════════════════════════════════════════
+   COUNTRY-SPECIFIC FEED DATABASE
+   Each country has ONLY its own local/national sources.
+   Google News RSS is used as the primary guaranteed source per country.
+   Format: {n: name, u: url, c: category, primary: bool}
+══════════════════════════════════════════════════════════════ */
+const FEEDS = {
+
+  /* ─── UNITED STATES ─── */
+  us: [
+    // Google News USA — guaranteed country-specific
+    {n:'Google News US',u:'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',c:'general',primary:true},
+    {n:'Google News US Top',u:'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en',c:'general'},
+    // US National sources
+    {n:'AP News',u:'https://feeds.apnews.com/rss/apf-topnews',c:'general'},
+    {n:'AP Politics',u:'https://feeds.apnews.com/rss/apf-politics',c:'world'},
+    {n:'NPR',u:'https://feeds.npr.org/1001/rss.xml',c:'general'},
+    {n:'NPR News',u:'https://feeds.npr.org/1004/rss.xml',c:'world'},
+    {n:'CNN',u:'http://rss.cnn.com/rss/edition.rss',c:'general'},
+    {n:'CNN Business',u:'http://rss.cnn.com/rss/edition_business.rss',c:'business'},
+    {n:'CBS News',u:'https://www.cbsnews.com/latest/rss/main',c:'general'},
+    {n:'ABC News',u:'https://abcnews.go.com/abcnews/topstories',c:'general'},
+    {n:'PBS NewsHour',u:'https://www.pbs.org/newshour/feeds/rss/headlines',c:'general'},
+    {n:'USA Today',u:'https://rssfeeds.usatoday.com/usatoday-NewsTopStories',c:'general'},
+    {n:'Washington Post',u:'https://feeds.washingtonpost.com/rss/national',c:'general'},
+    {n:'NY Times',u:'https://rss.nytimes.com/services/xml/rss/nf/HomePage.xml',c:'general'},
+    {n:'The Hill',u:'https://thehill.com/homenews/feed/',c:'general'},
+    {n:'LA Times',u:'https://www.latimes.com/rss2.0.xml',c:'general'},
+    {n:'Politico',u:'https://www.politico.com/rss/politicopicks.xml',c:'world'},
+    {n:'Wired',u:'https://www.wired.com/feed/rss',c:'technology'},
+    {n:'TechCrunch',u:'https://techcrunch.com/feed',c:'technology'},
+    {n:'Ars Technica',u:'http://feeds.arstechnica.com/arstechnica/index/',c:'technology'},
+    {n:'The Verge',u:'https://www.theverge.com/rss/index.xml',c:'technology'},
+    {n:'ESPN',u:'https://www.espn.com/espn/rss/news',c:'sports'},
+    {n:'MarketWatch',u:'https://www.marketwatch.com/rss/topstories',c:'business'},
+    {n:'Bloomberg',u:'https://feeds.bloomberg.com/markets/news.rss',c:'business'},
+  ],
+
+  /* ─── UNITED KINGDOM ─── */
+  gb: [
+    {n:'Google News UK',u:'https://news.google.com/rss?hl=en-GB&gl=GB&ceid=GB:en',c:'general',primary:true},
+    {n:'BBC News',u:'http://feeds.bbci.co.uk/news/rss.xml',c:'general'},
+    {n:'BBC UK',u:'http://feeds.bbci.co.uk/news/uk/rss.xml',c:'general'},
+    {n:'BBC Business',u:'http://feeds.bbci.co.uk/news/business/rss.xml',c:'business'},
+    {n:'BBC Tech',u:'http://feeds.bbci.co.uk/news/technology/rss.xml',c:'technology'},
+    {n:'BBC Science',u:'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml',c:'science'},
+    {n:'BBC Health',u:'http://feeds.bbci.co.uk/news/health/rss.xml',c:'health'},
+    {n:'BBC Sport',u:'http://feeds.bbci.co.uk/sport/rss.xml',c:'sports'},
+    {n:'BBC Politics',u:'http://feeds.bbci.co.uk/news/politics/rss.xml',c:'world'},
+    {n:'The Guardian UK',u:'https://www.theguardian.com/uk/rss',c:'general'},
+    {n:'Guardian Politics',u:'https://www.theguardian.com/politics/rss',c:'world'},
+    {n:'Guardian Tech',u:'https://www.theguardian.com/technology/rss',c:'technology'},
+    {n:'Guardian Science',u:'https://www.theguardian.com/science/rss',c:'science'},
+    {n:'Sky News',u:'https://feeds.skynews.com/feeds/rss/home.xml',c:'general'},
+    {n:'Sky News UK',u:'https://feeds.skynews.com/feeds/rss/uk.xml',c:'general'},
+    {n:'The Independent',u:'https://www.independent.co.uk/rss',c:'general'},
+    {n:'The Register',u:'https://www.theregister.com/headlines.atom',c:'technology'},
+    {n:'The Economist',u:'https://www.economist.com/latest/rss.xml',c:'business'},
+  ],
+
+  /* ─── CANADA ─── */
+  ca: [
+    {n:'Google News CA',u:'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',c:'general',primary:true},
+    {n:'CBC Top Stories',u:'https://www.cbc.ca/cmlink/rss-topstories',c:'general'},
+    {n:'CBC Canada',u:'https://www.cbc.ca/cmlink/rss-canada',c:'general'},
+    {n:'CBC World',u:'https://www.cbc.ca/cmlink/rss-world',c:'world'},
+    {n:'CBC Business',u:'https://www.cbc.ca/cmlink/rss-business',c:'business'},
+    {n:'CBC Tech',u:'https://www.cbc.ca/cmlink/rss-technology',c:'technology'},
+    {n:'CBC Sports',u:'https://www.cbc.ca/cmlink/rss-sports',c:'sports'},
+    {n:'CBC Health',u:'https://www.cbc.ca/cmlink/rss-health',c:'health'},
+    {n:'Global News',u:'https://globalnews.ca/feed/',c:'general'},
+    {n:'Globe & Mail',u:'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/',c:'general'},
+    {n:'Toronto Star',u:'https://www.thestar.com/content/thestar/feed.topstories.rss',c:'general'},
+    {n:'National Post',u:'https://nationalpost.com/feed',c:'general'},
+    {n:'CTV News',u:'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009',c:'general'},
+  ],
+
+  /* ─── AUSTRALIA ─── */
+  au: [
+    {n:'Google News AU',u:'https://news.google.com/rss?hl=en-AU&gl=AU&ceid=AU:en',c:'general',primary:true},
+    {n:'ABC Australia',u:'https://www.abc.net.au/news/feed/51120/rss.xml',c:'general'},
+    {n:'ABC World',u:'https://www.abc.net.au/news/feed/51892/rss.xml',c:'world'},
+    {n:'ABC Science',u:'https://www.abc.net.au/news/feed/52498/rss.xml',c:'science'},
+    {n:'ABC Sport',u:'https://www.abc.net.au/news/feed/52278/rss.xml',c:'sports'},
+    {n:'ABC Business',u:'https://www.abc.net.au/news/feed/52309/rss.xml',c:'business'},
+    {n:'ABC Health',u:'https://www.abc.net.au/news/feed/52456/rss.xml',c:'health'},
+    {n:'SBS News',u:'https://www.sbs.com.au/news/feed',c:'general'},
+    {n:'The Age',u:'https://www.theage.com.au/rss/feed.xml',c:'general'},
+    {n:'Sydney Morning Herald',u:'https://www.smh.com.au/rss/feed.xml',c:'general'},
+    {n:'The Australian',u:'https://www.theaustralian.com.au/feed',c:'general'},
+    {n:'Sky News AU',u:'https://www.skynews.com.au/feed',c:'general'},
+    {n:'Herald Sun',u:'https://www.heraldsun.com.au/feed',c:'general'},
+  ],
+
+  /* ─── NEW ZEALAND ─── */
+  nz: [
+    {n:'Google News NZ',u:'https://news.google.com/rss?hl=en-NZ&gl=NZ&ceid=NZ:en',c:'general',primary:true},
+    {n:'RNZ National',u:'https://www.rnz.co.nz/rss/national.xml',c:'general'},
+    {n:'RNZ World',u:'https://www.rnz.co.nz/rss/world.xml',c:'world'},
+    {n:'RNZ Business',u:'https://www.rnz.co.nz/rss/business.xml',c:'business'},
+    {n:'RNZ Sport',u:'https://www.rnz.co.nz/rss/sport.xml',c:'sports'},
+    {n:'Stuff NZ',u:'https://www.stuff.co.nz/rss',c:'general'},
+    {n:'NZ Herald',u:'https://www.nzherald.co.nz/arc/outboundfeeds/rss/',c:'general'},
+    {n:'1News NZ',u:'https://www.1news.co.nz/rss',c:'general'},
+  ],
+
+  /* ─── GERMANY ─── */
+  de: [
+    {n:'Google News DE',u:'https://news.google.com/rss?hl=en-DE&gl=DE&ceid=DE:de',c:'general',primary:true},
+    {n:'DW Top',u:'https://rss.dw.com/rdf/rss-en-all',c:'general'},
+    {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
+    {n:'DW Germany',u:'https://rss.dw.com/xml/rss-en-ger',c:'general'},
+    {n:'DW Business',u:'https://rss.dw.com/xml/rss-en-eco',c:'business'},
+    {n:'DW Science',u:'https://rss.dw.com/xml/rss-en-sci',c:'science'},
+    {n:'DW Sport',u:'https://rss.dw.com/xml/rss-en-sport',c:'sports'},
+    {n:'DW Culture',u:'https://rss.dw.com/xml/rss-en-cul',c:'entertainment'},
+    {n:'Local Germany',u:'https://feeds.thelocal.com/rss/de',c:'general'},
+    {n:'EURACTIV',u:'https://www.euractiv.com/feed/',c:'world'},
+  ],
+
+  /* ─── FRANCE ─── */
+  fr: [
+    {n:'Google News FR',u:'https://news.google.com/rss?hl=fr&gl=FR&ceid=FR:fr',c:'general',primary:true},
+    {n:'France 24 Top',u:'https://www.france24.com/en/top-stories/rss',c:'general'},
+    {n:'France 24',u:'https://www.france24.com/en/rss',c:'general'},
+    {n:'France 24 France',u:'https://www.france24.com/en/france/rss',c:'general'},
+    {n:'France 24 World',u:'https://www.france24.com/en/world/rss',c:'world'},
+    {n:'France 24 Economy',u:'https://www.france24.com/en/economy/rss',c:'business'},
+    {n:'France 24 Tech',u:'https://www.france24.com/en/tech-science/rss',c:'technology'},
+    {n:'France 24 Sport',u:'https://www.france24.com/en/sport/rss',c:'sports'},
+    {n:'RFI English',u:'https://en.rfi.fr/rss',c:'general'},
+    {n:'The Local France',u:'https://feeds.thelocal.com/rss/fr',c:'general'},
+  ],
+
+  /* ─── JAPAN ─── */
+  jp: [
+    {n:'Google News JP',u:'https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja',c:'general',primary:true},
+    {n:'NHK World',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/all.xml',c:'general'},
+    {n:'NHK Business',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/business.xml',c:'business'},
+    {n:'NHK Science',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/science.xml',c:'science'},
+    {n:'NHK Sport',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/sport.xml',c:'sports'},
+    {n:'Japan Times',u:'https://www.japantimes.co.jp/feed',c:'general'},
+    {n:'Kyodo News',u:'https://english.kyodonews.net/rss/all.xml',c:'general'},
+    {n:'Diplomat Japan',u:'https://thediplomat.com/regions/japan/feed',c:'world'},
+    {n:'Asahi Shimbun',u:'https://www.asahi.com/rss/asahi/newsheadlines.rdf',c:'general'},
+    {n:'Nikkei Asia',u:'https://asia.nikkei.com/rss/feed/nar',c:'business'},
+  ],
+
+  /* ─── INDIA ─── */
+  in: [
+    {n:'Google News IN',u:'https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en',c:'general',primary:true},
+    {n:'The Hindu',u:'https://www.thehindu.com/feeder/default.rss',c:'general'},
+    {n:'Hindu Business',u:'https://www.thehindu.com/business/feeder/default.rss',c:'business'},
+    {n:'Hindu Science',u:'https://www.thehindu.com/sci-tech/science/feeder/default.rss',c:'science'},
+    {n:'Times of India',u:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms',c:'general'},
+    {n:'TOI India',u:'https://timesofindia.indiatimes.com/rssfeeds/296589292.cms',c:'general'},
+    {n:'Economic Times',u:'https://economictimes.indiatimes.com/rssfeedstopstories.cms',c:'business'},
+    {n:'NDTV',u:'https://feeds.feedburner.com/ndtvnews-top-stories',c:'general'},
+    {n:'NDTV India',u:'https://feeds.feedburner.com/ndtvnews-india-news',c:'general'},
+    {n:'Indian Express',u:'https://indianexpress.com/feed/',c:'general'},
+    {n:'Hindustan Times',u:'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml',c:'general'},
+    {n:'India Today',u:'https://www.indiatoday.in/rss/home',c:'general'},
+    {n:'The Wire',u:'https://thewire.in/feed',c:'general'},
+    {n:'Deccan Herald',u:'https://www.deccanherald.com/rss-feed/india-news/rss',c:'general'},
+  ],
+
+  /* ─── SINGAPORE ─── */
+  sg: [
+    {n:'Google News SG',u:'https://news.google.com/rss?hl=en-SG&gl=SG&ceid=SG:en',c:'general',primary:true},
+    {n:'CNA',u:'https://www.channelnewsasia.com/rssfeeds/8395884',c:'general'},
+    {n:'CNA Singapore',u:'https://www.channelnewsasia.com/rssfeeds/8395890',c:'general'},
+    {n:'CNA Asia',u:'https://www.channelnewsasia.com/rssfeeds/8395910',c:'world'},
+    {n:'CNA Business',u:'https://www.channelnewsasia.com/rssfeeds/8395952',c:'business'},
+    {n:'CNA Tech',u:'https://www.channelnewsasia.com/rssfeeds/8395968',c:'technology'},
+    {n:'CNA Sport',u:'https://www.channelnewsasia.com/rssfeeds/8395972',c:'sports'},
+    {n:'Straits Times',u:'https://www.straitstimes.com/news/singapore/rss.xml',c:'general'},
+    {n:'TODAY Online',u:'https://www.todayonline.com/rss',c:'general'},
+    {n:'Diplomat SE Asia',u:'https://thediplomat.com/regions/southeast-asia/feed',c:'world'},
+  ],
+
+  /* ─── UAE ─── */
+  ae: [
+    {n:'Google News AE',u:'https://news.google.com/rss?hl=en-AE&gl=AE&ceid=AE:en',c:'general',primary:true},
+    {n:'Gulf News',u:'https://gulfnews.com/rss/news',c:'general'},
+    {n:'The National UAE',u:'https://www.thenationalnews.com/rss/home.xml',c:'general'},
+    {n:'Khaleej Times',u:'https://www.khaleejtimes.com/rss',c:'general'},
+    {n:'Arabian Business',u:'https://www.arabianbusiness.com/rss',c:'business'},
+    {n:'Emirates 24|7',u:'https://www.emirates247.com/rss',c:'general'},
+    {n:'Gulf Business',u:'https://gulfbusiness.com/feed/',c:'business'},
+  ],
+
+  /* ─── SOUTH AFRICA ─── */
+  za: [
+    {n:'Google News ZA',u:'https://news.google.com/rss?hl=en-ZA&gl=ZA&ceid=ZA:en',c:'general',primary:true},
+    {n:'Daily Maverick',u:'https://www.dailymaverick.co.za/feed',c:'general'},
+    {n:'News24',u:'https://feeds.news24.com/articles/news24/TopStories/rss',c:'general'},
+    {n:'TimesLive',u:'https://www.timeslive.co.za/rss/',c:'general'},
+    {n:'IOL',u:'https://www.iol.co.za/rss',c:'general'},
+    {n:'Business Day',u:'https://www.businesslive.co.za/rss/bd/',c:'business'},
+    {n:'Mail & Guardian',u:'https://mg.co.za/feed/',c:'general'},
+    {n:'eNCA',u:'https://www.enca.com/rss.xml',c:'general'},
+  ],
+
+  /* ─── NIGERIA ─── */
+  ng: [
+    {n:'Google News NG',u:'https://news.google.com/rss?hl=en-NG&gl=NG&ceid=NG:en',c:'general',primary:true},
+    {n:'Punch Nigeria',u:'https://punchng.com/feed',c:'general'},
+    {n:'Vanguard NG',u:'https://www.vanguardngr.com/feed',c:'general'},
+    {n:'Premium Times',u:'https://www.premiumtimesng.com/feed',c:'general'},
+    {n:'The Guardian NG',u:'https://guardian.ng/feed/',c:'general'},
+    {n:'Channels TV',u:'https://www.channelstv.com/feed/',c:'general'},
+    {n:'This Day',u:'https://www.thisdaylive.com/feed/',c:'general'},
+    {n:'Sahara Reporters',u:'https://saharareporters.com/rss.xml',c:'general'},
+    {n:'Business Day NG',u:'https://businessday.ng/feed/',c:'business'},
+  ],
+
+  /* ─── KENYA ─── */
+  ke: [
+    {n:'Google News KE',u:'https://news.google.com/rss?hl=en-KE&gl=KE&ceid=KE:en',c:'general',primary:true},
+    {n:'Nation Africa',u:'https://nation.africa/kenya/rss.xml',c:'general'},
+    {n:'The Star Kenya',u:'https://www.the-star.co.ke/feed/',c:'general'},
+    {n:'Daily Nation',u:'https://nation.africa/kenya/news/rss.xml',c:'general'},
+    {n:'Business Daily',u:'https://www.businessdailyafrica.com/rss/news/rss.xml',c:'business'},
+    {n:'Standard Kenya',u:'https://www.standardmedia.co.ke/rss/news.php',c:'general'},
+  ],
+
+  /* ─── ITALY ─── */
+  it: [
+    {n:'Google News IT',u:'https://news.google.com/rss?hl=it&gl=IT&ceid=IT:it',c:'general',primary:true},
+    {n:'ANSA English',u:'https://www.ansa.it/sito/ansait_rss.xml',c:'general'},
+    {n:'The Local Italy',u:'https://feeds.thelocal.com/rss/it',c:'general'},
+    {n:'Italy 24',u:'https://www.italy24.ilsole24ore.com/rss/en/latest-news.xml',c:'general'},
+  ],
+
+  /* ─── SPAIN ─── */
+  es: [
+    {n:'Google News ES',u:'https://news.google.com/rss?hl=es&gl=ES&ceid=ES:es',c:'general',primary:true},
+    {n:'El País English',u:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada',c:'general'},
+    {n:'The Local Spain',u:'https://feeds.thelocal.com/rss/es',c:'general'},
+    {n:'EFE News',u:'https://efenoticias.com/feed/',c:'general'},
+  ],
+
+  /* ─── NETHERLANDS ─── */
+  nl: [
+    {n:'Google News NL',u:'https://news.google.com/rss?hl=nl&gl=NL&ceid=NL:nl',c:'general',primary:true},
+    {n:'DutchNews.nl',u:'https://www.dutchnews.nl/feed',c:'general'},
+    {n:'The Local NL',u:'https://feeds.thelocal.com/rss/nl',c:'general'},
+    {n:'NL Times',u:'https://nltimes.nl/rss.xml',c:'general'},
+    {n:'Dutch Review',u:'https://dutchreview.com/feed/',c:'general'},
+  ],
+
+  /* ─── SWEDEN ─── */
+  se: [
+    {n:'Google News SE',u:'https://news.google.com/rss?hl=sv&gl=SE&ceid=SE:sv',c:'general',primary:true},
+    {n:'The Local SE',u:'https://feeds.thelocal.com/rss/se',c:'general'},
+    {n:'Sweden Herald',u:'https://swedenherald.com/feed/',c:'general'},
+    {n:'Radio Sweden',u:'https://sverigesradio.se/topnyheter/rss.xml',c:'general'},
+  ],
+
+  /* ─── NORWAY ─── */
+  no: [
+    {n:'Google News NO',u:'https://news.google.com/rss?hl=no&gl=NO&ceid=NO:no',c:'general',primary:true},
+    {n:'Norway Today',u:'https://norwaytoday.info/feed',c:'general'},
+    {n:'The Local NO',u:'https://feeds.thelocal.com/rss/no',c:'general'},
+    {n:'Aftenposten EN',u:'https://www.aftenposten.no/rss/',c:'general'},
+  ],
+
+  /* ─── CHINA ─── */
+  cn: [
+    {n:'SCMP China',u:'https://www.scmp.com/rss/4/feed',c:'general',primary:true},
+    {n:'SCMP HK',u:'https://www.scmp.com/rss/2/feed',c:'general'},
+    {n:'SCMP Business',u:'https://www.scmp.com/rss/92/feed',c:'business'},
+    {n:'SCMP Tech',u:'https://www.scmp.com/rss/36/feed',c:'technology'},
+    {n:'SCMP Asia',u:'https://www.scmp.com/rss/3/feed',c:'world'},
+    {n:'Diplomat China',u:'https://thediplomat.com/regions/east-asia/feed',c:'world'},
+    {n:'Sixth Tone',u:'https://www.sixthtone.com/rss.xml',c:'general'},
+    {n:'Caixin Global',u:'https://www.caixinglobal.com/rss.xml',c:'business'},
+    {n:'Nikkei Asia',u:'https://asia.nikkei.com/rss/feed/nar',c:'business'},
+  ],
+
+  /* ─── RUSSIA ─── */
+  ru: [
+    {n:'Moscow Times',u:'https://www.themoscowtimes.com/rss/news',c:'general',primary:true},
+    {n:'Moscow Times Business',u:'https://www.themoscowtimes.com/rss/business',c:'business'},
+    {n:'The Insider RU',u:'https://theins.ru/en/feed',c:'general'},
+    {n:'Meduza English',u:'https://meduza.io/en/rss/all',c:'general'},
+    {n:'Russia Beyond',u:'https://www.rbth.com/rss/russian_news.xml',c:'general'},
+  ],
+
+  /* ─── BRAZIL ─── */
+  br: [
+    {n:'Google News BR',u:'https://news.google.com/rss?hl=pt-BR&gl=BR&ceid=BR:pt-419',c:'general',primary:true},
+    {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general'},
+    {n:'Brazil Reports',u:'https://brazilreports.com/feed/',c:'general'},
+    {n:'Rio Times',u:'https://riotimesonline.com/feed/',c:'general'},
+    {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
+    {n:'AgênciaBrasil EN',u:'https://agenciabrasil.ebc.com.br/en/rss/news',c:'general'},
+  ],
+
+  /* ─── MEXICO ─── */
+  mx: [
+    {n:'Google News MX',u:'https://news.google.com/rss?hl=es&gl=MX&ceid=MX:es',c:'general',primary:true},
+    {n:'Mexico News Daily',u:'https://mexiconewsdaily.com/feed',c:'general'},
+    {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
+    {n:'Mexico Business',u:'https://www.mexicobusiness.news/feed/',c:'business'},
+    {n:'El Universal EN',u:'https://www.eluniversal.com.mx/english/rss.xml',c:'general'},
+  ],
+
+  /* ─── ARGENTINA ─── */
+  ar: [
+    {n:'Google News AR',u:'https://news.google.com/rss?hl=es&gl=AR&ceid=AR:es',c:'general',primary:true},
+    {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general'},
+    {n:'Buenos Aires Herald',u:'https://buenosairesherald.com/feed',c:'general'},
+    {n:'Argentina Reports',u:'https://argentinareports.com/feed/',c:'general'},
+    {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
+  ],
+
+  /* ─── EGYPT ─── */
+  eg: [
+    {n:'Google News EG',u:'https://news.google.com/rss?hl=en-EG&gl=EG&ceid=EG:en',c:'general',primary:true},
+    {n:'Al-Ahram',u:'https://english.ahram.org.eg/RSS/1.aspx',c:'general'},
+    {n:'Egypt Independent',u:'https://www.egyptindependent.com/feed',c:'general'},
+    {n:'Daily News Egypt',u:'https://dailynewsegypt.com/feed/',c:'general'},
+    {n:'Egypt Today',u:'https://www.egypttoday.com/rss',c:'general'},
+  ],
+
+  /* ─── SOUTH KOREA ─── */
+  kr: [
+    {n:'Google News KR',u:'https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko',c:'general',primary:true},
+    {n:'Korea Herald',u:'http://www.koreaherald.com/rss/00100000.xml',c:'general'},
+    {n:'Korea Times',u:'https://www.koreatimes.co.kr/www/rss/rss.xml',c:'general'},
+    {n:'Yonhap News',u:'https://en.yna.co.kr/RSS/news.xml',c:'general'},
+    {n:'Diplomat Korea',u:'https://thediplomat.com/regions/south-korea/feed',c:'world'},
+  ],
+
+  /* ─── INDONESIA ─── */
+  id: [
+    {n:'Google News ID',u:'https://news.google.com/rss?hl=id&gl=ID&ceid=ID:id',c:'general',primary:true},
+    {n:'Jakarta Post',u:'https://www.thejakartapost.com/rss',c:'general'},
+    {n:'Jakarta Globe',u:'https://jakartaglobe.id/feed',c:'general'},
+    {n:'Diplomat SE Asia',u:'https://thediplomat.com/regions/southeast-asia/feed',c:'world'},
+    {n:'BeritaSatu EN',u:'https://www.beritasatu.com/rss/homefeed.rss',c:'general'},
+  ],
+
+  /* ─── PHILIPPINES ─── */
+  ph: [
+    {n:'Google News PH',u:'https://news.google.com/rss?hl=en-PH&gl=PH&ceid=PH:en',c:'general',primary:true},
+    {n:'Philippine Daily Inquirer',u:'https://newsinfo.inquirer.net/feed',c:'general'},
+    {n:'Manila Times',u:'https://www.manilatimes.net/feed',c:'general'},
+    {n:'Rappler',u:'https://www.rappler.com/rss/',c:'general'},
+    {n:'Philippine Star',u:'https://www.philstar.com/rss/headlines',c:'general'},
+    {n:'ABS-CBN News',u:'https://news.abs-cbn.com/rss/news',c:'general'},
+  ],
+
+  /* ─── PAKISTAN ─── */
+  pk: [
+    {n:'Google News PK',u:'https://news.google.com/rss?hl=en-PK&gl=PK&ceid=PK:en',c:'general',primary:true},
+    {n:'Dawn',u:'https://www.dawn.com/feeds/home',c:'general'},
+    {n:'The News PK',u:'https://www.thenews.com.pk/rss/1/1',c:'general'},
+    {n:'Geo TV',u:'https://www.geo.tv/rss/10/pakistan',c:'general'},
+    {n:'The Express Tribune',u:'https://tribune.com.pk/feed/home',c:'general'},
+  ],
+
+  /* ─── TURKEY ─── */
+  tr: [
+    {n:'Google News TR',u:'https://news.google.com/rss?hl=tr&gl=TR&ceid=TR:tr',c:'general',primary:true},
+    {n:'Hurriyet Daily News',u:'https://www.hurriyetdailynews.com/rss',c:'general'},
+    {n:'Daily Sabah',u:'https://www.dailysabah.com/rss',c:'general'},
+    {n:'TRT World',u:'https://www.trtworld.com/rss',c:'general'},
+    {n:'Anadolu Agency',u:'https://www.aa.com.tr/en/rss/default?cat=economy',c:'business'},
+  ],
+
+  /* ─── ISRAEL ─── */
+  il: [
+    {n:'Google News IL',u:'https://news.google.com/rss?hl=en-IL&gl=IL&ceid=IL:en',c:'general',primary:true},
+    {n:'Haaretz English',u:'https://www.haaretz.com/cmlink/1.4968842',c:'general'},
+    {n:'Jerusalem Post',u:'https://www.jpost.com/rss/rssfeedsfrontpage.aspx',c:'general'},
+    {n:'Times of Israel',u:'https://www.timesofisrael.com/feed/',c:'general'},
+    {n:'Ynetnews',u:'https://www.ynetnews.com/home/0,7340,L-3,00.xml',c:'general'},
+  ],
+
+  /* ─── IRELAND ─── */
+  ie: [
+    {n:'Google News IE',u:'https://news.google.com/rss?hl=en-IE&gl=IE&ceid=IE:en',c:'general',primary:true},
+    {n:'RTE News',u:'https://www.rte.ie/news/rss/news-headlines.xml',c:'general'},
+    {n:'Irish Times',u:'https://www.irishtimes.com/rss/',c:'general'},
+    {n:'Irish Examiner',u:'https://www.irishexaminer.com/feed/',c:'general'},
+    {n:'The Journal',u:'https://www.thejournal.ie/feed/',c:'general'},
+  ],
+
+  /* ─── POLAND ─── */
+  pl: [
+    {n:'Google News PL',u:'https://news.google.com/rss?hl=pl&gl=PL&ceid=PL:pl',c:'general',primary:true},
+    {n:'Notes from Poland',u:'https://notesfrompoland.com/feed/',c:'general'},
+    {n:'Warsaw Voice',u:'https://www.warsawvoice.pl/rss',c:'general'},
+    {n:'Poland In',u:'https://polandin.com/feed',c:'general'},
+  ],
+
+  /* ─── UKRAINE ─── */
+  ua: [
+    {n:'Google News UA',u:'https://news.google.com/rss?hl=uk&gl=UA&ceid=UA:uk',c:'general',primary:true},
+    {n:'Kyiv Independent',u:'https://kyivindependent.com/rss/',c:'general'},
+    {n:'Ukrinform',u:'https://www.ukrinform.net/rss/block-lastnews',c:'general'},
+    {n:'Kyiv Post',u:'https://www.kyivpost.com/rss',c:'general'},
+    {n:'Ukraine Business News',u:'https://ubn.news/feed/',c:'business'},
+  ],
+
+  /* ─── GHANA ─── */
+  gh: [
+    {n:'Google News GH',u:'https://news.google.com/rss?hl=en-GH&gl=GH&ceid=GH:en',c:'general',primary:true},
+    {n:'GhanaWeb',u:'https://www.ghanaweb.com/GhanaHomePage/NewsArchive/rss.php',c:'general'},
+    {n:'Ghana Broadcasting',u:'https://www.gbcghana.com/feed',c:'general'},
+    {n:'Citi Newsroom',u:'https://citinewsroom.com/feed/',c:'general'},
+  ],
+
+  /* ─── ETHIOPIA ─── */
+  et: [
+    {n:'Google News ET',u:'https://news.google.com/rss?hl=en-ET&gl=ET&ceid=ET:en',c:'general',primary:true},
+    {n:'Addis Standard',u:'https://addisstandard.com/feed/',c:'general'},
+    {n:'Ethiopia Insight',u:'https://www.ethiopia-insight.com/feed/',c:'general'},
+    {n:'Fana Broadcasting',u:'https://www.fanabc.com/english/feed/',c:'general'},
+  ],
+
+  /* ─── BANGLADESH ─── */
+  bd: [
+    {n:'Google News BD',u:'https://news.google.com/rss?hl=en-BD&gl=BD&ceid=BD:en',c:'general',primary:true},
+    {n:'Daily Star BD',u:'https://www.thedailystar.net/frontpage/rss.xml',c:'general'},
+    {n:'Dhaka Tribune',u:'https://www.dhakatribune.com/feed',c:'general'},
+    {n:'BD News 24',u:'https://bdnews24.com/?wm=rss&cat=1',c:'general'},
+    {n:'New Age BD',u:'https://www.newagebd.net/rss.xml',c:'general'},
+  ],
+
+  /* ─── THAILAND ─── */
+  th: [
+    {n:'Google News TH',u:'https://news.google.com/rss?hl=th&gl=TH&ceid=TH:th',c:'general',primary:true},
+    {n:'Bangkok Post',u:'https://www.bangkokpost.com/rss/data/topstories.xml',c:'general'},
+    {n:'Thai PBS World',u:'https://www.thaipbsworld.com/feed/',c:'general'},
+    {n:'The Nation TH',u:'https://www.nationthailand.com/rss',c:'general'},
+    {n:'Khaosod English',u:'https://www.khaosodenglish.com/feed/',c:'general'},
+  ],
+
+  /* ─── MALAYSIA ─── */
+  my: [
+    {n:'Google News MY',u:'https://news.google.com/rss?hl=en-MY&gl=MY&ceid=MY:en',c:'general',primary:true},
+    {n:'Free Malaysia Today',u:'https://www.freemalaysiatoday.com/feed/',c:'general'},
+    {n:'Malay Mail',u:'https://www.malaymail.com/feed',c:'general'},
+    {n:'New Straits Times',u:'https://www.nst.com.my/rss/news',c:'general'},
+    {n:'The Edge MY',u:'https://www.theedgemarkets.com/rss.xml',c:'business'},
+  ],
+
+  /* ─── HONG KONG ─── */
+  hk: [
+    {n:'SCMP HK',u:'https://www.scmp.com/rss/2/feed',c:'general',primary:true},
+    {n:'Google News HK',u:'https://news.google.com/rss?hl=en-HK&gl=HK&ceid=HK:en',c:'general'},
+    {n:'SCMP China',u:'https://www.scmp.com/rss/4/feed',c:'general'},
+    {n:'HK Free Press',u:'https://hongkongfp.com/feed/',c:'general'},
+    {n:'HK01 English',u:'https://www.hk01.com/rss/hot',c:'general'},
+  ],
+
+  /* ─── PORTUGAL ─── */
+  pt: [
+    {n:'Google News PT',u:'https://news.google.com/rss?hl=pt&gl=PT&ceid=PT:pt',c:'general',primary:true},
+    {n:'Portugal Resident',u:'https://www.theportugalnews.com/en/feed',c:'general'},
+    {n:'The Portugal News',u:'https://www.theportugalnews.com/en/rss',c:'general'},
+    {n:'Lusa EN',u:'https://feeds.lusa.pt/EN/NEWS',c:'general'},
+  ],
+
+  /* ─── SWITZERLAND ─── */
+  ch: [
+    {n:'Google News CH',u:'https://news.google.com/rss?hl=en-CH&gl=CH&ceid=CH:en',c:'general',primary:true},
+    {n:'Swissinfo',u:'https://www.swissinfo.ch/eng/rss/news',c:'general'},
+    {n:'The Local CH',u:'https://feeds.thelocal.com/rss/ch',c:'general'},
+  ],
+
+  /* ─── AUSTRIA ─── */
+  at: [
+    {n:'Google News AT',u:'https://news.google.com/rss?hl=de&gl=AT&ceid=AT:de',c:'general',primary:true},
+    {n:'The Local AT',u:'https://feeds.thelocal.com/rss/at',c:'general'},
+    {n:'Vienna Online EN',u:'https://www.vienna.at/rss/international',c:'general'},
+  ],
+
+  /* ─── DENMARK ─── */
+  dk: [
+    {n:'Google News DK',u:'https://news.google.com/rss?hl=da&gl=DK&ceid=DK:da',c:'general',primary:true},
+    {n:'The Local DK',u:'https://feeds.thelocal.com/rss/dk',c:'general'},
+    {n:'Copenhagen Post',u:'https://cphpost.dk/?feed=rss2',c:'general'},
+  ],
+
+  /* ─── FINLAND ─── */
+  fi: [
+    {n:'Google News FI',u:'https://news.google.com/rss?hl=fi&gl=FI&ceid=FI:fi',c:'general',primary:true},
+    {n:'YLE News',u:'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_NEWS&concepts=18-34953',c:'general'},
+    {n:'Yle English',u:'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_NEWS',c:'general'},
+  ],
+
+  /* ─── BELGIUM ─── */
+  be: [
+    {n:'Google News BE',u:'https://news.google.com/rss?hl=fr-BE&gl=BE&ceid=BE:fr',c:'general',primary:true},
+    {n:'The Brussels Times',u:'https://www.brusselstimes.com/feed',c:'general'},
+    {n:'Politico EU',u:'https://www.politico.eu/feed/',c:'world'},
+  ],
+
+  /* ─── GREECE ─── */
+  gr: [
+    {n:'Google News GR',u:'https://news.google.com/rss?hl=el&gl=GR&ceid=GR:el',c:'general',primary:true},
+    {n:'Ekathimerini',u:'https://www.ekathimerini.com/rss/?lang=en',c:'general'},
+    {n:'Greece Is',u:'https://www.greece-is.com/feed/',c:'general'},
+    {n:'Keep Talking Greece',u:'https://www.keeptalkinggreece.com/feed/',c:'general'},
+  ],
+
+  /* ─── IRAN ─── */
+  ir: [
+    {n:'Google News IR',u:'https://news.google.com/rss?hl=fa&gl=IR&ceid=IR:fa',c:'general',primary:true},
+    {n:'Tehran Times',u:'https://www.tehrantimes.com/rss',c:'general'},
+    {n:'Iran International',u:'https://www.iranintl.com/en/rss',c:'general'},
+    {n:'Iran Daily',u:'http://www.iran-daily.com/rss/',c:'general'},
+  ],
+
+  /* ─── SAUDI ARABIA ─── */
+  sa: [
+    {n:'Google News SA',u:'https://news.google.com/rss?hl=ar&gl=SA&ceid=SA:ar',c:'general',primary:true},
+    {n:'Arab News',u:'https://www.arabnews.com/rss.xml',c:'general'},
+    {n:'Saudi Gazette',u:'https://saudigazette.com.sa/rss',c:'general'},
+    {n:'Al Arabiya EN',u:'https://english.alarabiya.net/rss',c:'general'},
+  ],
+
+  /* ─── MYANMAR ─── */
+  mm: [
+    {n:'Google News MM',u:'https://news.google.com/rss?hl=my&gl=MM&ceid=MM:my',c:'general',primary:true},
+    {n:'Irrawaddy',u:'https://www.irrawaddy.com/feed',c:'general'},
+    {n:'Myanmar Now',u:'https://myanmar-now.org/en/feed/',c:'general'},
+    {n:'Mizzima English',u:'https://mizzima.com/content/mizzima-news/en/feed',c:'general'},
+  ],
+
+  /* ─── COLOMBIA ─── */
+  co: [
+    {n:'Google News CO',u:'https://news.google.com/rss?hl=es&gl=CO&ceid=CO:es',c:'general',primary:true},
+    {n:'Colombia Reports',u:'https://colombiareports.com/feed/',c:'general'},
+    {n:'Bogota Post',u:'https://thebogotapost.com/feed/',c:'general'},
+    {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
+  ],
+
+  /* ─── GLOBAL WORLD ─── */
+  _world: [
+    {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'},
+    {n:'Reuters World',u:'https://feeds.reuters.com/reuters/worldNews',c:'world'},
+    {n:'BBC World',u:'http://feeds.bbci.co.uk/news/world/rss.xml',c:'world'},
+    {n:'AP International',u:'https://feeds.apnews.com/rss/apf-intlnews',c:'world'},
+    {n:'VOA News',u:'https://www.voanews.com/api/zmorq$epiqy',c:'world'},
+    {n:'Global Voices',u:'https://globalvoices.org/feed',c:'world'},
+    {n:'RFE/RL',u:'https://www.rferl.org/api/zyr$piv',c:'world'},
+    {n:'France 24 Top',u:'https://www.france24.com/en/top-stories/rss',c:'general'},
+    {n:'DW World',u:'https://rss.dw.com/xml/rss-en-world',c:'world'},
+  ]
+};
+
+/* ── COUNTRY METADATA ── */
+const COV = {
+  us:'strong',gb:'strong',ca:'strong',au:'strong',nz:'strong',de:'strong',fr:'strong',jp:'strong',
+  in:'strong',sg:'strong',kr:'strong',ph:'strong',pk:'strong',ua:'strong',ie:'strong',
+  ae:'good',za:'good',ng:'good',ke:'good',it:'good',es:'good',nl:'good',se:'good',no:'good',
+  il:'good',tr:'good',bd:'good',th:'good',my:'good',hk:'good',id:'good',pl:'good',br:'good',
+  pt:'good',ch:'good',at:'good',dk:'good',fi:'good',be:'good',gr:'good',ir:'good',sa:'good',co:'good',
+  cn:'limited',ru:'limited',mx:'limited',ar:'limited',eg:'limited',mm:'limited',gh:'limited',et:'limited',
+};
+
+const COUNTRIES = [
+  // Group 1: Strong English-language coverage
   {code:'us',name:'USA 🇺🇸',q:'strong'},{code:'gb',name:'UK 🇬🇧',q:'strong'},
   {code:'ca',name:'Canada 🇨🇦',q:'strong'},{code:'au',name:'Australia 🇦🇺',q:'strong'},
-  {code:'nz',name:'New Zealand 🇳🇿',q:'strong'},{code:'de',name:'Germany 🇩🇪',q:'strong'},
-  {code:'fr',name:'France 🇫🇷',q:'strong'},{code:'jp',name:'Japan 🇯🇵',q:'strong'},
-  {code:'sg',name:'Singapore 🇸🇬',q:'good'},{code:'in',name:'India 🇮🇳',q:'good'},
-  {code:'ae',name:'UAE 🇦🇪',q:'good'},{code:'it',name:'Italy 🇮🇹',q:'good'},
-  {code:'es',name:'Spain 🇪🇸',q:'good'},{code:'nl',name:'Netherlands 🇳🇱',q:'good'},
-  {code:'se',name:'Sweden 🇸🇪',q:'good'},{code:'no',name:'Norway 🇳🇴',q:'good'},
+  {code:'nz',name:'New Zealand 🇳🇿',q:'strong'},{code:'ie',name:'Ireland 🇮🇪',q:'strong'},
+  {code:'in',name:'India 🇮🇳',q:'strong'},{code:'sg',name:'Singapore 🇸🇬',q:'strong'},
+  {code:'ph',name:'Philippines 🇵🇭',q:'strong'},{code:'pk',name:'Pakistan 🇵🇰',q:'strong'},
+  {code:'ua',name:'Ukraine 🇺🇦',q:'strong'},{code:'kr',name:'South Korea 🇰🇷',q:'strong'},
+  // Group 2: Good coverage
+  {code:'de',name:'Germany 🇩🇪',q:'good'},{code:'fr',name:'France 🇫🇷',q:'good'},
+  {code:'jp',name:'Japan 🇯🇵',q:'good'},{code:'ae',name:'UAE 🇦🇪',q:'good'},
   {code:'za',name:'S. Africa 🇿🇦',q:'good'},{code:'ng',name:'Nigeria 🇳🇬',q:'good'},
-  {code:'ke',name:'Kenya 🇰🇪',q:'good'},{code:'cn',name:'China 🇨🇳',q:'limited'},
-  {code:'ru',name:'Russia 🇷🇺',q:'limited'},{code:'br',name:'Brazil 🇧🇷',q:'limited'},
+  {code:'ke',name:'Kenya 🇰🇪',q:'good'},{code:'il',name:'Israel 🇮🇱',q:'good'},
+  {code:'tr',name:'Turkey 🇹🇷',q:'good'},{code:'bd',name:'Bangladesh 🇧🇩',q:'good'},
+  {code:'th',name:'Thailand 🇹🇭',q:'good'},{code:'my',name:'Malaysia 🇲🇾',q:'good'},
+  {code:'hk',name:'Hong Kong 🇭🇰',q:'good'},{code:'id',name:'Indonesia 🇮🇩',q:'good'},
+  {code:'pl',name:'Poland 🇵🇱',q:'good'},{code:'br',name:'Brazil 🇧🇷',q:'good'},
+  {code:'it',name:'Italy 🇮🇹',q:'good'},{code:'es',name:'Spain 🇪🇸',q:'good'},
+  {code:'nl',name:'Netherlands 🇳🇱',q:'good'},{code:'se',name:'Sweden 🇸🇪',q:'good'},
+  {code:'no',name:'Norway 🇳🇴',q:'good'},{code:'pt',name:'Portugal 🇵🇹',q:'good'},
+  {code:'ch',name:'Switzerland 🇨🇭',q:'good'},{code:'at',name:'Austria 🇦🇹',q:'good'},
+  {code:'dk',name:'Denmark 🇩🇰',q:'good'},{code:'fi',name:'Finland 🇫🇮',q:'good'},
+  {code:'be',name:'Belgium 🇧🇪',q:'good'},{code:'gr',name:'Greece 🇬🇷',q:'good'},
+  {code:'sa',name:'Saudi Arabia 🇸🇦',q:'good'},{code:'co',name:'Colombia 🇨🇴',q:'good'},
+  // Group 3: Limited (Google News primary)
+  {code:'cn',name:'China 🇨🇳',q:'limited'},{code:'ru',name:'Russia 🇷🇺',q:'limited'},
   {code:'mx',name:'Mexico 🇲🇽',q:'limited'},{code:'ar',name:'Argentina 🇦🇷',q:'limited'},
-  {code:'eg',name:'Egypt 🇪🇬',q:'limited'},
+  {code:'eg',name:'Egypt 🇪🇬',q:'limited'},{code:'ir',name:'Iran 🇮🇷',q:'limited'},
+  {code:'mm',name:'Myanmar 🇲🇲',q:'limited'},{code:'gh',name:'Ghana 🇬🇭',q:'limited'},
+  {code:'et',name:'Ethiopia 🇪🇹',q:'limited'},
 ];
 
-let S={country:localStorage.getItem('hn_country')||'us',theme:localStorage.getItem('hn_theme')||'dark',query:'',category:'general',source:'all',articles:[],filtered:[],loading:false,feedResults:[]};
+const COVNOTE = {
+  cn:'Showing SCMP, Caixin, Sixth Tone & Nikkei Asia. Mainland state media blocked by most CORS proxies.',
+  ru:'Showing Moscow Times, Meduza & Russia Beyond — independent sources only.',
+  ir:'Limited English-language independent sources available for Iran.',
+  mm:'Coverage from Irrawaddy and Myanmar Now — independent journalism sources.',
+};
 
-const $=id=>document.getElementById(id);
-const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+let S = {
+  country: localStorage.getItem('hn_country') || 'us',
+  theme: localStorage.getItem('hn_theme') || 'dark',
+  query: '', category: 'general', source: 'all',
+  articles: [], filtered: [], loading: false, feedResults: [],
+  abortCtrl: null
+};
 
-/* ── FETCH ── */
-const p1=u=>`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`;
-const p2=u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`;
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ── FETCH HELPERS ── */
+const p1 = u => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(u)}`;
+const p2 = u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`;
+const p3 = u => `https://corsproxy.io/?${encodeURIComponent(u)}`;
+
 function sh(h){const d=document.createElement('div');d.innerHTML=h;return(d.textContent||'').replace(/\s+/g,' ').trim();}
 function xi(h){const m=(h||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?m[1]:'';}
 
-async function fetchFeed(feed){
-  try{const r=await fetch(p1(feed.u),{signal:AbortSignal.timeout(8000)});if(r.ok){const d=await r.json();if(d.status==='ok'&&d.items?.length)return{items:d.items.map(i=>fr2j(i,feed.n,feed.c)),ok:true};}}catch(_){}
-  try{const r=await fetch(p2(feed.u),{signal:AbortSignal.timeout(8000)});if(r.ok){const items=pxml(await r.text(),feed.n,feed.c);if(items.length)return{items,ok:true};}}catch(_){}
-  return{items:[],ok:false};
-}
-function fr2j(i,src,cat){const img=i.enclosure?.link||i.thumbnail||xi(i.content||'')||xi(i.description||'');return{title:(i.title||'').trim(),desc:sh(i.description||'').slice(0,210),url:i.link||'#',img:img||'',date:i.pubDate||'',src,cat};}
-function pxml(xml,src,cat){
-  try{const doc=new DOMParser().parseFromString(xml,'application/xml');return Array.from(doc.querySelectorAll('item')).slice(0,30).map(el=>{const t=s=>el.querySelector(s)?.textContent?.trim()||'';const img=el.querySelector('[url]')?.getAttribute('url')||el.querySelector('enclosure')?.getAttribute('url')||xi(t('description'));return{title:t('title'),desc:sh(t('description')).slice(0,210),url:t('link')||t('guid')||'#',img:img||'',date:t('pubDate')||'',src,cat};}).filter(a=>a.title.length>3);}catch(_){return[];}
+async function fetchFeed(feed, signal) {
+  // Try rss2json first (best structured data)
+  try {
+    const r = await fetch(p1(feed.u), {signal, cache:'no-cache'});
+    if (r.ok) {
+      const d = await r.json();
+      if (d.status === 'ok' && d.items?.length) {
+        return {items: d.items.map(i => fr2j(i, feed.n, feed.c)), ok: true};
+      }
+    }
+  } catch(e) { if (e.name === 'AbortError') throw e; }
+
+  // Try allorigins
+  try {
+    const r = await fetch(p2(feed.u), {signal, cache:'no-cache'});
+    if (r.ok) {
+      const items = pxml(await r.text(), feed.n, feed.c);
+      if (items.length) return {items, ok: true};
+    }
+  } catch(e) { if (e.name === 'AbortError') throw e; }
+
+  // Try corsproxy.io as third option
+  try {
+    const r = await fetch(p3(feed.u), {signal, cache:'no-cache'});
+    if (r.ok) {
+      const items = pxml(await r.text(), feed.n, feed.c);
+      if (items.length) return {items, ok: true};
+    }
+  } catch(e) { if (e.name === 'AbortError') throw e; }
+
+  return {items: [], ok: false};
 }
 
-/* ── LOAD NEWS ── */
-async function loadNews(){
-  if(S.loading)return;S.loading=true;S.articles=[];S.feedResults=[];
-  $('grid').innerHTML='';$('nores').style.display='none';$('srcbar').innerHTML='';$('fsb').innerHTML='';$('covn').style.display='none';
+function fr2j(i, src, cat) {
+  const img = i.enclosure?.link || i.thumbnail || xi(i.content||'') || xi(i.description||'');
+  return {
+    title: (i.title||'').trim().replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"'),
+    desc: sh(i.description||'').slice(0, 240),
+    url: i.link || '#', img: img || '', date: i.pubDate || '', src, cat
+  };
+}
+
+function pxml(xml, src, cat) {
+  try {
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    if (doc.querySelector('parsererror')) return [];
+    return Array.from(doc.querySelectorAll('item, entry')).slice(0, 30).map(el => {
+      const t = s => el.querySelector(s)?.textContent?.trim() || '';
+      const img = el.querySelector('[url]')?.getAttribute('url') ||
+                  el.querySelector('enclosure')?.getAttribute('url') ||
+                  xi(t('description')) || xi(t('content'));
+      const rawTitle = t('title');
+      const cleanTitle = rawTitle.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'");
+      return {
+        title: cleanTitle, desc: sh(t('description') || t('summary') || t('content')).slice(0, 240),
+        url: t('link') || t('id') || el.querySelector('link')?.getAttribute('href') || '#',
+        img: img || '', date: t('pubDate') || t('published') || t('updated') || '', src, cat
+      };
+    }).filter(a => a.title.length > 3);
+  } catch(_) { return []; }
+}
+
+/* ── LOAD NEWS (country-specific only) ── */
+async function loadNews() {
+  if (S.loading) return;
+
+  // Cancel any previous load
+  if (S.abortCtrl) S.abortCtrl.abort();
+  S.abortCtrl = new AbortController();
+  const signal = S.abortCtrl.signal;
+
+  S.loading = true; S.articles = []; S.feedResults = [];
+  $('grid').innerHTML = ''; $('nores').style.display = 'none';
+  $('srcbar').innerHTML = ''; $('fsb').innerHTML = ''; $('covn').style.display = 'none';
   showSpin(true);
-  const pool=[...(FEEDS[S.country]||FEEDS.us),...FEEDS._world];
-  const sel=S.category==='general'?pool:pool.filter(f=>f.c===S.category||f.c==='general');
-  const res=await Promise.allSettled(sel.slice(0,12).map(f=>fetchFeed(f).then(r=>({f,...r}))));
-  let all=[];
-  res.forEach(r=>{if(r.status==='fulfilled'){S.feedResults.push({name:r.value.f.n,ok:r.value.ok});if(r.value.ok)all=all.concat(r.value.items);}});
-  const seen=new Set();
-  all=all.filter(a=>{const k=(a.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,55);if(!k||seen.has(k))return false;seen.add(k);return true;});
-  all.sort((a,b)=>new Date(b.date)-new Date(a.date));
-  S.articles=all;
-  buildStatus();buildSrcBar();applyFilters();renderCards();updateMeta();
-  showSpin(false);S.loading=false;
-  if(!all.length){toast('⚠ All feeds unavailable — retry');$('nores').style.display='block';}
+
+  // Get ONLY this country's feeds (no global mixing!)
+  const countryFeeds = FEEDS[S.country] || FEEDS.us;
+
+  // Filter by category — if not general, include feeds matching that category + any primary feeds
+  let pool;
+  if (S.category === 'general') {
+    pool = countryFeeds;
+  } else {
+    const catFeeds = countryFeeds.filter(f => f.c === S.category || f.primary);
+    pool = catFeeds.length > 0 ? catFeeds : countryFeeds;
+  }
+
+  // Limit concurrent requests to avoid rate limits — prioritize primary feeds
+  const primary = pool.filter(f => f.primary);
+  const secondary = pool.filter(f => !f.primary);
+  const selected = [...primary, ...secondary].slice(0, 14);
+
+  // Fetch in parallel with timeout
+  const results = await Promise.allSettled(
+    selected.map(f =>
+      fetchFeed(f, signal)
+        .then(r => ({f, ...r}))
+        .catch(e => { if (e.name === 'AbortError') throw e; return {f, items:[], ok:false}; })
+    )
+  );
+
+  if (signal.aborted) { S.loading = false; return; }
+
+  let all = [];
+  results.forEach(r => {
+    if (r.status === 'fulfilled') {
+      S.feedResults.push({name: r.value.f.n, ok: r.value.ok});
+      if (r.value.ok) all = all.concat(r.value.items);
+    }
+  });
+
+  // Dedup by title
+  const seen = new Set();
+  all = all.filter(a => {
+    const k = (a.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0, 55);
+    if (!k || seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+
+  // Sort by date, then by title length (longer = more substantive)
+  all.sort((a, b) => {
+    const da = new Date(b.date), db = new Date(a.date);
+    if (!isNaN(da) && !isNaN(db)) return da - db;
+    return 0;
+  });
+
+  S.articles = all;
+  buildStatus(); buildSrcBar(); applyFilters(); renderCards(); updateMeta();
+  updateBreaking(all);
+  showSpin(false); S.loading = false;
+
+  if (!all.length) {
+    toast('⚠ All feeds unavailable — retry');
+    $('nores').style.display = 'block';
+  }
 }
 
-function buildStatus(){
-  const ok=S.feedResults.filter(f=>f.ok),fail=S.feedResults.filter(f=>!f.ok);
-  let h=`<span style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-right:.2rem">SOURCES:</span>`;
-  ok.forEach(f=>{h+=`<span class="fb fok">✓ ${esc(f.name)}</span>`;});
-  fail.forEach(f=>{h+=`<span class="fb ffail">✗ ${esc(f.name)}</span>`;});
-  $('fsb').innerHTML=h;
-  const note=COVNOTE[S.country];
-  const cn=$('covn');
-  if(note){cn.textContent='ℹ Coverage note: '+note;cn.style.display='block';}
+function updateBreaking(articles) {
+  if (!articles.length) { $('breaking-bar').style.display = 'none'; return; }
+  const top5 = articles.slice(0, 5).map(a => a.title).join('  ·  ');
+  $('breaking-inner').textContent = top5;
+  $('breaking-bar').style.display = 'flex';
 }
 
-function buildSrcBar(){
-  const bar=$('srcbar');
-  const srcs=[...new Set(S.articles.map(a=>a.src).filter(Boolean))];
-  if(srcs.length<2){bar.innerHTML='';return;}
-  let h=`<button class="fp on" data-src="all" style="font-size:.62rem;min-height:26px;padding:.2rem .6rem">ALL</button>`;
-  srcs.slice(0,12).forEach(s=>{h+=`<button class="fp" data-src="${esc(s)}" style="font-size:.62rem;min-height:26px;padding:.2rem .6rem">${esc(s)}</button>`;});
-  bar.innerHTML=h;
-  bar.querySelectorAll('[data-src]').forEach(btn=>{
-    btn.addEventListener('click',()=>{bar.querySelectorAll('[data-src]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');S.source=btn.dataset.src;applyFilters();renderCards();updateMeta();});
+function buildStatus() {
+  const ok = S.feedResults.filter(f => f.ok), fail = S.feedResults.filter(f => !f.ok);
+  let h = `<span style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-right:.2rem">SOURCES:</span>`;
+  ok.forEach(f => {h += `<span class="fb fok">✓ ${esc(f.name)}</span>`;});
+  fail.forEach(f => {h += `<span class="fb ffail">✗ ${esc(f.name)}</span>`;});
+  $('fsb').innerHTML = h;
+  const note = COVNOTE[S.country];
+  const cn = $('covn');
+  if (note) { cn.textContent = 'ℹ Coverage note: ' + note; cn.style.display = 'block'; }
+}
+
+function buildSrcBar() {
+  const bar = $('srcbar');
+  const srcs = [...new Set(S.articles.map(a => a.src).filter(Boolean))];
+  if (srcs.length < 2) { bar.innerHTML = ''; return; }
+  let h = `<button class="fp on" data-src="all" style="font-size:.62rem;min-height:26px;padding:.2rem .6rem">ALL</button>`;
+  srcs.slice(0, 14).forEach(s => {
+    h += `<button class="fp" data-src="${esc(s)}" style="font-size:.62rem;min-height:26px;padding:.2rem .6rem">${esc(s)}</button>`;
+  });
+  bar.innerHTML = h;
+  bar.querySelectorAll('[data-src]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      bar.querySelectorAll('[data-src]').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on'); S.source = btn.dataset.src;
+      applyFilters(); renderCards(); updateMeta();
+    });
   });
 }
 
-function applyFilters(){
-  const q=S.query.toLowerCase().trim();
-  S.filtered=S.articles.filter(a=>{
-    const mQ=!q||(a.title||'').toLowerCase().includes(q)||(a.desc||'').toLowerCase().includes(q);
-    const mS=S.source==='all'||a.src===S.source;
-    return mQ&&mS;
+function applyFilters() {
+  const q = S.query.toLowerCase().trim();
+  S.filtered = S.articles.filter(a => {
+    const mQ = !q || (a.title||'').toLowerCase().includes(q) || (a.desc||'').toLowerCase().includes(q);
+    const mS = S.source === 'all' || a.src === S.source;
+    return mQ && mS;
   });
 }
 
-const FB=['https://picsum.photos/seed/hn1/600/380','https://picsum.photos/seed/hn2/600/380','https://picsum.photos/seed/hn3/600/380','https://picsum.photos/seed/hn4/600/380','https://picsum.photos/seed/hn5/600/380','https://picsum.photos/seed/hn6/600/380'];
+const FB = [
+  'https://picsum.photos/seed/hn1/600/380','https://picsum.photos/seed/hn2/600/380',
+  'https://picsum.photos/seed/hn3/600/380','https://picsum.photos/seed/hn4/600/380',
+  'https://picsum.photos/seed/hn5/600/380','https://picsum.photos/seed/hn6/600/380',
+  'https://picsum.photos/seed/hn7/600/380','https://picsum.photos/seed/hn8/600/380',
+];
 
-function renderCards(){
-  const grid=$('grid');grid.innerHTML='';
-  if(!S.filtered.length){$('nores').style.display='block';return;}
-  $('nores').style.display='none';
-  S.filtered.forEach((art,i)=>{
-    const fb=FB[i%FB.length];
-    const img=(art.img&&/^https?:\/\//.test(art.img))?art.img:fb;
-    const el=document.createElement('article');
-    el.className='card';el.style.animationDelay=`${(i%16)*28}ms`;
-    el.innerHTML=`<a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer" style="display:block"><img src="${esc(img)}" alt="${esc(art.title)}" class="ci" loading="lazy" onerror="this.src='${fb}';this.onerror=null"/></a>
-<div class="cb">
-  <div class="cs">${esc(art.src)}</div>
-  <h2 class="ct"><a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer">${esc(art.title)}</a></h2>
-  ${art.desc?`<p class="cd">${esc(art.desc)}</p>`:''}
-  <div class="cf"><span>${tago(art.date)}</span><a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer" class="rbtn">READ →</a></div>
-</div>`;
+function renderCards() {
+  const grid = $('grid'); grid.innerHTML = '';
+  if (!S.filtered.length) { $('nores').style.display = 'block'; return; }
+  $('nores').style.display = 'none';
+  S.filtered.forEach((art, i) => {
+    const fb = FB[i % FB.length];
+    const img = (art.img && /^https?:\/\//.test(art.img)) ? art.img : fb;
+    const el = document.createElement('article');
+    el.className = 'card'; el.style.animationDelay = `${(i % 20) * 25}ms`;
+    const {rel, abs} = tago(art.date);
+    const timeHtml = rel
+      ? `<div class="card-time">
+           <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;opacity:.6"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+           <span class="card-time-rel">${esc(rel)}</span>
+           <span class="card-time-sep">·</span>
+           <span class="card-time-abs">${esc(abs)}</span>
+         </div>`
+      : '';
+    el.innerHTML = `
+      <a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer" style="display:block">
+        <img src="${esc(img)}" alt="" class="ci" loading="lazy" onerror="this.src='${fb}';this.onerror=null"/>
+      </a>
+      <div class="cb">
+        <div class="cs">${esc(art.src)}</div>
+        <h2 class="ct"><a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer">${esc(art.title)}</a></h2>
+        ${art.desc ? `<p class="cd">${esc(art.desc)}</p>` : ''}
+        ${timeHtml}
+        <div class="cf"><a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer" class="rbtn">READ →</a></div>
+      </div>`;
     grid.appendChild(el);
   });
 }
 
-function updateMeta(){
-  const c=COUNTRIES.find(x=>x.code===S.country);
-  $('clbl').textContent=(c?c.name.replace(/[^\w ]/g,'').trim().toUpperCase():'TOP')+' HEADLINES';
-  $('acnt').textContent=`${S.filtered.length} articles · ${S.feedResults.filter(f=>f.ok).length}/${S.feedResults.length} sources loaded`;
+function updateMeta() {
+  const c = COUNTRIES.find(x => x.code === S.country);
+  const flag = c ? c.name.split(' ').slice(-1)[0] : '';
+  const name = c ? c.name.replace(/[^\w ]/g,'').trim().toUpperCase() : 'TOP';
+  $('clbl').textContent = flag + ' ' + name + ' HEADLINES';
+  const loaded = S.feedResults.filter(f => f.ok).length;
+  $('acnt').textContent = `${S.filtered.length} articles from ${loaded}/${S.feedResults.length} sources`;
 }
 
-function tago(iso){if(!iso)return'';const d=Math.floor((Date.now()-new Date(iso).getTime())/1000);if(isNaN(d)||d<0)return'';if(d<60)return d+'s ago';if(d<3600)return Math.floor(d/60)+'m ago';if(d<86400)return Math.floor(d/3600)+'h ago';return Math.floor(d/86400)+'d ago';}
-function showSpin(v){$('lsp').style.display=v?'flex':'none';}
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+function tago(iso) {
+  if (!iso) return {rel:'', abs:''};
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return {rel:'', abs:''};
+  const d = Math.floor((Date.now() - dt.getTime()) / 1000);
+  let rel = '';
+  if (d < 0) rel = 'just now';
+  else if (d < 60) rel = d + 's ago';
+  else if (d < 3600) rel = Math.floor(d / 60) + 'm ago';
+  else if (d < 86400) rel = Math.floor(d / 3600) + 'h ago';
+  else rel = Math.floor(d / 86400) + 'd ago';
+  // Format absolute time: "Mar 12, 3:45 PM" or "Mar 12, 2025, 3:45 PM" if older than this year
+  const now = new Date();
+  const sameYear = dt.getFullYear() === now.getFullYear();
+  const abs = dt.toLocaleString('en-US', {
+    month:'short', day:'numeric',
+    ...(sameYear ? {} : {year:'numeric'}),
+    hour:'numeric', minute:'2-digit', hour12:true
+  });
+  return {rel, abs};
+}
+
+function showSpin(v) { $('lsp').style.display = v ? 'flex' : 'none'; }
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
 
 /* ── THEME ── */
-function applyTheme(){
-  const d=S.theme==='dark';
-  document.documentElement.classList.toggle('dark',d);
-  document.documentElement.classList.toggle('light',!d);
-  $('thicon').textContent=d?'☀️':'🌙';
-  const di=$('theme-drw-icon');if(di)di.textContent=d?'☀️':'🌙';
+function applyTheme() {
+  const d = S.theme === 'dark';
+  document.documentElement.classList.toggle('dark', d);
+  document.documentElement.classList.toggle('light', !d);
+  $('thicon').textContent = d ? '☀️' : '🌙';
+  const di = $('theme-drw-icon'); if (di) di.textContent = d ? '☀️' : '🌙';
 }
 
-/* ── POPULATE ── */
-function populateUI(){
-  const sel=$('csel'),msel=$('csel-m');
-  COUNTRIES.forEach(c=>{
-    [sel,msel].forEach(el=>{const o=document.createElement('option');o.value=c.code;o.textContent=c.name;if(c.code===S.country)o.selected=true;el.appendChild(o);});
+/* ── POPULATE UI ── */
+function populateUI() {
+  // Desktop select
+  const sel = $('csel');
+  COUNTRIES.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.code; o.textContent = c.name;
+    if (c.code === S.country) o.selected = true;
+    sel.appendChild(o);
   });
-  const list=$('clist');
-  COUNTRIES.forEach(c=>{
-    const btn=document.createElement('button');
-    btn.className='cc'+(c.code===S.country?' on':'');
-    const qc=c.q==='strong'?'qs':c.q==='good'?'qg':'ql';
-    const ql=c.q==='strong'?'STR':c.q==='good'?'GD':'LTD';
-    btn.innerHTML=`<span>${esc(c.name)}</span><span class="qb ${qc}">${ql}</span>`;
-    btn.onclick=()=>{list.querySelectorAll('.cc').forEach(b=>b.classList.remove('on'));btn.classList.add('on');S.country=c.code;S.source='all';sel.value=c.code;msel.value=c.code;localStorage.setItem('hn_country',c.code);loadNews();};
+
+  // Sidebar country list
+  const list = $('clist');
+  COUNTRIES.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'cc' + (c.code === S.country ? ' on' : '');
+    const qc = c.q === 'strong' ? 'qs' : c.q === 'good' ? 'qg' : 'ql';
+    const ql = c.q === 'strong' ? 'STR' : c.q === 'good' ? 'GD' : 'LTD';
+    btn.innerHTML = `<span>${esc(c.name)}</span><span class="qb ${qc}">${ql}</span>`;
+    btn.onclick = () => switchCountry(c.code);
     list.appendChild(btn);
   });
+
+  // Mobile country scroll bar
+  const mbar = $('mobile-country-bar');
+  COUNTRIES.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'mcbtn' + (c.code === S.country ? ' on' : '');
+    btn.textContent = c.name;
+    btn.dataset.code = c.code;
+    btn.onclick = () => switchCountry(c.code);
+    mbar.appendChild(btn);
+  });
+}
+
+function switchCountry(code) {
+  S.country = code; S.source = 'all';
+  localStorage.setItem('hn_country', code);
+
+  // Sync all selectors
+  $('csel').value = code;
+  document.querySelectorAll('#clist .cc').forEach(b => {
+    b.classList.toggle('on', b.textContent.trim().startsWith(COUNTRIES.find(c=>c.code===code)?.name?.slice(0,3)||''));
+  });
+  // Re-build sidebar active state properly
+  document.querySelectorAll('#clist .cc').forEach((b, i) => {
+    b.classList.toggle('on', COUNTRIES[i]?.code === code);
+  });
+  document.querySelectorAll('#mobile-country-bar .mcbtn').forEach(b => {
+    b.classList.toggle('on', b.dataset.code === code);
+  });
+
+  loadNews();
+
+  // Scroll mobile bar to selected
+  const active = document.querySelector(`#mobile-country-bar .mcbtn.on`);
+  if (active) active.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
 }
 
 /* ── DRAWER ── */
-const drw=$('drw'),ovl=$('ovl');
-function openDrw(){drw.classList.add('open');ovl.classList.add('open');document.body.style.overflow='hidden';}
-function closeDrw(){drw.classList.remove('open');ovl.classList.remove('open');document.body.style.overflow='';}
-$('ham').addEventListener('click',openDrw);
-$('drw-close').addEventListener('click',closeDrw);
-ovl.addEventListener('click',closeDrw);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrw();});
+const drw = $('drw'), ovl = $('ovl');
+function openDrw() { drw.classList.add('open'); ovl.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeDrw() { drw.classList.remove('open'); ovl.classList.remove('open'); document.body.style.overflow = ''; }
+$('ham').addEventListener('click', openDrw);
+$('drw-close').addEventListener('click', closeDrw);
+ovl.addEventListener('click', closeDrw);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrw(); }});
 
 /* ── EVENTS ── */
-function toggleTheme(){S.theme=S.theme==='dark'?'light':'dark';localStorage.setItem('hn_theme',S.theme);applyTheme();}
-$('thbtn').addEventListener('click',toggleTheme);
-$('theme-drw-btn').addEventListener('click',()=>{closeDrw();toggleTheme();});
-$('csel').addEventListener('change',e=>{S.country=e.target.value;S.source='all';$('csel-m').value=e.target.value;localStorage.setItem('hn_country',S.country);loadNews();});
-$('csel-m').addEventListener('change',e=>{S.country=e.target.value;S.source='all';$('csel').value=e.target.value;localStorage.setItem('hn_country',S.country);loadNews();});
-function doSearch(){S.query=$('si').value;applyFilters();renderCards();updateMeta();}
-$('sb').addEventListener('click',doSearch);
-$('si').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
-$('si').addEventListener('input',e=>{if(!e.target.value){S.query='';applyFilters();renderCards();updateMeta();}});
-document.querySelectorAll('[data-cat]').forEach(p=>{
-  p.addEventListener('click',()=>{document.querySelectorAll('[data-cat]').forEach(x=>x.classList.remove('on'));p.classList.add('on');S.category=p.dataset.cat;S.source='all';loadNews();});
-});
-$('rfbtn').addEventListener('click',()=>{toast('🔄 REFRESHING…');loadNews();});
-$('rstbtn').addEventListener('click',()=>{S.query='';S.category='general';S.source='all';$('si').value='';document.querySelectorAll('[data-cat]').forEach((p,i)=>p.classList.toggle('on',i===0));loadNews();});
+function toggleTheme() { S.theme = S.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('hn_theme', S.theme); applyTheme(); }
+$('thbtn').addEventListener('click', toggleTheme);
+$('theme-drw-btn').addEventListener('click', () => { closeDrw(); toggleTheme(); });
+$('csel').addEventListener('change', e => switchCountry(e.target.value));
 
-/* ══════════════════════════════════════
-   CRYPTO TICKER — CoinGecko (no key)
-══════════════════════════════════════ */
-const CRYPTOS=[
+function doSearch() { S.query = $('si').value; applyFilters(); renderCards(); updateMeta(); }
+$('sb').addEventListener('click', doSearch);
+$('si').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+$('si').addEventListener('input', e => { if (!e.target.value) { S.query = ''; applyFilters(); renderCards(); updateMeta(); }});
+
+document.querySelectorAll('[data-cat]').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('[data-cat]').forEach(x => x.classList.remove('on'));
+    p.classList.add('on'); S.category = p.dataset.cat; S.source = 'all';
+    loadNews();
+  });
+});
+
+$('rfbtn').addEventListener('click', () => { toast('🔄 REFRESHING…'); loadNews(); });
+$('rstbtn').addEventListener('click', () => {
+  S.query = ''; S.category = 'general'; S.source = 'all'; $('si').value = '';
+  document.querySelectorAll('[data-cat]').forEach((p, i) => p.classList.toggle('on', i === 0));
+  loadNews();
+});
+
+/* ── CRYPTO TICKER ── */
+const CRYPTOS = [
   {id:'bitcoin',sym:'BTC'},{id:'ethereum',sym:'ETH'},{id:'solana',sym:'SOL'},
   {id:'binancecoin',sym:'BNB'},{id:'ripple',sym:'XRP'},{id:'cardano',sym:'ADA'},
   {id:'dogecoin',sym:'DOGE'},{id:'polkadot',sym:'DOT'},{id:'chainlink',sym:'LINK'},
   {id:'avalanche-2',sym:'AVAX'},{id:'matic-network',sym:'MATIC'},{id:'litecoin',sym:'LTC'},
   {id:'uniswap',sym:'UNI'},{id:'stellar',sym:'XLM'},{id:'the-open-network',sym:'TON'},
   {id:'shiba-inu',sym:'SHIB'},{id:'tron',sym:'TRX'},{id:'near',sym:'NEAR'},
+  {id:'aptos',sym:'APT'},{id:'injective-protocol',sym:'INJ'},
 ];
 
-async function loadCrypto(){
-  try{
-    const ids=CRYPTOS.map(c=>c.id).join(',');
-    const r=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,{signal:AbortSignal.timeout(10000)});
-    if(!r.ok)throw 0;
-    const d=await r.json();
-    const items=CRYPTOS.map(c=>{const v=d[c.id];if(!v)return null;return{sym:c.sym,price:v.usd,chg:v.usd_24h_change};}).filter(Boolean);
-    renderTicker('cti',items,true);
-  }catch(_){$('cti').innerHTML=`<span class="tload">CRYPTO UNAVAILABLE</span>`;}
+async function loadCrypto() {
+  try {
+    const ids = CRYPTOS.map(c => c.id).join(',');
+    const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`, {signal: AbortSignal.timeout(10000)});
+    if (!r.ok) throw 0;
+    const d = await r.json();
+    const items = CRYPTOS.map(c => {const v = d[c.id]; if (!v) return null; return {sym: c.sym, price: v.usd, chg: v.usd_24h_change};}).filter(Boolean);
+    renderTicker('cti', items);
+  } catch(_) { $('cti').innerHTML = `<span class="tload">CRYPTO UNAVAILABLE</span>`; }
 }
 
-/* ══════════════════════════════════════
-   STOCK TICKER — TwelveData free endpoint (no key for quotes)
-   Falls back to a static "last known" display if all APIs fail
-══════════════════════════════════════ */
-function renderTicker(id,items,isCrypto){
-  const fmtPrice=(v)=>{if(v==null)return'—';if(isCrypto){if(v>=1000)return'$'+Math.round(v).toLocaleString();if(v>=1)return'$'+v.toFixed(2);return'$'+v.toFixed(5);}return'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});};
-  const row=items.map(item=>{const up=(item.chg||0)>=0;const cs=item.chg!=null?`${up?'+':''}${item.chg.toFixed(2)}%`:'—';return`<div class="ti"><span class="tsym">${esc(item.sym)}</span><span class="tprc">${fmtPrice(item.price)}</span><span class="${up?'tup':'tdn'}">${cs}</span></div>`;}).join('');
-  $(id).innerHTML=row+row;
+function renderTicker(id, items) {
+  const fmtPrice = v => {
+    if (v == null) return '—';
+    if (v >= 1000) return '$' + Math.round(v).toLocaleString();
+    if (v >= 1) return '$' + v.toFixed(2);
+    return '$' + v.toFixed(6);
+  };
+  const row = items.map(item => {
+    const up = (item.chg || 0) >= 0;
+    const cs = item.chg != null ? `${up ? '+' : ''}${item.chg.toFixed(2)}%` : '—';
+    return `<div class="ti"><span class="tsym">${esc(item.sym)}</span><span class="tprc">${fmtPrice(item.price)}</span><span class="${up ? 'tup' : 'tdn'}">${cs}</span></div>`;
+  }).join('');
+  $(id).innerHTML = row + row; // doubled for seamless loop
 }
 
-function refreshTickers(){loadCrypto();}
-
-
-/* ══ COOKIE BANNER ══ */
-function hideCookieBanner(){
-  const b=$('cookiebanner');
-  b.style.opacity='0';
-  b.style.transform='translateY(200%)';
-  setTimeout(()=>{b.style.display='none';},420);
+/* ── COOKIE BANNER ── */
+function hideCookieBanner() {
+  const b = $('cookiebanner');
+  b.style.opacity = '0'; b.style.transform = 'translateY(200%)';
+  setTimeout(() => { b.style.display = 'none'; }, 420);
 }
-function acceptCookies(){
-  localStorage.setItem('hn_cookies','accepted');
-  hideCookieBanner();
-}
-function declineCookies(){
-  localStorage.setItem('hn_cookies','declined');
-  hideCookieBanner();
-}
-function initCookieBanner(){
-  const choice=localStorage.getItem('hn_cookies');
-  if(choice){$('cookiebanner').style.display='none';}
+function acceptCookies() { localStorage.setItem('hn_cookies', 'accepted'); hideCookieBanner(); }
+function declineCookies() { localStorage.setItem('hn_cookies', 'declined'); hideCookieBanner(); }
+function initCookieBanner() {
+  const choice = localStorage.getItem('hn_cookies');
+  if (choice) $('cookiebanner').style.display = 'none';
 }
 
-/* ══ MODALS ══ */
-function openModal(id){
-  document.getElementById('modal-'+id).classList.add('open');
-  document.body.style.overflow='hidden';
-}
-function closeModal(id){
-  document.getElementById('modal-'+id).classList.remove('open');
-  document.body.style.overflow='';
-}
-// Close modals on backdrop click
-document.querySelectorAll('.modal-wrap').forEach(m=>{
-  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open'),document.body.style.overflow='';});
+/* ── MODALS ── */
+function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); document.body.style.overflow = ''; }
+document.querySelectorAll('.modal-wrap').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) { m.classList.remove('open'); document.body.style.overflow = ''; }});
 });
 
-/* ══ BOOT ══ */
+/* ── BOOT ── */
 applyTheme();
 populateUI();
-$('csel').value=S.country;$('csel-m').value=S.country;
+$('csel').value = S.country;
 loadNews();
-refreshTickers();
-setInterval(refreshTickers,90000);
+loadCrypto();
+setInterval(loadCrypto, 90000);
+setInterval(() => { if (!S.loading) loadNews(); }, 600000); // auto-refresh every 10 min
 initCookieBanner();
 </script>
 </body>
