@@ -172,7 +172,7 @@ html.dark .inp option{background:#1a1a1a}
 @keyframes bscroll{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
 
 /* SPLASH */
-#splash{position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .65s ease,transform .65s ease;pointer-events:all;}
+#splash{position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .6s ease,transform .6s ease;pointer-events:all;}
 #splash.sp-out{opacity:0;transform:scale(1.04);pointer-events:none;}
 #splash-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}
 #splash-content{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:1.6rem;text-align:center;padding:2rem 1.5rem;pointer-events:all;}
@@ -188,27 +188,27 @@ html.dark .inp option{background:#1a1a1a}
 @keyframes spIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 /* LOGO GLITCH */
 .logo-wrap{position:relative;display:inline-block;}
-.logo-wrap::before,.logo-wrap::after{content:attr(data-g);position:absolute;inset:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:1.4rem;letter-spacing:.06em;color:var(--red);pointer-events:none;opacity:0;}
+.logo-wrap::before,.logo-wrap::after{content:attr(data-g);position:absolute;inset:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:1.4rem;letter-spacing:.06em;color:var(--red);pointer-events:none;opacity:0;line-height:1;}
 .logo-wrap::before{text-shadow:-2px 0 #00ffff;animation:lgB 7s steps(1) infinite 1s;}
 .logo-wrap::after{text-shadow:2px 0 #ff0000;animation:lgA 7s steps(1) infinite 1.18s;}
 @keyframes lgB{0%,90%,100%{opacity:0;clip-path:none;transform:translate(0)}91%{opacity:.85;transform:translate(-3px,0);clip-path:inset(8% 0 72% 0)}92%{opacity:0}93%{opacity:.85;transform:translate(2px,1px);clip-path:inset(52% 0 8% 0)}94%{opacity:.85;transform:translate(-1px,-1px);clip-path:inset(22% 0 44% 0)}95%{opacity:0}}
 @keyframes lgA{0%,90%,100%{opacity:0;clip-path:none;transform:translate(0)}91%{opacity:.75;transform:translate(3px,0);clip-path:inset(28% 0 42% 0)}92%{opacity:0}93%{opacity:.75;transform:translate(-2px,1px);clip-path:inset(66% 0 4% 0)}94%{opacity:.75;transform:translate(1px,-1px);clip-path:inset(4% 0 62% 0)}95%{opacity:0}}
 /* MOBILE */
-@media(max-width:520px){#grid{grid-template-columns:1fr!important}.ci{height:155px}#splash-title{font-size:clamp(2.2rem,13vw,3.6rem)}#splash-sub{font-size:.72rem;letter-spacing:.11em}#splash-enter{padding:.7rem 1.8rem;font-size:.7rem;letter-spacing:.14em}#hdr>div>div{gap:.3rem;padding:.4rem .6rem}#si{font-size:.76rem}.ibtn{width:32px;height:32px}.card-time{font-size:.54rem}}
+@media(max-width:520px){#grid{grid-template-columns:1fr!important}.ci{height:155px}#splash-title{font-size:clamp(2.2rem,13vw,3.6rem)}#splash-sub{font-size:.72rem;letter-spacing:.11em}#splash-enter{padding:.7rem 1.8rem;font-size:.7rem;letter-spacing:.14em}}
 @media(max-width:360px){#splash-title{font-size:2rem}#splash-enter{padding:.6rem 1.3rem}}
 </style>
 </head>
 <body>
 
-<!-- SPLASH SCREEN - z-index 99999, must be first child -->
-<div id="splash" role="dialog" aria-modal="true" aria-label="Hatty's News intro">
+<!-- SPLASH — must be first, z-index 99999 -->
+<div id="splash" role="dialog" aria-modal="true" aria-label="Welcome to Hatty's News">
   <canvas id="splash-canvas"></canvas>
   <div id="splash-content">
     <div id="splash-title" data-g="HATTY'S NEWS">HATTY'S NEWS</div>
     <div id="splash-sub">Created by <span id="splash-hh">HattyHats</span></div>
     <button id="splash-enter" onclick="enterSite()">
       ENTER
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
   </div>
 </div>
@@ -1038,36 +1038,48 @@ const p2 = u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`;
 const p3 = u => `https://corsproxy.io/?${encodeURIComponent(u)}`;
 
 function sh(h){const d=document.createElement('div');d.innerHTML=h;return(d.textContent||'').replace(/\s+/g,' ').trim();}
-function xi(h){const m=(h||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?m[1]:'';}
+function xi(h){const m=(h||'').match(/<img[^>]+src=["\']([^"\']+)["\']>/i);return m?m[1]:'';}
 
-/* 5-min localStorage cache */
-const CACHE_TTL=5*60*1000;
-function cKey(c){return'hn_c_'+c;}
-function rCache(c){try{const r=localStorage.getItem(cKey(c));if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts<CACHE_TTL)return data;}catch(_){}return null;}
-function wCache(c,data){try{localStorage.setItem(cKey(c),JSON.stringify({ts:Date.now(),data}));}catch(_){}}
+/* ── 5-MIN CACHE ── */
+const CACHE_TTL = 5 * 60 * 1000;
+function cKey(c){ return 'hn_cache_' + c; }
+function rCache(c){
+  try {
+    const raw = localStorage.getItem(cKey(c));
+    if (!raw) return null;
+    const {ts, data} = JSON.parse(raw);
+    if (Date.now() - ts < CACHE_TTL) return data;
+  } catch(_) {}
+  return null;
+}
+function wCache(c, data){
+  try { localStorage.setItem(cKey(c), JSON.stringify({ts: Date.now(), data})); } catch(_) {}
+}
 
-/* Race all 3 proxies — fastest with data wins */
+/* ── RACE 3 PROXIES SIMULTANEOUSLY — fastest with data wins ── */
 async function fetchFeed(feed, signal) {
   const r2j = async () => {
-    const r = await fetch(p1(feed.u),{signal});
-    if(!r.ok) throw 0;
+    const r = await fetch(p1(feed.u), {signal});
+    if (!r.ok) throw 0;
     const d = await r.json();
-    if(d.status==='ok'&&d.items?.length) return {items:d.items.map(i=>fr2j(i,feed.n,feed.c)),ok:true};
+    if (d.status === 'ok' && d.items?.length)
+      return {items: d.items.map(i => fr2j(i, feed.n, feed.c)), ok: true};
     throw 0;
   };
   const raw = proxy => async () => {
-    const r = await fetch(proxy(feed.u),{signal});
-    if(!r.ok) throw 0;
-    const items = pxml(await r.text(),feed.n,feed.c);
-    if(!items.length) throw 0;
-    return {items,ok:true};
+    const r = await fetch(proxy(feed.u), {signal});
+    if (!r.ok) throw 0;
+    const items = pxml(await r.text(), feed.n, feed.c);
+    if (!items.length) throw 0;
+    return {items, ok: true};
   };
   try {
     return await Promise.any([r2j(), raw(p2)(), raw(p3)()]);
   } catch(e) {
-    if(e?.name==='AbortError'||(e?.errors&&e.errors.some(x=>x?.name==='AbortError')))
-      throw new DOMException('aborted','AbortError');
-    return {items:[],ok:false};
+    const isAbort = e?.name === 'AbortError' ||
+      (e?.errors && e.errors.some(x => x?.name === 'AbortError'));
+    if (isAbort) throw new DOMException('aborted', 'AbortError');
+    return {items: [], ok: false};
   }
 }
 
@@ -1100,62 +1112,121 @@ function pxml(xml, src, cat) {
   } catch(_) { return []; }
 }
 
-/* ── LOAD NEWS — cache + progressive render ── */
+/* ── LOAD NEWS ── */
+// loadId tracks which load is "current" — any older load discovering it's stale will discard results
+let loadSeq = 0;
+
 async function loadNews() {
-  if (S.loading) return;
-  if (S.abortCtrl) S.abortCtrl.abort();
+  // Always abort any in-flight load — never block on S.loading
+  if (S.abortCtrl) {
+    S.abortCtrl.abort();
+    S.abortCtrl = null;
+  }
+  // Give the aborted promises a tick to settle before we start fresh
+  await new Promise(r => setTimeout(r, 0));
+
+  const mySeq = ++loadSeq;           // unique ID for this load
   S.abortCtrl = new AbortController();
   const signal = S.abortCtrl.signal;
-  S.loading = true; S.articles = []; S.feedResults = [];
-  $('grid').innerHTML = ''; $('nores').style.display = 'none';
-  $('srcbar').innerHTML = ''; $('fsb').innerHTML = ''; $('covn').style.display = 'none';
 
+  // Reset state immediately so UI feels instant
+  S.loading = true;
+  S.articles = [];
+  S.feedResults = [];
+  $('grid').innerHTML = '';
+  $('nores').style.display = 'none';
+  $('srcbar').innerHTML = '';
+  $('fsb').innerHTML = '';
+  $('covn').style.display = 'none';
+  showSpin(true);
+
+  // Stale check helper — returns true if this load has been superseded
+  const stale = () => mySeq !== loadSeq || signal.aborted;
+
+  // Show cache instantly while fresh data loads in background
   const cached = rCache(S.country);
   if (cached && cached.length) {
-    S.articles = cached;
-    applyFilters(); renderCards(); updateMeta(); updateBreaking(S.articles);
-    S.loading = false;
-    bgRefresh(signal);
-    return;
+    if (!stale()) {
+      S.articles = cached;
+      applyFilters(); renderCards(); updateMeta(); updateBreaking(S.articles);
+      showSpin(false);
+    }
+    // Still fetch fresh in background even when serving cache
   }
 
-  showSpin(true);
   const countryFeeds = FEEDS[S.country] || FEEDS.us;
-  let pool = S.category==='general' ? countryFeeds : countryFeeds.filter(f=>f.c===S.category||f.primary);
+  let pool = S.category === 'general'
+    ? countryFeeds
+    : countryFeeds.filter(f => f.c === S.category || f.primary);
   if (!pool.length) pool = countryFeeds;
-  const selected = [...pool.filter(f=>f.primary),...pool.filter(f=>!f.primary)].slice(0,16);
+  const selected = [...pool.filter(f => f.primary), ...pool.filter(f => !f.primary)].slice(0, 16);
 
-  const seen = new Set(); let fired = 0;
-  function merge(art){const k=(art.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,55);if(!k||seen.has(k))return false;seen.add(k);S.articles.push(art);return true;}
-  function flush(){
-    S.articles.sort((a,b)=>{const da=new Date(b.date),db=new Date(a.date);return(!isNaN(da)&&!isNaN(db))?da-db:0;});
-    applyFilters();renderCards();updateMeta();buildStatus();buildSrcBar();updateBreaking(S.articles);
+  const seen   = new Set();
+  const fresh  = [];        // all articles from this load
+  let firstFire = false;
+
+  function mergeNew(items) {
+    let added = 0;
+    items.forEach(art => {
+      const k = (art.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 55);
+      if (!k || seen.has(k)) return;
+      seen.add(k);
+      fresh.push(art);
+      added++;
+    });
+    return added;
   }
 
-  await Promise.allSettled(selected.map(f=>
-    fetchFeed(f,signal).then(r=>{
-      if(signal.aborted)return;
-      S.feedResults.push({name:f.n,ok:r.ok});
-      if(r.ok){let n=0;r.items.forEach(a=>{if(merge(a))n++;});if(n){fired++;if(fired===1){showSpin(false);flush();}else if(fired%2===0)flush();}}
-    }).catch(e=>{if(e?.name!=='AbortError')S.feedResults.push({name:f.n,ok:false});})
-  ));
-  if(signal.aborted){S.loading=false;return;}
-  flush(); showSpin(false); S.loading=false;
-  if(!S.articles.length){toast('⚠ All feeds unavailable — retry');$('nores').style.display='block';}
-  else wCache(S.country,S.articles);
-}
+  function sortAndFlush() {
+    fresh.sort((a, b) => {
+      const da = new Date(b.date), db = new Date(a.date);
+      return (!isNaN(da) && !isNaN(db)) ? da - db : 0;
+    });
+    S.articles   = [...fresh];
+    S.feedResults = S.feedResults; // already accumulated
+    applyFilters(); renderCards(); updateMeta(); buildStatus(); buildSrcBar();
+    updateBreaking(S.articles);
+    showSpin(false);
+  }
 
-async function bgRefresh(signal){
-  const countryFeeds=FEEDS[S.country]||FEEDS.us;
-  let pool=S.category==='general'?countryFeeds:countryFeeds.filter(f=>f.c===S.category||f.primary);
-  if(!pool.length)pool=countryFeeds;
-  const sel=[...pool.filter(f=>f.primary),...pool.filter(f=>!f.primary)].slice(0,16);
-  const fresh=[];const seen=new Set();const fr=[];
-  await Promise.allSettled(sel.map(f=>fetchFeed(f,signal).then(r=>{fr.push({name:f.n,ok:r.ok});if(r.ok)r.items.forEach(a=>{const k=(a.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,55);if(k&&!seen.has(k)){seen.add(k);fresh.push(a);}});}).catch(()=>{})));
-  if(signal.aborted||!fresh.length)return;
-  fresh.sort((a,b)=>{const da=new Date(b.date),db=new Date(a.date);return(!isNaN(da)&&!isNaN(db))?da-db:0;});
-  wCache(S.country,fresh);
-  if(!signal.aborted){S.articles=fresh;S.feedResults=fr;applyFilters();renderCards();updateMeta();buildStatus();buildSrcBar();updateBreaking(fresh);}
+  // Fetch all feeds — render as each one arrives
+  const promises = selected.map(feed =>
+    fetchFeed(feed, signal)
+      .then(result => {
+        if (stale()) return;                          // discard if superseded
+        S.feedResults.push({name: feed.n, ok: result.ok});
+        if (result.ok) {
+          const added = mergeNew(result.items);
+          if (added > 0) {
+            if (!firstFire) {
+              firstFire = true;
+              sortAndFlush();                         // show first results ASAP
+            } else {
+              sortAndFlush();                         // keep updating as more arrive
+            }
+          }
+        }
+      })
+      .catch(e => {
+        if (e?.name !== 'AbortError' && !stale())
+          S.feedResults.push({name: feed.n, ok: false});
+      })
+  );
+
+  await Promise.allSettled(promises);
+
+  if (stale()) { S.loading = false; return; }        // another load started — bail
+
+  // Final flush
+  sortAndFlush();
+  S.loading = false;
+
+  if (!fresh.length && !cached?.length) {
+    toast('⚠ All feeds unavailable — retry');
+    $('nores').style.display = 'block';
+  } else if (fresh.length) {
+    wCache(S.country, fresh);
+  }
 }
 
 function updateBreaking(articles) {
@@ -1325,27 +1396,33 @@ function populateUI() {
 }
 
 function switchCountry(code) {
-  S.country = code; S.source = 'all';
+  if (code === S.country) return;      // already on this country — no-op
+
+  S.country  = code;
+  S.source   = 'all';
+  S.query    = '';                     // clear search so it doesn't filter new country
+  $('si').value = '';
   localStorage.setItem('hn_country', code);
 
-  // Sync all selectors
+  // Sync desktop select
   $('csel').value = code;
-  document.querySelectorAll('#clist .cc').forEach(b => {
-    b.classList.toggle('on', b.textContent.trim().startsWith(COUNTRIES.find(c=>c.code===code)?.name?.slice(0,3)||''));
-  });
-  // Re-build sidebar active state properly
+
+  // Sync sidebar list
   document.querySelectorAll('#clist .cc').forEach((b, i) => {
     b.classList.toggle('on', COUNTRIES[i]?.code === code);
   });
+
+  // Sync mobile chip bar
   document.querySelectorAll('#mobile-country-bar .mcbtn').forEach(b => {
     b.classList.toggle('on', b.dataset.code === code);
   });
 
-  loadNews();
-
-  // Scroll mobile bar to selected
-  const active = document.querySelector(`#mobile-country-bar .mcbtn.on`);
+  // Scroll mobile bar to show selected chip
+  const active = document.querySelector('#mobile-country-bar .mcbtn.on');
   if (active) active.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+
+  // loadNews handles aborting any in-flight load itself — just call it
+  loadNews();
 }
 
 /* ── DRAWER ── */
@@ -1442,72 +1519,75 @@ document.querySelectorAll('.modal-wrap').forEach(m => {
 
 /* ── SPLASH JS ── */
 (function(){
-  // Hide splash immediately if already seen this session
-  if(sessionStorage.getItem('hn_sp')){
-    var sp=document.getElementById('splash');
-    if(sp)sp.style.display='none';
+  if (sessionStorage.getItem('hn_sp')) {
+    var sp = document.getElementById('splash');
+    if (sp) sp.style.display = 'none';
     return;
   }
-  // Set glitch attribute
-  var t=document.getElementById('splash-title');
-  if(t)t.setAttribute('data-g',t.textContent);
+  var t = document.getElementById('splash-title');
+  if (t) t.setAttribute('data-g', t.textContent);
 
-  // Animated red glow on canvas
-  var canvas=document.getElementById('splash-canvas');
-  var ctx=canvas.getContext('2d');
-  var W,H,tick=0,raf;
-  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+  var canvas = document.getElementById('splash-canvas');
+  var ctx = canvas.getContext('2d');
+  var W, H, tick = 0, raf;
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
   resize();
-  window.addEventListener('resize',resize);
+  window.addEventListener('resize', resize);
+
   function draw(){
-    ctx.clearRect(0,0,W,H);
-    tick+=0.014;
-    var pulse=0.68+0.32*Math.sin(tick);
-    var r=Math.min(W,H)*0.52*pulse,cx=W/2,cy=H/2;
-    var g1=ctx.createRadialGradient(cx,cy,0,cx,cy,r*1.7);
-    g1.addColorStop(0,'rgba(180,8,8,'+(0.1*pulse)+')');
-    g1.addColorStop(0.5,'rgba(130,0,0,'+(0.05*pulse)+')');
-    g1.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
-    var g2=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-    g2.addColorStop(0,'rgba(220,38,38,'+(0.24*pulse)+')');
-    g2.addColorStop(0.4,'rgba(180,18,18,'+(0.13*pulse)+')');
-    g2.addColorStop(0.75,'rgba(100,0,0,'+(0.05*pulse)+')');
-    g2.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
-    for(var y=0;y<H;y+=4){ctx.fillStyle='rgba(0,0,0,0.035)';ctx.fillRect(0,y,W,2);}
-    raf=requestAnimationFrame(draw);
+    ctx.clearRect(0, 0, W, H);
+    tick += 0.013;
+    var pulse = 0.68 + 0.32 * Math.sin(tick);
+    var r = Math.min(W, H) * 0.52 * pulse, cx = W/2, cy = H/2;
+    var g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.7);
+    g1.addColorStop(0,   'rgba(180,8,8,' + (0.10*pulse) + ')');
+    g1.addColorStop(0.5, 'rgba(130,0,0,' + (0.05*pulse) + ')');
+    g1.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
+    var g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g2.addColorStop(0,    'rgba(220,38,38,' + (0.25*pulse) + ')');
+    g2.addColorStop(0.4,  'rgba(180,18,18,' + (0.13*pulse) + ')');
+    g2.addColorStop(0.75, 'rgba(100,0,0,'   + (0.05*pulse) + ')');
+    g2.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+    for (var y = 0; y < H; y += 4) {
+      ctx.fillStyle = 'rgba(0,0,0,0.035)'; ctx.fillRect(0, y, W, 2);
+    }
+    raf = requestAnimationFrame(draw);
   }
   draw();
 
-  window.enterSite=function(){
-    sessionStorage.setItem('hn_sp','1');
-    var sp=document.getElementById('splash');
+  window.enterSite = function(){
+    sessionStorage.setItem('hn_sp', '1');
+    var sp = document.getElementById('splash');
     sp.classList.add('sp-out');
-    setTimeout(function(){sp.style.display='none';cancelAnimationFrame(raf);},680);
+    setTimeout(function(){ sp.style.display = 'none'; cancelAnimationFrame(raf); }, 680);
   };
 
-  // Keyboard dismiss
-  document.addEventListener('keydown',function(e){
-    var sp=document.getElementById('splash');
-    if(sp&&sp.style.display!=='none'&&!sp.classList.contains('sp-out')){
-      if(e.key==='Enter'||e.key===' '||e.key==='Escape'){e.preventDefault();window.enterSite();}
+  document.addEventListener('keydown', function(e){
+    var sp = document.getElementById('splash');
+    if (sp && sp.style.display !== 'none' && !sp.classList.contains('sp-out')) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+        e.preventDefault(); window.enterSite();
+      }
     }
   });
 })();
 
 /* ── GEO DETECT ── */
 async function geoDetect(){
-  if(sessionStorage.getItem('hn_geo'))return;
-  try{
-    const r=await fetch('https://ipapi.co/json/',{signal:AbortSignal.timeout(3000)});
-    if(!r.ok)return;
-    const d=await r.json();
-    const cc=(d.country_code||'').toLowerCase();
-    const MAP={cn:'cn',ru:'ru',hk:'hk',tw:'cn'};
-    const mapped=MAP[cc]||(FEEDS[cc]?cc:null);
-    if(mapped&&mapped!==S.country)switchCountry(mapped);
-  }catch(_){}finally{sessionStorage.setItem('hn_geo','1');}
+  if (sessionStorage.getItem('hn_geo')) return;
+  try {
+    const r = await fetch('https://ipapi.co/json/', {signal: AbortSignal.timeout(3000)});
+    if (!r.ok) return;
+    const d = await r.json();
+    const cc = (d.country_code || '').toLowerCase();
+    const MAP = {cn:'cn', ru:'ru', hk:'hk', tw:'cn'};
+    const mapped = MAP[cc] || (FEEDS[cc] ? cc : null);
+    if (mapped && mapped !== S.country) switchCountry(mapped);
+  } catch(_) {} finally {
+    sessionStorage.setItem('hn_geo', '1');
+  }
 }
 
 /* ── BOOT ── */
