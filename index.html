@@ -170,147 +170,50 @@ html.dark .inp option{background:#1a1a1a}
 #breaking-scroll{flex:1;overflow:hidden;white-space:nowrap;mask-image:linear-gradient(to right,transparent,#fff 40px,#fff calc(100% - 40px),transparent)}
 #breaking-inner{display:inline-block;animation:bscroll 40s linear infinite;padding-right:80px}
 @keyframes bscroll{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .65s ease,transform .65s ease;pointer-events:all;}
+#splash.sp-out{opacity:0;transform:scale(1.04);pointer-events:none;}
+#splash-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}
+#splash-content{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:1.6rem;text-align:center;padding:2rem 1.5rem;pointer-events:all;}
+#splash-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(2.6rem,10vw,8rem);letter-spacing:.07em;color:#fff;line-height:1;opacity:0;animation:spIn 1.6s ease forwards;text-shadow:0 0 30px rgba(220,38,38,1),0 0 80px rgba(220,38,38,.55),0 0 160px rgba(220,38,38,.22);position:relative;user-select:none;display:inline-block;}
+#splash-title::after{content:attr(data-g);position:absolute;inset:0;color:#ff2222;opacity:0;text-shadow:2px 0 #ff0000,-2px 0 #00ffff;animation:gT 5s steps(1) infinite 2.4s;}
+@keyframes gT{0%,87%,100%{opacity:0;transform:translate(0);clip-path:none}88%{opacity:1;transform:translate(-4px,2px);clip-path:inset(10% 0 70% 0)}89%{opacity:0}90%{opacity:1;transform:translate(5px,-2px);clip-path:inset(58% 0 5% 0)}91%{opacity:1;transform:translate(-2px,1px);clip-path:inset(28% 0 30% 0)}92%{opacity:0}94%{opacity:1;transform:translate(3px,2px);clip-path:inset(5% 0 78% 0)}95%{opacity:0}}
+#splash-sub{font-family:'IBM Plex Mono',monospace;font-size:clamp(.78rem,2vw,1.05rem);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55);opacity:0;animation:spIn .9s ease forwards 1.4s;}
+#splash-hh{color:#dc2626;font-weight:700;display:inline-block;position:relative;animation:gHH 4s steps(1) infinite 2.9s;}
+@keyframes gHH{0%,80%,100%{color:#dc2626;text-shadow:none;transform:translate(0)}81%{color:#ff4444;text-shadow:3px 0 #f00,-3px 0 #0cf;transform:translate(-3px,0)}82%{color:#dc2626;text-shadow:none;transform:translate(2px,1px)}83%{color:#ff6666;text-shadow:-2px 0 #f00,2px 0 #0cf}84%{color:#dc2626;text-shadow:none;transform:translate(0)}89%{color:#ff3333;text-shadow:4px 0 rgba(255,0,0,.55);transform:translate(-2px,0)}90%{color:#dc2626;text-shadow:none;transform:translate(0)}}
+#splash-enter{display:flex;align-items:center;justify-content:center;gap:.6rem;background:transparent;border:2px solid rgba(220,38,38,.7);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:clamp(.72rem,1.6vw,.88rem);font-weight:700;letter-spacing:.22em;text-transform:uppercase;padding:.8rem 2.6rem;border-radius:3px;cursor:pointer;opacity:0;animation:spIn .8s ease forwards 2.1s;transition:background .22s,border-color .22s,box-shadow .22s,transform .14s;box-shadow:0 0 22px rgba(220,38,38,.2),inset 0 0 20px rgba(220,38,38,.05);pointer-events:all;z-index:5;-webkit-tap-highlight-color:rgba(220,38,38,.25);touch-action:manipulation;min-width:160px;}
+#splash-enter:hover,#splash-enter:focus-visible{border-color:#dc2626;outline:none;box-shadow:0 0 40px rgba(220,38,38,.65),0 0 90px rgba(220,38,38,.22),inset 0 0 30px rgba(220,38,38,.12);transform:scale(1.05);}
+#splash-enter:active{transform:scale(.96);}
+@keyframes spIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* LOGO GLITCH */
+.logo-wrap{position:relative;display:inline-block;}
+.logo-wrap::before,.logo-wrap::after{content:attr(data-g);position:absolute;inset:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:1.4rem;letter-spacing:.06em;color:var(--red);pointer-events:none;opacity:0;}
+.logo-wrap::before{text-shadow:-2px 0 #00ffff;animation:lgB 7s steps(1) infinite 1s;}
+.logo-wrap::after{text-shadow:2px 0 #ff0000;animation:lgA 7s steps(1) infinite 1.18s;}
+@keyframes lgB{0%,90%,100%{opacity:0;clip-path:none;transform:translate(0)}91%{opacity:.85;transform:translate(-3px,0);clip-path:inset(8% 0 72% 0)}92%{opacity:0}93%{opacity:.85;transform:translate(2px,1px);clip-path:inset(52% 0 8% 0)}94%{opacity:.85;transform:translate(-1px,-1px);clip-path:inset(22% 0 44% 0)}95%{opacity:0}}
+@keyframes lgA{0%,90%,100%{opacity:0;clip-path:none;transform:translate(0)}91%{opacity:.75;transform:translate(3px,0);clip-path:inset(28% 0 42% 0)}92%{opacity:0}93%{opacity:.75;transform:translate(-2px,1px);clip-path:inset(66% 0 4% 0)}94%{opacity:.75;transform:translate(1px,-1px);clip-path:inset(4% 0 62% 0)}95%{opacity:0}}
+/* MOBILE */
+@media(max-width:520px){#grid{grid-template-columns:1fr!important}.ci{height:155px}#splash-title{font-size:clamp(2.2rem,13vw,3.6rem)}#splash-sub{font-size:.72rem;letter-spacing:.11em}#splash-enter{padding:.7rem 1.8rem;font-size:.7rem;letter-spacing:.14em}#hdr>div>div{gap:.3rem;padding:.4rem .6rem}#si{font-size:.76rem}.ibtn{width:32px;height:32px}.card-time{font-size:.54rem}}
+@media(max-width:360px){#splash-title{font-size:2rem}#splash-enter{padding:.6rem 1.3rem}}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════
-     SPLASH / INTRO SCREEN
-══════════════════════════════════════ -->
-<div id="splash">
+<!-- SPLASH SCREEN - z-index 99999, must be first child -->
+<div id="splash" role="dialog" aria-modal="true" aria-label="Hatty's News intro">
   <canvas id="splash-canvas"></canvas>
   <div id="splash-content">
-    <div id="splash-title">HATTY'S<span id="splash-media"> MEDIA</span></div>
+    <div id="splash-title" data-g="HATTY'S NEWS">HATTY'S NEWS</div>
     <div id="splash-sub">Created by <span id="splash-hh">HattyHats</span></div>
     <button id="splash-enter" onclick="enterSite()">
-      <span id="splash-enter-txt">ENTER</span>
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      ENTER
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     </button>
   </div>
 </div>
 
-<style>
-/* ── SPLASH ── */
-#splash {
-  position: fixed; inset: 0; z-index: 9999;
-  background: #000;
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column;
-  transition: opacity .7s ease, transform .7s ease;
-}
-#splash.exiting { opacity: 0; transform: scale(1.04); pointer-events: none; }
-#splash-canvas {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-}
-#splash-content {
-  position: relative; z-index: 2;
-  display: flex; flex-direction: column; align-items: center; gap: 1.4rem;
-  text-align: center; padding: 2rem;
-}
-
-/* ── BIG TITLE ── */
-#splash-title {
-  font-family: 'Bebas Neue', Impact, sans-serif;
-  font-size: clamp(3.2rem, 12vw, 9rem);
-  letter-spacing: .08em;
-  color: #fff;
-  line-height: 1;
-  opacity: 0;
-  animation: splashFadeIn 1.8s ease forwards;
-  text-shadow:
-    0 0 30px rgba(220,38,38,.9),
-    0 0 80px rgba(220,38,38,.55),
-    0 0 160px rgba(220,38,38,.25);
-  position: relative;
-}
-#splash-title::before {
-  content: attr(data-glitch);
-  position: absolute; inset: 0;
-  color: #ff3333;
-  clip-path: inset(0 0 0 0);
-  animation: glitchTitle 4.5s steps(1) infinite 2s;
-  opacity: 0;
-  text-shadow: 2px 0 0 #ff0000, -2px 0 0 #00ffff;
-}
-@keyframes glitchTitle {
-  0%,88%,100%{opacity:0;transform:translate(0)}
-  89%{opacity:1;transform:translate(-4px,2px);clip-path:inset(20% 0 60% 0)}
-  90%{opacity:0;transform:translate(0)}
-  91%{opacity:1;transform:translate(5px,-3px);clip-path:inset(55% 0 10% 0)}
-  92%{opacity:1;transform:translate(-2px,1px);clip-path:inset(40% 0 30% 0)}
-  93%{opacity:0;transform:translate(0)}
-  95%{opacity:1;transform:translate(3px,2px);clip-path:inset(10% 0 70% 0)}
-  96%{opacity:0}
-}
-
-/* ── SUBTITLE ── */
-#splash-sub {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: clamp(.85rem, 2.5vw, 1.3rem);
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.6);
-  opacity: 0;
-  animation: splashFadeIn .9s ease forwards 1.4s;
-}
-#splash-hh {
-  color: #dc2626;
-  font-weight: 700;
-  position: relative;
-  display: inline-block;
-  animation: glitchHH 3.5s steps(1) infinite 2.5s;
-}
-@keyframes glitchHH {
-  0%,82%,100%{color:#dc2626;text-shadow:none;transform:translate(0)}
-  83%{color:#ff4444;text-shadow:3px 0 0 #ff0000,-3px 0 0 #00ffff;transform:translate(-3px,0)}
-  84%{color:#dc2626;text-shadow:none;transform:translate(2px,1px)}
-  85%{color:#ff6666;text-shadow:-2px 0 0 #ff0000,2px 0 0 #00ccff;transform:translate(0)}
-  86%{color:#dc2626;text-shadow:none;transform:translate(0)}
-  90%{color:#ff3333;text-shadow:4px 0 0 rgba(255,0,0,.7);transform:translate(-2px,0)}
-  91%{color:#dc2626;text-shadow:none;transform:translate(0)}
-}
-
-/* ── ENTER BUTTON ── */
-#splash-enter {
-  display: flex; align-items: center; gap: .6rem;
-  background: transparent;
-  border: 2px solid rgba(220,38,38,.7);
-  color: #fff;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: clamp(.75rem, 1.8vw, .95rem);
-  font-weight: 700;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  padding: .75rem 2.2rem;
-  border-radius: 3px;
-  cursor: pointer;
-  opacity: 0;
-  animation: splashFadeIn .8s ease forwards 2.2s;
-  transition: background .25s, border-color .25s, box-shadow .25s, transform .15s;
-  box-shadow: 0 0 18px rgba(220,38,38,.2), inset 0 0 18px rgba(220,38,38,.04);
-  position: relative;
-  overflow: hidden;
-}
-#splash-enter::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: rgba(220,38,38,.08);
-  transform: translateX(-100%);
-  transition: transform .35s ease;
-}
-#splash-enter:hover::before { transform: translateX(0); }
-#splash-enter:hover {
-  border-color: #dc2626;
-  box-shadow: 0 0 36px rgba(220,38,38,.55), 0 0 80px rgba(220,38,38,.2), inset 0 0 30px rgba(220,38,38,.1);
-  transform: scale(1.04);
-}
-#splash-enter:active { transform: scale(.98); }
-
-@keyframes splashFadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-</style>
+<div id="ovl"></div>
 
 <!-- COOKIE BANNER -->
 <div id="cookiebanner">
@@ -386,7 +289,7 @@ html.dark .inp option{background:#1a1a1a}
         <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <a href="/" style="text-decoration:none;flex-shrink:0">
-        <span class="logo" style="font-size:1.4rem">HATTY'S <span style="opacity:.55">NEWS</span></span>
+        <span class="logo logo-wrap" data-g="HATTY'S NEWS" style="font-size:1.4rem">HATTY'S <span style="opacity:.55">NEWS</span></span>
       </a>
       <div style="display:flex;align-items:center;gap:.3rem;color:var(--ink-muted);font-size:.6rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;flex-shrink:0">
         <div class="ldot"></div><span class="hidden sm:inline">LIVE</span>
@@ -523,20 +426,16 @@ const FEEDS = {
 
   /* ─── UNITED STATES ─── */
   us: [
+    // Google News USA — guaranteed country-specific
     {n:'Google News US',u:'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',c:'general',primary:true},
     {n:'Google News US Top',u:'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en',c:'general'},
+    // US National sources
     {n:'AP News',u:'https://feeds.apnews.com/rss/apf-topnews',c:'general'},
     {n:'AP Politics',u:'https://feeds.apnews.com/rss/apf-politics',c:'world'},
-    {n:'AP Business',u:'https://feeds.apnews.com/rss/apf-business',c:'business'},
-    {n:'AP Science',u:'https://feeds.apnews.com/rss/apf-science',c:'science'},
-    {n:'AP Sports',u:'https://feeds.apnews.com/rss/apf-sports',c:'sports'},
     {n:'NPR',u:'https://feeds.npr.org/1001/rss.xml',c:'general'},
     {n:'NPR News',u:'https://feeds.npr.org/1004/rss.xml',c:'world'},
-    {n:'NPR Health',u:'https://feeds.npr.org/1128/rss.xml',c:'health'},
-    {n:'NPR Science',u:'https://feeds.npr.org/1007/rss.xml',c:'science'},
     {n:'CNN',u:'http://rss.cnn.com/rss/edition.rss',c:'general'},
     {n:'CNN Business',u:'http://rss.cnn.com/rss/edition_business.rss',c:'business'},
-    {n:'CNN Tech',u:'http://rss.cnn.com/rss/edition_technology.rss',c:'technology'},
     {n:'CBS News',u:'https://www.cbsnews.com/latest/rss/main',c:'general'},
     {n:'ABC News',u:'https://abcnews.go.com/abcnews/topstories',c:'general'},
     {n:'PBS NewsHour',u:'https://www.pbs.org/newshour/feeds/rss/headlines',c:'general'},
@@ -546,22 +445,13 @@ const FEEDS = {
     {n:'The Hill',u:'https://thehill.com/homenews/feed/',c:'general'},
     {n:'LA Times',u:'https://www.latimes.com/rss2.0.xml',c:'general'},
     {n:'Politico',u:'https://www.politico.com/rss/politicopicks.xml',c:'world'},
-    {n:'Reuters US',u:'https://feeds.reuters.com/reuters/domesticNews',c:'general'},
-    {n:'Axios',u:'https://api.axios.com/feed/',c:'general'},
-    {n:'Business Insider',u:'https://feeds.businessinsider.com/custom/all',c:'business'},
     {n:'Wired',u:'https://www.wired.com/feed/rss',c:'technology'},
     {n:'TechCrunch',u:'https://techcrunch.com/feed',c:'technology'},
     {n:'Ars Technica',u:'http://feeds.arstechnica.com/arstechnica/index/',c:'technology'},
     {n:'The Verge',u:'https://www.theverge.com/rss/index.xml',c:'technology'},
-    {n:'Engadget',u:'https://www.engadget.com/rss.xml',c:'technology'},
     {n:'ESPN',u:'https://www.espn.com/espn/rss/news',c:'sports'},
     {n:'MarketWatch',u:'https://www.marketwatch.com/rss/topstories',c:'business'},
     {n:'Bloomberg',u:'https://feeds.bloomberg.com/markets/news.rss',c:'business'},
-    {n:'Forbes',u:'https://www.forbes.com/most-popular/feed/',c:'business'},
-    {n:'Scientific American',u:'https://www.scientificamerican.com/platform/syndication/rss/science-news/',c:'science'},
-    {n:'Healthline',u:'https://www.healthline.com/rss/health-news',c:'health'},
-    {n:'Variety',u:'https://variety.com/feed/',c:'entertainment'},
-    {n:'Rolling Stone',u:'https://www.rollingstone.com/feed/',c:'entertainment'},
   ],
 
   /* ─── UNITED KINGDOM ─── */
@@ -575,24 +465,15 @@ const FEEDS = {
     {n:'BBC Health',u:'http://feeds.bbci.co.uk/news/health/rss.xml',c:'health'},
     {n:'BBC Sport',u:'http://feeds.bbci.co.uk/sport/rss.xml',c:'sports'},
     {n:'BBC Politics',u:'http://feeds.bbci.co.uk/news/politics/rss.xml',c:'world'},
-    {n:'BBC Entertainment',u:'http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml',c:'entertainment'},
     {n:'The Guardian UK',u:'https://www.theguardian.com/uk/rss',c:'general'},
     {n:'Guardian Politics',u:'https://www.theguardian.com/politics/rss',c:'world'},
     {n:'Guardian Tech',u:'https://www.theguardian.com/technology/rss',c:'technology'},
     {n:'Guardian Science',u:'https://www.theguardian.com/science/rss',c:'science'},
-    {n:'Guardian Business',u:'https://www.theguardian.com/business/rss',c:'business'},
-    {n:'Guardian Sport',u:'https://www.theguardian.com/sport/rss',c:'sports'},
     {n:'Sky News',u:'https://feeds.skynews.com/feeds/rss/home.xml',c:'general'},
     {n:'Sky News UK',u:'https://feeds.skynews.com/feeds/rss/uk.xml',c:'general'},
-    {n:'Sky News Business',u:'https://feeds.skynews.com/feeds/rss/business.xml',c:'business'},
-    {n:'Sky News Tech',u:'https://feeds.skynews.com/feeds/rss/technology.xml',c:'technology'},
     {n:'The Independent',u:'https://www.independent.co.uk/rss',c:'general'},
-    {n:'The Telegraph',u:'https://www.telegraph.co.uk/rss.xml',c:'general'},
     {n:'The Register',u:'https://www.theregister.com/headlines.atom',c:'technology'},
     {n:'The Economist',u:'https://www.economist.com/latest/rss.xml',c:'business'},
-    {n:'Financial Times',u:'https://www.ft.com/rss/home/uk',c:'business'},
-    {n:'Reuters UK',u:'https://feeds.reuters.com/reuters/UKNewsHeadlines',c:'general'},
-    {n:'Daily Mail',u:'https://www.dailymail.co.uk/articles.rss',c:'general'},
   ],
 
   /* ─── CANADA ─── */
@@ -605,17 +486,11 @@ const FEEDS = {
     {n:'CBC Tech',u:'https://www.cbc.ca/cmlink/rss-technology',c:'technology'},
     {n:'CBC Sports',u:'https://www.cbc.ca/cmlink/rss-sports',c:'sports'},
     {n:'CBC Health',u:'https://www.cbc.ca/cmlink/rss-health',c:'health'},
-    {n:'CBC Politics',u:'https://www.cbc.ca/cmlink/rss-politics',c:'world'},
     {n:'Global News',u:'https://globalnews.ca/feed/',c:'general'},
     {n:'Globe & Mail',u:'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/',c:'general'},
-    {n:'Globe Business',u:'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business/',c:'business'},
     {n:'Toronto Star',u:'https://www.thestar.com/content/thestar/feed.topstories.rss',c:'general'},
     {n:'National Post',u:'https://nationalpost.com/feed',c:'general'},
     {n:'CTV News',u:'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009',c:'general'},
-    {n:'iPolitics',u:'https://ipolitics.ca/feed/',c:'world'},
-    {n:'Financial Post',u:'https://financialpost.com/feed',c:'business'},
-    {n:'Vancouver Sun',u:'https://vancouversun.com/feed',c:'general'},
-    {n:'Ottawa Citizen',u:'https://ottawacitizen.com/feed',c:'general'},
   ],
 
   /* ─── AUSTRALIA ─── */
@@ -633,10 +508,6 @@ const FEEDS = {
     {n:'The Australian',u:'https://www.theaustralian.com.au/feed',c:'general'},
     {n:'Sky News AU',u:'https://www.skynews.com.au/feed',c:'general'},
     {n:'Herald Sun',u:'https://www.heraldsun.com.au/feed',c:'general'},
-    {n:'The Guardian AU',u:'https://www.theguardian.com/au/rss',c:'general'},
-    {n:'Brisbane Times',u:'https://www.brisbanetimes.com.au/rss/feed.xml',c:'general'},
-    {n:'WA Today',u:'https://www.watoday.com.au/rss/feed.xml',c:'general'},
-    {n:'Nine News AU',u:'https://www.9news.com.au/feed',c:'general'},
   ],
 
   /* ─── NEW ZEALAND ─── */
@@ -649,8 +520,6 @@ const FEEDS = {
     {n:'Stuff NZ',u:'https://www.stuff.co.nz/rss',c:'general'},
     {n:'NZ Herald',u:'https://www.nzherald.co.nz/arc/outboundfeeds/rss/',c:'general'},
     {n:'1News NZ',u:'https://www.1news.co.nz/rss',c:'general'},
-    {n:'Newshub NZ',u:'https://www.newshub.co.nz/home/new-zealand.rss',c:'general'},
-    {n:'NZ Business Desk',u:'https://businessdesk.co.nz/feed',c:'business'},
   ],
 
   /* ─── GERMANY ─── */
@@ -663,11 +532,8 @@ const FEEDS = {
     {n:'DW Science',u:'https://rss.dw.com/xml/rss-en-sci',c:'science'},
     {n:'DW Sport',u:'https://rss.dw.com/xml/rss-en-sport',c:'sports'},
     {n:'DW Culture',u:'https://rss.dw.com/xml/rss-en-cul',c:'entertainment'},
-    {n:'DW Tech',u:'https://rss.dw.com/xml/rss-en-tech',c:'technology'},
     {n:'Local Germany',u:'https://feeds.thelocal.com/rss/de',c:'general'},
     {n:'EURACTIV',u:'https://www.euractiv.com/feed/',c:'world'},
-    {n:'Spiegel International',u:'https://www.spiegel.de/international/index.rss',c:'general'},
-    {n:'Deutsche Welle',u:'https://rss.dw.com/xml/rss-en-world',c:'world'},
   ],
 
   /* ─── FRANCE ─── */
@@ -680,11 +546,8 @@ const FEEDS = {
     {n:'France 24 Economy',u:'https://www.france24.com/en/economy/rss',c:'business'},
     {n:'France 24 Tech',u:'https://www.france24.com/en/tech-science/rss',c:'technology'},
     {n:'France 24 Sport',u:'https://www.france24.com/en/sport/rss',c:'sports'},
-    {n:'France 24 Culture',u:'https://www.france24.com/en/culture/rss',c:'entertainment'},
     {n:'RFI English',u:'https://en.rfi.fr/rss',c:'general'},
     {n:'The Local France',u:'https://feeds.thelocal.com/rss/fr',c:'general'},
-    {n:'Le Monde EN',u:'https://www.lemonde.fr/en/rss/une.xml',c:'general'},
-    {n:'Connexion France',u:'https://www.connexionfrance.com/rss.xml',c:'general'},
   ],
 
   /* ─── JAPAN ─── */
@@ -694,16 +557,11 @@ const FEEDS = {
     {n:'NHK Business',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/business.xml',c:'business'},
     {n:'NHK Science',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/science.xml',c:'science'},
     {n:'NHK Sport',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/sport.xml',c:'sports'},
-    {n:'NHK Tech',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/technology.xml',c:'technology'},
     {n:'Japan Times',u:'https://www.japantimes.co.jp/feed',c:'general'},
-    {n:'Japan Times Business',u:'https://www.japantimes.co.jp/business/feed',c:'business'},
     {n:'Kyodo News',u:'https://english.kyodonews.net/rss/all.xml',c:'general'},
     {n:'Diplomat Japan',u:'https://thediplomat.com/regions/japan/feed',c:'world'},
     {n:'Asahi Shimbun',u:'https://www.asahi.com/rss/asahi/newsheadlines.rdf',c:'general'},
     {n:'Nikkei Asia',u:'https://asia.nikkei.com/rss/feed/nar',c:'business'},
-    {n:'The Mainichi',u:'https://mainichi.jp/rss/etc/english.rss',c:'general'},
-    {n:'Japan Today',u:'https://japantoday.com/feed',c:'general'},
-    {n:'Tokyo Reporter',u:'https://www.tokyoreporter.com/feed/',c:'general'},
   ],
 
   /* ─── INDIA ─── */
@@ -742,14 +600,11 @@ const FEEDS = {
   ae: [
     {n:'Google News AE',u:'https://news.google.com/rss?hl=en-AE&gl=AE&ceid=AE:en',c:'general',primary:true},
     {n:'Gulf News',u:'https://gulfnews.com/rss/news',c:'general'},
-    {n:'Gulf News Business',u:'https://gulfnews.com/rss/business',c:'business'},
     {n:'The National UAE',u:'https://www.thenationalnews.com/rss/home.xml',c:'general'},
-    {n:'The National Business',u:'https://www.thenationalnews.com/rss/business.xml',c:'business'},
     {n:'Khaleej Times',u:'https://www.khaleejtimes.com/rss',c:'general'},
     {n:'Arabian Business',u:'https://www.arabianbusiness.com/rss',c:'business'},
     {n:'Emirates 24|7',u:'https://www.emirates247.com/rss',c:'general'},
     {n:'Gulf Business',u:'https://gulfbusiness.com/feed/',c:'business'},
-    {n:'WAM Agency',u:'https://wam.ae/en/feed',c:'general'},
   ],
 
   /* ─── SOUTH AFRICA ─── */
@@ -757,21 +612,17 @@ const FEEDS = {
     {n:'Google News ZA',u:'https://news.google.com/rss?hl=en-ZA&gl=ZA&ceid=ZA:en',c:'general',primary:true},
     {n:'Daily Maverick',u:'https://www.dailymaverick.co.za/feed',c:'general'},
     {n:'News24',u:'https://feeds.news24.com/articles/news24/TopStories/rss',c:'general'},
-    {n:'News24 Business',u:'https://feeds.news24.com/articles/fin24/TopStories/rss',c:'business'},
     {n:'TimesLive',u:'https://www.timeslive.co.za/rss/',c:'general'},
     {n:'IOL',u:'https://www.iol.co.za/rss',c:'general'},
     {n:'Business Day',u:'https://www.businesslive.co.za/rss/bd/',c:'business'},
     {n:'Mail & Guardian',u:'https://mg.co.za/feed/',c:'general'},
     {n:'eNCA',u:'https://www.enca.com/rss.xml',c:'general'},
-    {n:'The Citizen ZA',u:'https://www.citizen.co.za/feed/',c:'general'},
-    {n:'Africa Check',u:'https://africacheck.org/feed/',c:'general'},
   ],
 
   /* ─── NIGERIA ─── */
   ng: [
     {n:'Google News NG',u:'https://news.google.com/rss?hl=en-NG&gl=NG&ceid=NG:en',c:'general',primary:true},
     {n:'Punch Nigeria',u:'https://punchng.com/feed',c:'general'},
-    {n:'Punch Business',u:'https://punchng.com/category/business/feed',c:'business'},
     {n:'Vanguard NG',u:'https://www.vanguardngr.com/feed',c:'general'},
     {n:'Premium Times',u:'https://www.premiumtimesng.com/feed',c:'general'},
     {n:'The Guardian NG',u:'https://guardian.ng/feed/',c:'general'},
@@ -779,8 +630,6 @@ const FEEDS = {
     {n:'This Day',u:'https://www.thisdaylive.com/feed/',c:'general'},
     {n:'Sahara Reporters',u:'https://saharareporters.com/rss.xml',c:'general'},
     {n:'Business Day NG',u:'https://businessday.ng/feed/',c:'business'},
-    {n:'Nigerian Tribune',u:'https://tribuneonlineng.com/feed/',c:'general'},
-    {n:'Daily Trust',u:'https://dailytrust.com/feed/',c:'general'},
   ],
 
   /* ─── KENYA ─── */
@@ -791,9 +640,6 @@ const FEEDS = {
     {n:'Daily Nation',u:'https://nation.africa/kenya/news/rss.xml',c:'general'},
     {n:'Business Daily',u:'https://www.businessdailyafrica.com/rss/news/rss.xml',c:'business'},
     {n:'Standard Kenya',u:'https://www.standardmedia.co.ke/rss/news.php',c:'general'},
-    {n:'Capital FM KE',u:'https://www.capitalfm.co.ke/news/feed/',c:'general'},
-    {n:'People Daily KE',u:'https://www.pd.co.ke/feed/',c:'general'},
-    {n:'KBC Channel 1',u:'https://kbc.co.ke/feed/',c:'general'},
   ],
 
   /* ─── ITALY ─── */
@@ -802,21 +648,14 @@ const FEEDS = {
     {n:'ANSA English',u:'https://www.ansa.it/sito/ansait_rss.xml',c:'general'},
     {n:'The Local Italy',u:'https://feeds.thelocal.com/rss/it',c:'general'},
     {n:'Italy 24',u:'https://www.italy24.ilsole24ore.com/rss/en/latest-news.xml',c:'general'},
-    {n:'Italian Insider',u:'https://www.italianinsider.it/rss',c:'general'},
-    {n:'TuttoMercatoWeb EN',u:'https://www.tuttomercatoweb.com/rss',c:'sports'},
-    {n:'Reuters Italy',u:'https://feeds.reuters.com/reuters/ITEhomepage',c:'general'},
   ],
 
   /* ─── SPAIN ─── */
   es: [
     {n:'Google News ES',u:'https://news.google.com/rss?hl=es&gl=ES&ceid=ES:es',c:'general',primary:true},
     {n:'El País English',u:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada',c:'general'},
-    {n:'El País Economy',u:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/section/economy',c:'business'},
     {n:'The Local Spain',u:'https://feeds.thelocal.com/rss/es',c:'general'},
     {n:'EFE News',u:'https://efenoticias.com/feed/',c:'general'},
-    {n:'Olive Press',u:'https://www.theolivepress.es/feed/',c:'general'},
-    {n:'Spain in English',u:'https://www.spainenglish.com/feed/',c:'general'},
-    {n:'Reuters Spain',u:'https://feeds.reuters.com/reuters/ESbusinessNews',c:'business'},
   ],
 
   /* ─── NETHERLANDS ─── */
@@ -834,8 +673,6 @@ const FEEDS = {
     {n:'The Local SE',u:'https://feeds.thelocal.com/rss/se',c:'general'},
     {n:'Sweden Herald',u:'https://swedenherald.com/feed/',c:'general'},
     {n:'Radio Sweden',u:'https://sverigesradio.se/topnyheter/rss.xml',c:'general'},
-    {n:'SVT News EN',u:'https://www.svt.se/nyheter/rss.xml',c:'general'},
-    {n:'The Spectator SE',u:'https://spectator.se/feed/',c:'general'},
   ],
 
   /* ─── NORWAY ─── */
@@ -844,47 +681,28 @@ const FEEDS = {
     {n:'Norway Today',u:'https://norwaytoday.info/feed',c:'general'},
     {n:'The Local NO',u:'https://feeds.thelocal.com/rss/no',c:'general'},
     {n:'Aftenposten EN',u:'https://www.aftenposten.no/rss/',c:'general'},
-    {n:'NRK EN',u:'https://www.nrk.no/toppsaker.rss',c:'general'},
-    {n:'Norway News EN',u:'https://www.newsinenglish.no/feed/',c:'general'},
   ],
 
   /* ─── CHINA ─── */
   cn: [
-    {n:'Google News CN',u:'https://news.google.com/rss?hl=zh-CN&gl=CN&ceid=CN:zh-Hans',c:'general',primary:true},
     {n:'SCMP China',u:'https://www.scmp.com/rss/4/feed',c:'general',primary:true},
     {n:'SCMP HK',u:'https://www.scmp.com/rss/2/feed',c:'general'},
     {n:'SCMP Business',u:'https://www.scmp.com/rss/92/feed',c:'business'},
     {n:'SCMP Tech',u:'https://www.scmp.com/rss/36/feed',c:'technology'},
     {n:'SCMP Asia',u:'https://www.scmp.com/rss/3/feed',c:'world'},
-    {n:'SCMP Economy',u:'https://www.scmp.com/rss/5/feed',c:'business'},
-    {n:'Caixin Global',u:'https://www.caixinglobal.com/rss.xml',c:'business'},
-    {n:'Sixth Tone',u:'https://www.sixthtone.com/rss.xml',c:'general'},
     {n:'Diplomat China',u:'https://thediplomat.com/regions/east-asia/feed',c:'world'},
+    {n:'Sixth Tone',u:'https://www.sixthtone.com/rss.xml',c:'general'},
+    {n:'Caixin Global',u:'https://www.caixinglobal.com/rss.xml',c:'business'},
     {n:'Nikkei Asia',u:'https://asia.nikkei.com/rss/feed/nar',c:'business'},
-    {n:'China Project',u:'https://thechinaproject.com/feed/',c:'general'},
-    {n:'ChinaFile',u:'https://www.chinafile.com/rss.xml',c:'general'},
-    {n:'SupChina',u:'https://supchina.com/feed/',c:'general'},
-    {n:'RFA China',u:'https://www.rfa.org/english/news/china/rss2',c:'general'},
-    {n:'Reuters Asia',u:'https://feeds.reuters.com/Reuters/AsiaNews',c:'world'},
-    {n:'Inkstone',u:'https://www.inkstonenews.com/rss',c:'general'},
   ],
 
   /* ─── RUSSIA ─── */
   ru: [
-    {n:'Google News RU',u:'https://news.google.com/rss?hl=ru&gl=RU&ceid=RU:ru',c:'general',primary:true},
     {n:'Moscow Times',u:'https://www.themoscowtimes.com/rss/news',c:'general',primary:true},
     {n:'Moscow Times Business',u:'https://www.themoscowtimes.com/rss/business',c:'business'},
-    {n:'Moscow Times Opinion',u:'https://www.themoscowtimes.com/rss/opinion',c:'general'},
-    {n:'Meduza English',u:'https://meduza.io/en/rss/all',c:'general'},
     {n:'The Insider RU',u:'https://theins.ru/en/feed',c:'general'},
+    {n:'Meduza English',u:'https://meduza.io/en/rss/all',c:'general'},
     {n:'Russia Beyond',u:'https://www.rbth.com/rss/russian_news.xml',c:'general'},
-    {n:'Russia Beyond Society',u:'https://www.rbth.com/rss/society_and_culture.xml',c:'general'},
-    {n:'iStories',u:'https://istories.media/en/rss/',c:'general'},
-    {n:'Novaya Gazeta Europe',u:'https://novayagazeta.eu/en/rss',c:'general'},
-    {n:'Re:Russia',u:'https://re-russia.net/en/feed/',c:'general'},
-    {n:'Diplomat Russia',u:'https://thediplomat.com/regions/russia/feed',c:'world'},
-    {n:'RFE/RL Russia',u:'https://www.rferl.org/api/zpiqmveiq-qiperqp/zh/rss2/',c:'general'},
-    {n:'BBC Europe',u:'http://feeds.bbci.co.uk/news/world/europe/rss.xml',c:'world'},
   ],
 
   /* ─── BRAZIL ─── */
@@ -895,9 +713,6 @@ const FEEDS = {
     {n:'Rio Times',u:'https://riotimesonline.com/feed/',c:'general'},
     {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
     {n:'AgênciaBrasil EN',u:'https://agenciabrasil.ebc.com.br/en/rss/news',c:'general'},
-    {n:'The Brazilian Report',u:'https://brazilian.report/feed/',c:'general'},
-    {n:'Reuters Brazil',u:'https://feeds.reuters.com/reuters/BRbusinessNews',c:'business'},
-    {n:'BNL News',u:'https://bnlnews.com.br/feed/',c:'general'},
   ],
 
   /* ─── MEXICO ─── */
@@ -907,9 +722,6 @@ const FEEDS = {
     {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
     {n:'Mexico Business',u:'https://www.mexicobusiness.news/feed/',c:'business'},
     {n:'El Universal EN',u:'https://www.eluniversal.com.mx/english/rss.xml',c:'general'},
-    {n:'The Yucatan Times',u:'https://www.theyucatantimes.com/feed/',c:'general'},
-    {n:'Mexico Voices',u:'https://mexicovoices.com/feed/',c:'general'},
-    {n:'Reuters Mexico',u:'https://feeds.reuters.com/reuters/MXLocalNews',c:'general'},
   ],
 
   /* ─── ARGENTINA ─── */
@@ -919,8 +731,6 @@ const FEEDS = {
     {n:'Buenos Aires Herald',u:'https://buenosairesherald.com/feed',c:'general'},
     {n:'Argentina Reports',u:'https://argentinareports.com/feed/',c:'general'},
     {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
-    {n:'Télam EN',u:'https://www.telam.com.ar/rss/english.xml',c:'general'},
-    {n:'Infobae EN',u:'https://www.infobae.com/feeds/rss/',c:'general'},
   ],
 
   /* ─── EGYPT ─── */
@@ -936,15 +746,9 @@ const FEEDS = {
   kr: [
     {n:'Google News KR',u:'https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko',c:'general',primary:true},
     {n:'Korea Herald',u:'http://www.koreaherald.com/rss/00100000.xml',c:'general'},
-    {n:'Korea Herald Business',u:'http://www.koreaherald.com/rss/00700000.xml',c:'business'},
     {n:'Korea Times',u:'https://www.koreatimes.co.kr/www/rss/rss.xml',c:'general'},
     {n:'Yonhap News',u:'https://en.yna.co.kr/RSS/news.xml',c:'general'},
-    {n:'Yonhap Business',u:'https://en.yna.co.kr/RSS/economy.xml',c:'business'},
-    {n:'Yonhap Sports',u:'https://en.yna.co.kr/RSS/sports.xml',c:'sports'},
     {n:'Diplomat Korea',u:'https://thediplomat.com/regions/south-korea/feed',c:'world'},
-    {n:'KBS World',u:'https://world.kbs.co.kr/rss/rss_news.htm',c:'general'},
-    {n:'Arirang News',u:'https://www.arirang.com/rss/rss.asp',c:'general'},
-    {n:'Korea JoongAng',u:'https://koreajoongangdaily.joins.com/feed/rss',c:'general'},
   ],
 
   /* ─── INDONESIA ─── */
@@ -954,39 +758,25 @@ const FEEDS = {
     {n:'Jakarta Globe',u:'https://jakartaglobe.id/feed',c:'general'},
     {n:'Diplomat SE Asia',u:'https://thediplomat.com/regions/southeast-asia/feed',c:'world'},
     {n:'BeritaSatu EN',u:'https://www.beritasatu.com/rss/homefeed.rss',c:'general'},
-    {n:'Antara News',u:'https://en.antaranews.com/rss/news.xml',c:'general'},
-    {n:'Tempo EN',u:'https://en.tempo.co/rss/news',c:'general'},
-    {n:'CNBC Indonesia',u:'https://www.cnbcindonesia.com/rss',c:'business'},
   ],
 
   /* ─── PHILIPPINES ─── */
   ph: [
     {n:'Google News PH',u:'https://news.google.com/rss?hl=en-PH&gl=PH&ceid=PH:en',c:'general',primary:true},
     {n:'Philippine Daily Inquirer',u:'https://newsinfo.inquirer.net/feed',c:'general'},
-    {n:'Inquirer Business',u:'https://business.inquirer.net/feed',c:'business'},
-    {n:'Inquirer Tech',u:'https://technology.inquirer.net/feed',c:'technology'},
     {n:'Manila Times',u:'https://www.manilatimes.net/feed',c:'general'},
     {n:'Rappler',u:'https://www.rappler.com/rss/',c:'general'},
     {n:'Philippine Star',u:'https://www.philstar.com/rss/headlines',c:'general'},
     {n:'ABS-CBN News',u:'https://news.abs-cbn.com/rss/news',c:'general'},
-    {n:'GMA News',u:'https://www.gmanetwork.com/news/rss/news.xml',c:'general'},
-    {n:'BusinessWorld PH',u:'https://www.bworldonline.com/feed/',c:'business'},
-    {n:'SunStar',u:'https://www.sunstar.com.ph/rss',c:'general'},
   ],
 
   /* ─── PAKISTAN ─── */
   pk: [
     {n:'Google News PK',u:'https://news.google.com/rss?hl=en-PK&gl=PK&ceid=PK:en',c:'general',primary:true},
     {n:'Dawn',u:'https://www.dawn.com/feeds/home',c:'general'},
-    {n:'Dawn Business',u:'https://www.dawn.com/feeds/business',c:'business'},
-    {n:'Dawn Technology',u:'https://www.dawn.com/feeds/technology',c:'technology'},
     {n:'The News PK',u:'https://www.thenews.com.pk/rss/1/1',c:'general'},
     {n:'Geo TV',u:'https://www.geo.tv/rss/10/pakistan',c:'general'},
     {n:'The Express Tribune',u:'https://tribune.com.pk/feed/home',c:'general'},
-    {n:'Tribune Business',u:'https://tribune.com.pk/feed/business',c:'business'},
-    {n:'ARY News',u:'https://arynews.tv/feed/',c:'general'},
-    {n:'The Nation PK',u:'https://nation.com.pk/feed',c:'general'},
-    {n:'Pakistan Today',u:'https://www.pakistantoday.com.pk/feed/',c:'general'},
   ],
 
   /* ─── TURKEY ─── */
@@ -994,13 +784,8 @@ const FEEDS = {
     {n:'Google News TR',u:'https://news.google.com/rss?hl=tr&gl=TR&ceid=TR:tr',c:'general',primary:true},
     {n:'Hurriyet Daily News',u:'https://www.hurriyetdailynews.com/rss',c:'general'},
     {n:'Daily Sabah',u:'https://www.dailysabah.com/rss',c:'general'},
-    {n:'Daily Sabah Economy',u:'https://www.dailysabah.com/rss/economy',c:'business'},
     {n:'TRT World',u:'https://www.trtworld.com/rss',c:'general'},
-    {n:'TRT World Economy',u:'https://www.trtworld.com/rss/economy',c:'business'},
     {n:'Anadolu Agency',u:'https://www.aa.com.tr/en/rss/default?cat=economy',c:'business'},
-    {n:'Anadolu Politics',u:'https://www.aa.com.tr/en/rss/default?cat=politics',c:'world'},
-    {n:'Bianet EN',u:'https://bianet.org/english/feed/rss',c:'general'},
-    {n:'Al-Monitor Turkey',u:'https://www.al-monitor.com/rss/tags/turkey',c:'world'},
   ],
 
   /* ─── ISRAEL ─── */
@@ -1008,24 +793,17 @@ const FEEDS = {
     {n:'Google News IL',u:'https://news.google.com/rss?hl=en-IL&gl=IL&ceid=IL:en',c:'general',primary:true},
     {n:'Haaretz English',u:'https://www.haaretz.com/cmlink/1.4968842',c:'general'},
     {n:'Jerusalem Post',u:'https://www.jpost.com/rss/rssfeedsfrontpage.aspx',c:'general'},
-    {n:'Jerusalem Post Business',u:'https://www.jpost.com/rss/rssfeedsIsraelBusiness.aspx',c:'business'},
     {n:'Times of Israel',u:'https://www.timesofisrael.com/feed/',c:'general'},
     {n:'Ynetnews',u:'https://www.ynetnews.com/home/0,7340,L-3,00.xml',c:'general'},
-    {n:'i24 News',u:'https://www.i24news.tv/en/rss',c:'general'},
-    {n:'The Marker EN',u:'https://www.themarker.com/rss/english',c:'business'},
   ],
 
   /* ─── IRELAND ─── */
   ie: [
     {n:'Google News IE',u:'https://news.google.com/rss?hl=en-IE&gl=IE&ceid=IE:en',c:'general',primary:true},
     {n:'RTE News',u:'https://www.rte.ie/news/rss/news-headlines.xml',c:'general'},
-    {n:'RTE Business',u:'https://www.rte.ie/news/rss/business-headlines.xml',c:'business'},
-    {n:'RTE Sport',u:'https://www.rte.ie/sport/rss/sport-headlines.xml',c:'sports'},
     {n:'Irish Times',u:'https://www.irishtimes.com/rss/',c:'general'},
     {n:'Irish Examiner',u:'https://www.irishexaminer.com/feed/',c:'general'},
     {n:'The Journal',u:'https://www.thejournal.ie/feed/',c:'general'},
-    {n:'Business Post IE',u:'https://businesspost.ie/feed/',c:'business'},
-    {n:'Newstalk',u:'https://www.newstalk.com/rss',c:'general'},
   ],
 
   /* ─── POLAND ─── */
@@ -1034,9 +812,6 @@ const FEEDS = {
     {n:'Notes from Poland',u:'https://notesfrompoland.com/feed/',c:'general'},
     {n:'Warsaw Voice',u:'https://www.warsawvoice.pl/rss',c:'general'},
     {n:'Poland In',u:'https://polandin.com/feed',c:'general'},
-    {n:'TVN24 EN',u:'https://tvn24.pl/rss/wszystkie.xml',c:'general'},
-    {n:'Euractiv Poland',u:'https://www.euractiv.pl/feed/',c:'world'},
-    {n:'First News PL',u:'https://www.thefirstnews.com/rss',c:'general'},
   ],
 
   /* ─── UKRAINE ─── */
@@ -1044,12 +819,8 @@ const FEEDS = {
     {n:'Google News UA',u:'https://news.google.com/rss?hl=uk&gl=UA&ceid=UA:uk',c:'general',primary:true},
     {n:'Kyiv Independent',u:'https://kyivindependent.com/rss/',c:'general'},
     {n:'Ukrinform',u:'https://www.ukrinform.net/rss/block-lastnews',c:'general'},
-    {n:'Ukrinform Economy',u:'https://www.ukrinform.net/rss/block-economy',c:'business'},
     {n:'Kyiv Post',u:'https://www.kyivpost.com/rss',c:'general'},
     {n:'Ukraine Business News',u:'https://ubn.news/feed/',c:'business'},
-    {n:'Suspilne EN',u:'https://suspilne.media/rss/en',c:'general'},
-    {n:'Euromaidan Press',u:'https://euromaidanpress.com/feed/',c:'general'},
-    {n:'Ukrainska Pravda EN',u:'https://www.pravda.com.ua/eng/rss/',c:'general'},
   ],
 
   /* ─── GHANA ─── */
@@ -1058,9 +829,6 @@ const FEEDS = {
     {n:'GhanaWeb',u:'https://www.ghanaweb.com/GhanaHomePage/NewsArchive/rss.php',c:'general'},
     {n:'Ghana Broadcasting',u:'https://www.gbcghana.com/feed',c:'general'},
     {n:'Citi Newsroom',u:'https://citinewsroom.com/feed/',c:'general'},
-    {n:'MyJoyOnline',u:'https://www.myjoyonline.com/feed/',c:'general'},
-    {n:'Ghana Business News',u:'https://www.ghanabusinessnews.com/feed/',c:'business'},
-    {n:'Graphic Online',u:'https://www.graphic.com.gh/feed',c:'general'},
   ],
 
   /* ─── ETHIOPIA ─── */
@@ -1069,33 +837,24 @@ const FEEDS = {
     {n:'Addis Standard',u:'https://addisstandard.com/feed/',c:'general'},
     {n:'Ethiopia Insight',u:'https://www.ethiopia-insight.com/feed/',c:'general'},
     {n:'Fana Broadcasting',u:'https://www.fanabc.com/english/feed/',c:'general'},
-    {n:'ENA EN',u:'https://www.ena.et/en/feed',c:'general'},
-    {n:'The Reporter ET',u:'https://www.thereporterethiopia.com/feed',c:'general'},
   ],
 
   /* ─── BANGLADESH ─── */
   bd: [
     {n:'Google News BD',u:'https://news.google.com/rss?hl=en-BD&gl=BD&ceid=BD:en',c:'general',primary:true},
     {n:'Daily Star BD',u:'https://www.thedailystar.net/frontpage/rss.xml',c:'general'},
-    {n:'Daily Star Business',u:'https://www.thedailystar.net/business/rss.xml',c:'business'},
     {n:'Dhaka Tribune',u:'https://www.dhakatribune.com/feed',c:'general'},
     {n:'BD News 24',u:'https://bdnews24.com/?wm=rss&cat=1',c:'general'},
     {n:'New Age BD',u:'https://www.newagebd.net/rss.xml',c:'general'},
-    {n:'Financial Express BD',u:'https://thefinancialexpress.com.bd/rss',c:'business'},
-    {n:'Prothomalo EN',u:'https://en.prothomalo.com/feed',c:'general'},
   ],
 
   /* ─── THAILAND ─── */
   th: [
     {n:'Google News TH',u:'https://news.google.com/rss?hl=th&gl=TH&ceid=TH:th',c:'general',primary:true},
     {n:'Bangkok Post',u:'https://www.bangkokpost.com/rss/data/topstories.xml',c:'general'},
-    {n:'Bangkok Post Business',u:'https://www.bangkokpost.com/rss/data/business.xml',c:'business'},
-    {n:'Bangkok Post Tech',u:'https://www.bangkokpost.com/rss/data/tech.xml',c:'technology'},
     {n:'Thai PBS World',u:'https://www.thaipbsworld.com/feed/',c:'general'},
     {n:'The Nation TH',u:'https://www.nationthailand.com/rss',c:'general'},
     {n:'Khaosod English',u:'https://www.khaosodenglish.com/feed/',c:'general'},
-    {n:'Pattaya Mail',u:'https://www.pattayamail.com/feed',c:'general'},
-    {n:'Thaiger',u:'https://thethaiger.com/feed',c:'general'},
   ],
 
   /* ─── MALAYSIA ─── */
@@ -1105,10 +864,6 @@ const FEEDS = {
     {n:'Malay Mail',u:'https://www.malaymail.com/feed',c:'general'},
     {n:'New Straits Times',u:'https://www.nst.com.my/rss/news',c:'general'},
     {n:'The Edge MY',u:'https://www.theedgemarkets.com/rss.xml',c:'business'},
-    {n:'Malaysiakini EN',u:'https://www.malaysiakini.com/rss/english',c:'general'},
-    {n:'The Sun MY',u:'https://www.thesundaily.my/rss.xml',c:'general'},
-    {n:'Bernama EN',u:'https://www.bernama.com/en/news/rss.php',c:'general'},
-    {n:'Malaysia Now',u:'https://www.malaysianow.com/feed',c:'general'},
   ],
 
   /* ─── HONG KONG ─── */
@@ -1116,11 +871,8 @@ const FEEDS = {
     {n:'SCMP HK',u:'https://www.scmp.com/rss/2/feed',c:'general',primary:true},
     {n:'Google News HK',u:'https://news.google.com/rss?hl=en-HK&gl=HK&ceid=HK:en',c:'general'},
     {n:'SCMP China',u:'https://www.scmp.com/rss/4/feed',c:'general'},
-    {n:'SCMP Business',u:'https://www.scmp.com/rss/92/feed',c:'business'},
     {n:'HK Free Press',u:'https://hongkongfp.com/feed/',c:'general'},
     {n:'HK01 English',u:'https://www.hk01.com/rss/hot',c:'general'},
-    {n:'Coconuts HK',u:'https://coconuts.co/hongkong/feed/',c:'general'},
-    {n:'Asia Times HK',u:'https://asiatimes.com/feed/',c:'general'},
   ],
 
   /* ─── PORTUGAL ─── */
@@ -1129,20 +881,13 @@ const FEEDS = {
     {n:'Portugal Resident',u:'https://www.theportugalnews.com/en/feed',c:'general'},
     {n:'The Portugal News',u:'https://www.theportugalnews.com/en/rss',c:'general'},
     {n:'Lusa EN',u:'https://feeds.lusa.pt/EN/NEWS',c:'general'},
-    {n:'Observador EN',u:'https://observador.pt/feed/',c:'general'},
-    {n:'Portugal Daily View',u:'https://www.portugaldailyview.com/feed/',c:'general'},
-    {n:'The Local PT',u:'https://feeds.thelocal.com/rss/pt',c:'general'},
   ],
 
   /* ─── SWITZERLAND ─── */
   ch: [
     {n:'Google News CH',u:'https://news.google.com/rss?hl=en-CH&gl=CH&ceid=CH:en',c:'general',primary:true},
     {n:'Swissinfo',u:'https://www.swissinfo.ch/eng/rss/news',c:'general'},
-    {n:'Swissinfo Business',u:'https://www.swissinfo.ch/eng/rss/economy',c:'business'},
     {n:'The Local CH',u:'https://feeds.thelocal.com/rss/ch',c:'general'},
-    {n:'SWI swissinfo',u:'https://www.swissinfo.ch/eng/rss/politics',c:'world'},
-    {n:'Swiss Broadcasting',u:'https://www.srf.ch/play/rss/audio',c:'general'},
-    {n:'Geneva Solutions',u:'https://genevasolutions.news/feed',c:'world'},
   ],
 
   /* ─── AUSTRIA ─── */
@@ -1150,8 +895,6 @@ const FEEDS = {
     {n:'Google News AT',u:'https://news.google.com/rss?hl=de&gl=AT&ceid=AT:de',c:'general',primary:true},
     {n:'The Local AT',u:'https://feeds.thelocal.com/rss/at',c:'general'},
     {n:'Vienna Online EN',u:'https://www.vienna.at/rss/international',c:'general'},
-    {n:'Austria Today',u:'https://austriatoday.at/feed/',c:'general'},
-    {n:'Vienna Würstelstand',u:'https://www.viennawurstelstand.com/feed/',c:'general'},
   ],
 
   /* ─── DENMARK ─── */
@@ -1159,8 +902,6 @@ const FEEDS = {
     {n:'Google News DK',u:'https://news.google.com/rss?hl=da&gl=DK&ceid=DK:da',c:'general',primary:true},
     {n:'The Local DK',u:'https://feeds.thelocal.com/rss/dk',c:'general'},
     {n:'Copenhagen Post',u:'https://cphpost.dk/?feed=rss2',c:'general'},
-    {n:'DR International',u:'https://www.dr.dk/nyheder/service/feeds/internationalt',c:'world'},
-    {n:'Denmark.dk',u:'https://denmark.dk/feed',c:'general'},
   ],
 
   /* ─── FINLAND ─── */
@@ -1168,29 +909,21 @@ const FEEDS = {
     {n:'Google News FI',u:'https://news.google.com/rss?hl=fi&gl=FI&ceid=FI:fi',c:'general',primary:true},
     {n:'YLE News',u:'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_NEWS&concepts=18-34953',c:'general'},
     {n:'Yle English',u:'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_NEWS',c:'general'},
-    {n:'Helsinki Times',u:'https://www.helsinkitimes.fi/rss',c:'general'},
-    {n:'This is Finland',u:'https://finland.fi/feed/',c:'general'},
   ],
 
   /* ─── BELGIUM ─── */
   be: [
     {n:'Google News BE',u:'https://news.google.com/rss?hl=fr-BE&gl=BE&ceid=BE:fr',c:'general',primary:true},
     {n:'The Brussels Times',u:'https://www.brusselstimes.com/feed',c:'general'},
-    {n:'Brussels Times Business',u:'https://www.brusselstimes.com/category/business/feed',c:'business'},
     {n:'Politico EU',u:'https://www.politico.eu/feed/',c:'world'},
-    {n:'RTBF EN',u:'https://www.rtbf.be/rss/info.xml',c:'general'},
-    {n:'Flandersnews',u:'https://www.flandersnews.be/rss.xml',c:'general'},
   ],
 
   /* ─── GREECE ─── */
   gr: [
     {n:'Google News GR',u:'https://news.google.com/rss?hl=el&gl=GR&ceid=GR:el',c:'general',primary:true},
     {n:'Ekathimerini',u:'https://www.ekathimerini.com/rss/?lang=en',c:'general'},
-    {n:'Ekathimerini Economy',u:'https://www.ekathimerini.com/rss/?lang=en&cat=economy',c:'business'},
     {n:'Greece Is',u:'https://www.greece-is.com/feed/',c:'general'},
     {n:'Keep Talking Greece',u:'https://www.keeptalkinggreece.com/feed/',c:'general'},
-    {n:'Greek Reporter',u:'https://greekreporter.com/feed/',c:'general'},
-    {n:'Greek City Times',u:'https://greekcitytimes.com/feed/',c:'general'},
   ],
 
   /* ─── IRAN ─── */
@@ -1199,20 +932,14 @@ const FEEDS = {
     {n:'Tehran Times',u:'https://www.tehrantimes.com/rss',c:'general'},
     {n:'Iran International',u:'https://www.iranintl.com/en/rss',c:'general'},
     {n:'Iran Daily',u:'http://www.iran-daily.com/rss/',c:'general'},
-    {n:'RFE/RL Iran',u:'https://www.rferl.org/api/zput$ipr/zh/rss2/',c:'general'},
-    {n:'VOA Persian EN',u:'https://www.voanews.com/api/zp$opieq',c:'general'},
-    {n:'IranWire',u:'https://iranwire.com/en/feed/',c:'general'},
   ],
 
   /* ─── SAUDI ARABIA ─── */
   sa: [
     {n:'Google News SA',u:'https://news.google.com/rss?hl=ar&gl=SA&ceid=SA:ar',c:'general',primary:true},
     {n:'Arab News',u:'https://www.arabnews.com/rss.xml',c:'general'},
-    {n:'Arab News Business',u:'https://www.arabnews.com/rss/business.xml',c:'business'},
     {n:'Saudi Gazette',u:'https://saudigazette.com.sa/rss',c:'general'},
     {n:'Al Arabiya EN',u:'https://english.alarabiya.net/rss',c:'general'},
-    {n:'Saudi Press Agency',u:'https://www.spa.gov.sa/rss.php',c:'general'},
-    {n:'Al-Monitor Gulf',u:'https://www.al-monitor.com/rss/tags/gulf-arab-states',c:'world'},
   ],
 
   /* ─── MYANMAR ─── */
@@ -1221,8 +948,6 @@ const FEEDS = {
     {n:'Irrawaddy',u:'https://www.irrawaddy.com/feed',c:'general'},
     {n:'Myanmar Now',u:'https://myanmar-now.org/en/feed/',c:'general'},
     {n:'Mizzima English',u:'https://mizzima.com/content/mizzima-news/en/feed',c:'general'},
-    {n:'DVB News',u:'https://english.dvb.no/feed/',c:'general'},
-    {n:'RFA Myanmar',u:'https://www.rfa.org/english/news/myanmar/rss2',c:'general'},
   ],
 
   /* ─── COLOMBIA ─── */
@@ -1231,8 +956,6 @@ const FEEDS = {
     {n:'Colombia Reports',u:'https://colombiareports.com/feed/',c:'general'},
     {n:'Bogota Post',u:'https://thebogotapost.com/feed/',c:'general'},
     {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
-    {n:'El Espectador EN',u:'https://www.elespectador.com/feed/',c:'general'},
-    {n:'Medellin Living',u:'https://medellinliving.com/feed/',c:'general'},
   ],
 
   /* ─── GLOBAL WORLD ─── */
@@ -1317,44 +1040,34 @@ const p3 = u => `https://corsproxy.io/?${encodeURIComponent(u)}`;
 function sh(h){const d=document.createElement('div');d.innerHTML=h;return(d.textContent||'').replace(/\s+/g,' ').trim();}
 function xi(h){const m=(h||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?m[1]:'';}
 
-/* ── 5-MINUTE CACHE ── */
-const CACHE_TTL = 5 * 60 * 1000;
-function cacheKey(c) { return `hn_cache_${c}`; }
-function readCache(c) {
-  try {
-    const raw = localStorage.getItem(cacheKey(c));
-    if (!raw) return null;
-    const {ts, data} = JSON.parse(raw);
-    if (Date.now() - ts < CACHE_TTL) return data;
-  } catch(_) {}
-  return null;
-}
-function writeCache(c, data) {
-  try { localStorage.setItem(cacheKey(c), JSON.stringify({ts: Date.now(), data})); } catch(_) {}
-}
+/* 5-min localStorage cache */
+const CACHE_TTL=5*60*1000;
+function cKey(c){return'hn_c_'+c;}
+function rCache(c){try{const r=localStorage.getItem(cKey(c));if(!r)return null;const{ts,data}=JSON.parse(r);if(Date.now()-ts<CACHE_TTL)return data;}catch(_){}return null;}
+function wCache(c,data){try{localStorage.setItem(cKey(c),JSON.stringify({ts:Date.now(),data}));}catch(_){}}
 
-/* ── RACE ALL 3 PROXIES SIMULTANEOUSLY — fastest wins ── */
+/* Race all 3 proxies — fastest with data wins */
 async function fetchFeed(feed, signal) {
-  const tryRss2json = async () => {
-    const r = await fetch(p1(feed.u), {signal});
-    if (!r.ok) throw 0;
+  const r2j = async () => {
+    const r = await fetch(p1(feed.u),{signal});
+    if(!r.ok) throw 0;
     const d = await r.json();
-    if (d.status === 'ok' && d.items?.length) return {items: d.items.map(i => fr2j(i, feed.n, feed.c)), ok: true};
+    if(d.status==='ok'&&d.items?.length) return {items:d.items.map(i=>fr2j(i,feed.n,feed.c)),ok:true};
     throw 0;
   };
-  const tryRaw = proxy => async () => {
-    const r = await fetch(proxy(feed.u), {signal});
-    if (!r.ok) throw 0;
-    const items = pxml(await r.text(), feed.n, feed.c);
-    if (!items.length) throw 0;
-    return {items, ok: true};
+  const raw = proxy => async () => {
+    const r = await fetch(proxy(feed.u),{signal});
+    if(!r.ok) throw 0;
+    const items = pxml(await r.text(),feed.n,feed.c);
+    if(!items.length) throw 0;
+    return {items,ok:true};
   };
   try {
-    return await Promise.any([tryRss2json(), tryRaw(p2)(), tryRaw(p3)()]);
+    return await Promise.any([r2j(), raw(p2)(), raw(p3)()]);
   } catch(e) {
-    if (e?.name === 'AbortError' || (e?.errors && e.errors.some(x => x?.name === 'AbortError')))
+    if(e?.name==='AbortError'||(e?.errors&&e.errors.some(x=>x?.name==='AbortError')))
       throw new DOMException('aborted','AbortError');
-    return {items: [], ok: false};
+    return {items:[],ok:false};
   }
 }
 
@@ -1387,109 +1100,62 @@ function pxml(xml, src, cat) {
   } catch(_) { return []; }
 }
 
-/* ── LOAD NEWS — progressive render + cache ── */
+/* ── LOAD NEWS — cache + progressive render ── */
 async function loadNews() {
   if (S.loading) return;
   if (S.abortCtrl) S.abortCtrl.abort();
   S.abortCtrl = new AbortController();
   const signal = S.abortCtrl.signal;
-
   S.loading = true; S.articles = []; S.feedResults = [];
   $('grid').innerHTML = ''; $('nores').style.display = 'none';
   $('srcbar').innerHTML = ''; $('fsb').innerHTML = ''; $('covn').style.display = 'none';
 
-  // Show cached content instantly, then refresh in background
-  const cached = readCache(S.country);
+  const cached = rCache(S.country);
   if (cached && cached.length) {
     S.articles = cached;
     applyFilters(); renderCards(); updateMeta(); updateBreaking(S.articles);
-    refreshInBackground(signal);
     S.loading = false;
+    bgRefresh(signal);
     return;
   }
 
   showSpin(true);
-
   const countryFeeds = FEEDS[S.country] || FEEDS.us;
-  let pool = S.category === 'general' ? countryFeeds : countryFeeds.filter(f => f.c === S.category || f.primary);
+  let pool = S.category==='general' ? countryFeeds : countryFeeds.filter(f=>f.c===S.category||f.primary);
   if (!pool.length) pool = countryFeeds;
-  const selected = [...pool.filter(f=>f.primary), ...pool.filter(f=>!f.primary)].slice(0, 16);
+  const selected = [...pool.filter(f=>f.primary),...pool.filter(f=>!f.primary)].slice(0,16);
 
-  const seen = new Set();
-  let loadedCount = 0;
-
-  function mergeArticle(art) {
-    const k = (art.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,55);
-    if (!k || seen.has(k)) return false;
-    seen.add(k); S.articles.push(art); return true;
+  const seen = new Set(); let fired = 0;
+  function merge(art){const k=(art.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,55);if(!k||seen.has(k))return false;seen.add(k);S.articles.push(art);return true;}
+  function flush(){
+    S.articles.sort((a,b)=>{const da=new Date(b.date),db=new Date(a.date);return(!isNaN(da)&&!isNaN(db))?da-db:0;});
+    applyFilters();renderCards();updateMeta();buildStatus();buildSrcBar();updateBreaking(S.articles);
   }
 
-  function flushRender() {
-    S.articles.sort((a,b) => {
-      const da=new Date(b.date), db=new Date(a.date);
-      return (!isNaN(da)&&!isNaN(db)) ? da-db : 0;
-    });
-    applyFilters(); renderCards(); updateMeta(); buildStatus(); buildSrcBar(); updateBreaking(S.articles);
-  }
-
-  const promises = selected.map(f =>
-    fetchFeed(f, signal).then(r => {
-      if (signal.aborted) return;
-      S.feedResults.push({name:f.n, ok:r.ok});
-      if (r.ok) {
-        let added = 0;
-        r.items.forEach(art => { if (mergeArticle(art)) added++; });
-        if (added > 0) {
-          loadedCount++;
-          if (loadedCount === 1) { showSpin(false); flushRender(); }
-          else if (loadedCount % 2 === 0) flushRender();
-        }
-      }
-    }).catch(e => { if (e?.name !== 'AbortError') S.feedResults.push({name:f.n, ok:false}); })
-  );
-
-  await Promise.allSettled(promises);
-  if (signal.aborted) { S.loading = false; return; }
-
-  flushRender();
-  showSpin(false);
-  S.loading = false;
-
-  if (!S.articles.length) {
-    toast('⚠ All feeds unavailable — retry');
-    $('nores').style.display = 'block';
-  } else {
-    writeCache(S.country, S.articles);
-  }
+  await Promise.allSettled(selected.map(f=>
+    fetchFeed(f,signal).then(r=>{
+      if(signal.aborted)return;
+      S.feedResults.push({name:f.n,ok:r.ok});
+      if(r.ok){let n=0;r.items.forEach(a=>{if(merge(a))n++;});if(n){fired++;if(fired===1){showSpin(false);flush();}else if(fired%2===0)flush();}}
+    }).catch(e=>{if(e?.name!=='AbortError')S.feedResults.push({name:f.n,ok:false});})
+  ));
+  if(signal.aborted){S.loading=false;return;}
+  flush(); showSpin(false); S.loading=false;
+  if(!S.articles.length){toast('⚠ All feeds unavailable — retry');$('nores').style.display='block';}
+  else wCache(S.country,S.articles);
 }
 
-/* ── BACKGROUND REFRESH — silently update while cache is shown ── */
-async function refreshInBackground(signal) {
-  const countryFeeds = FEEDS[S.country] || FEEDS.us;
-  let pool = S.category === 'general' ? countryFeeds : countryFeeds.filter(f => f.c === S.category || f.primary);
-  if (!pool.length) pool = countryFeeds;
-  const selected = [...pool.filter(f=>f.primary), ...pool.filter(f=>!f.primary)].slice(0,16);
-
-  const fresh = []; const seen = new Set(); const feedResults = [];
-  await Promise.allSettled(selected.map(f =>
-    fetchFeed(f, signal).then(r => {
-      feedResults.push({name:f.n, ok:r.ok});
-      if (r.ok) r.items.forEach(art => {
-        const k = (art.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,55);
-        if (k && !seen.has(k)) { seen.add(k); fresh.push(art); }
-      });
-    }).catch(()=>{})
-  ));
-  if (signal.aborted || !fresh.length) return;
-  fresh.sort((a,b) => {
-    const da=new Date(b.date), db=new Date(a.date);
-    return (!isNaN(da)&&!isNaN(db)) ? da-db : 0;
-  });
-  writeCache(S.country, fresh);
-  if (!signal.aborted) {
-    S.articles = fresh; S.feedResults = feedResults;
-    applyFilters(); renderCards(); updateMeta(); buildStatus(); buildSrcBar(); updateBreaking(fresh);
-  }
+async function bgRefresh(signal){
+  const countryFeeds=FEEDS[S.country]||FEEDS.us;
+  let pool=S.category==='general'?countryFeeds:countryFeeds.filter(f=>f.c===S.category||f.primary);
+  if(!pool.length)pool=countryFeeds;
+  const sel=[...pool.filter(f=>f.primary),...pool.filter(f=>!f.primary)].slice(0,16);
+  const fresh=[];const seen=new Set();const fr=[];
+  await Promise.allSettled(sel.map(f=>fetchFeed(f,signal).then(r=>{fr.push({name:f.n,ok:r.ok});if(r.ok)r.items.forEach(a=>{const k=(a.title||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,55);if(k&&!seen.has(k)){seen.add(k);fresh.push(a);}});}).catch(()=>{})));
+  if(signal.aborted||!fresh.length)return;
+  fresh.sort((a,b)=>{const da=new Date(b.date),db=new Date(a.date);return(!isNaN(da)&&!isNaN(db))?da-db:0;});
+  wCache(S.country,fresh);
+  if(!signal.aborted){S.articles=fresh;S.feedResults=fr;applyFilters();renderCards();updateMeta();buildStatus();buildSrcBar();updateBreaking(fresh);}
 }
 
 function updateBreaking(articles) {
@@ -1774,75 +1440,74 @@ document.querySelectorAll('.modal-wrap').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) { m.classList.remove('open'); document.body.style.overflow = ''; }});
 });
 
-/* ── SPLASH SCREEN ── */
-(function() {
-  if (sessionStorage.getItem('hn_splash_done')) {
-    document.getElementById('splash').style.display = 'none';
+/* ── SPLASH JS ── */
+(function(){
+  // Hide splash immediately if already seen this session
+  if(sessionStorage.getItem('hn_sp')){
+    var sp=document.getElementById('splash');
+    if(sp)sp.style.display='none';
     return;
   }
-  const titleEl = document.getElementById('splash-title');
-  if (titleEl) titleEl.setAttribute('data-glitch', titleEl.textContent);
+  // Set glitch attribute
+  var t=document.getElementById('splash-title');
+  if(t)t.setAttribute('data-g',t.textContent);
 
-  const canvas = document.getElementById('splash-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H, t = 0;
-  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  // Animated red glow on canvas
+  var canvas=document.getElementById('splash-canvas');
+  var ctx=canvas.getContext('2d');
+  var W,H,tick=0,raf;
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
   resize();
-  window.addEventListener('resize', resize);
-
-  function drawGlow() {
-    ctx.clearRect(0, 0, W, H);
-    t += 0.012;
-    const pulse = 0.72 + 0.28 * Math.sin(t);
-    const r = Math.min(W, H) * 0.55 * pulse;
-    const cx = W / 2, cy = H / 2;
-    const g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.6);
-    g1.addColorStop(0, `rgba(180,10,10,${0.09 * pulse})`);
-    g1.addColorStop(0.5, `rgba(140,0,0,${0.05 * pulse})`);
-    g1.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
-    const g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g2.addColorStop(0, `rgba(220,38,38,${0.22 * pulse})`);
-    g2.addColorStop(0.35, `rgba(180,20,20,${0.12 * pulse})`);
-    g2.addColorStop(0.7, `rgba(100,0,0,${0.05 * pulse})`);
-    g2.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
-    for (let y = 0; y < H; y += 4) { ctx.fillStyle = 'rgba(0,0,0,0.04)'; ctx.fillRect(0, y, W, 2); }
+  window.addEventListener('resize',resize);
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    tick+=0.014;
+    var pulse=0.68+0.32*Math.sin(tick);
+    var r=Math.min(W,H)*0.52*pulse,cx=W/2,cy=H/2;
+    var g1=ctx.createRadialGradient(cx,cy,0,cx,cy,r*1.7);
+    g1.addColorStop(0,'rgba(180,8,8,'+(0.1*pulse)+')');
+    g1.addColorStop(0.5,'rgba(130,0,0,'+(0.05*pulse)+')');
+    g1.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+    var g2=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    g2.addColorStop(0,'rgba(220,38,38,'+(0.24*pulse)+')');
+    g2.addColorStop(0.4,'rgba(180,18,18,'+(0.13*pulse)+')');
+    g2.addColorStop(0.75,'rgba(100,0,0,'+(0.05*pulse)+')');
+    g2.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
+    for(var y=0;y<H;y+=4){ctx.fillStyle='rgba(0,0,0,0.035)';ctx.fillRect(0,y,W,2);}
+    raf=requestAnimationFrame(draw);
   }
+  draw();
 
-  let rafId;
-  function loop() { drawGlow(); rafId = requestAnimationFrame(loop); }
-  loop();
-
-  window.enterSite = function() {
-    sessionStorage.setItem('hn_splash_done', '1');
-    const splash = document.getElementById('splash');
-    splash.classList.add('exiting');
-    setTimeout(() => { splash.style.display = 'none'; cancelAnimationFrame(rafId); }, 720);
+  window.enterSite=function(){
+    sessionStorage.setItem('hn_sp','1');
+    var sp=document.getElementById('splash');
+    sp.classList.add('sp-out');
+    setTimeout(function(){sp.style.display='none';cancelAnimationFrame(raf);},680);
   };
 
-  document.addEventListener('keydown', e => {
-    const sp = document.getElementById('splash');
-    if (sp && sp.style.display !== 'none' && !sp.classList.contains('exiting')) {
-      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') window.enterSite();
+  // Keyboard dismiss
+  document.addEventListener('keydown',function(e){
+    var sp=document.getElementById('splash');
+    if(sp&&sp.style.display!=='none'&&!sp.classList.contains('sp-out')){
+      if(e.key==='Enter'||e.key===' '||e.key==='Escape'){e.preventDefault();window.enterSite();}
     }
   });
 })();
 
-/* ── GEO DETECT — auto-switch to Russia or China if visitor is there ── */
-async function geoDetect() {
-  if (sessionStorage.getItem('hn_geo_done')) return;
-  try {
-    const r = await fetch('https://ipapi.co/json/', {signal: AbortSignal.timeout(3000)});
-    if (!r.ok) return;
-    const d = await r.json();
-    const cc = (d.country_code || '').toLowerCase();
-    const GEO_MAP = {cn:'cn', ru:'ru', hk:'hk', tw:'cn'};
-    const mapped = GEO_MAP[cc] || (FEEDS[cc] ? cc : null);
-    if (mapped && mapped !== S.country) switchCountry(mapped);
-  } catch(_) {} finally {
-    sessionStorage.setItem('hn_geo_done', '1');
-  }
+/* ── GEO DETECT ── */
+async function geoDetect(){
+  if(sessionStorage.getItem('hn_geo'))return;
+  try{
+    const r=await fetch('https://ipapi.co/json/',{signal:AbortSignal.timeout(3000)});
+    if(!r.ok)return;
+    const d=await r.json();
+    const cc=(d.country_code||'').toLowerCase();
+    const MAP={cn:'cn',ru:'ru',hk:'hk',tw:'cn'};
+    const mapped=MAP[cc]||(FEEDS[cc]?cc:null);
+    if(mapped&&mapped!==S.country)switchCountry(mapped);
+  }catch(_){}finally{sessionStorage.setItem('hn_geo','1');}
 }
 
 /* ── BOOT ── */
