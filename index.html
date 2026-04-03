@@ -6,6 +6,8 @@
 <title>Hatty's News — Real World Headlines</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23dc2626'/><text x='4' y='24' font-size='22' font-family='serif' fill='white'>H</text></svg>"/>
 <meta name="description" content="Real global news. Country-specific RSS feeds from BBC, Reuters, AP, Al Jazeera, Google News, and 60+ verified sources."/>
+<meta name="robots" content="index, follow"/>
+<link rel="canonical" href="https://www.earnwithhatty.com/news"/>
 <!-- Google Auto Ads -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6374033238930580" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -174,7 +176,9 @@ html.dark .inp option{background:#1a1a1a}
 /* SPLASH */
 #splash{position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .6s ease,transform .6s ease;pointer-events:all;}
 #splash.sp-out{opacity:0;transform:scale(1.04);pointer-events:none;}
-#splash-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}
+#splash-gif{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
+#splash-overlay{position:absolute;inset:0;background:rgba(0,0,0,.52);pointer-events:none;z-index:1;}
+#splash-vignette{position:absolute;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at center,transparent 25%,rgba(0,0,0,.72) 100%);}
 #splash-content{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:1.6rem;text-align:center;padding:2rem 1.5rem;pointer-events:all;}
 #splash-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(2.6rem,10vw,8rem);letter-spacing:.07em;color:#fff;line-height:1;opacity:0;animation:spIn 1.6s ease forwards;text-shadow:0 0 30px rgba(220,38,38,1),0 0 80px rgba(220,38,38,.55),0 0 160px rgba(220,38,38,.22);position:relative;user-select:none;display:inline-block;}
 #splash-title::after{content:attr(data-g);position:absolute;inset:0;color:#ff2222;opacity:0;text-shadow:2px 0 #ff0000,-2px 0 #00ffff;animation:gT 5s steps(1) infinite 2.4s;}
@@ -202,7 +206,9 @@ html.dark .inp option{background:#1a1a1a}
 
 <!-- SPLASH — must be first, z-index 99999 -->
 <div id="splash" role="dialog" aria-modal="true" aria-label="Welcome to Hatty's News">
-  <canvas id="splash-canvas"></canvas>
+  <img id="splash-gif" src="newsworld.gif" alt="" aria-hidden="true"/>
+  <div id="splash-overlay"></div>
+  <div id="splash-vignette"></div>
   <div id="splash-content">
     <div id="splash-title" data-g="HATTY'S NEWS">HATTY'S NEWS</div>
     <div id="splash-sub">Created by <span id="splash-hh">HattyHats</span></div>
@@ -1084,11 +1090,25 @@ async function fetchFeed(feed, signal) {
 }
 
 function fr2j(i, src, cat) {
-  const img = i.enclosure?.link || i.thumbnail || xi(i.content||'') || xi(i.description||'');
+  // rss2json flattens many fields — check all possible image locations
+  const img = (function() {
+    // enclosure link (most reliable)
+    if (i.enclosure?.link && /^https?:\/\//.test(i.enclosure.link)) return i.enclosure.link;
+    // thumbnail field
+    if (i.thumbnail && /^https?:\/\//.test(i.thumbnail)) return i.thumbnail;
+    // image field (some feeds)
+    if (i.image && /^https?:\/\//.test(i.image)) return i.image;
+    // try extracting from content, then description
+    const fromContent = xi(i.content || '');
+    if (fromContent && /^https?:\/\//.test(fromContent)) return fromContent;
+    const fromDesc = xi(i.description || '');
+    if (fromDesc && /^https?:\/\//.test(fromDesc)) return fromDesc;
+    return '';
+  })();
   return {
     title: (i.title||'').trim().replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"'),
     desc: sh(i.description||'').slice(0, 240),
-    url: i.link || '#', img: img || '', date: i.pubDate || '', src, cat
+    url: i.link || '#', img, date: i.pubDate || '', src, cat
   };
 }
 
@@ -1098,9 +1118,44 @@ function pxml(xml, src, cat) {
     if (doc.querySelector('parsererror')) return [];
     return Array.from(doc.querySelectorAll('item, entry')).slice(0, 30).map(el => {
       const t = s => el.querySelector(s)?.textContent?.trim() || '';
-      const img = el.querySelector('[url]')?.getAttribute('url') ||
-                  el.querySelector('enclosure')?.getAttribute('url') ||
-                  xi(t('description')) || xi(t('content'));
+      // Comprehensive image extraction — check every known RSS image pattern
+      const img = (function() {
+        // 1. media:content url attribute (most common for news feeds)
+        const mc = el.getElementsByTagNameNS('*','content');
+        for (let i = 0; i < mc.length; i++) {
+          const u = mc[i].getAttribute('url');
+          if (u && /^https?:\/\//.test(u) && /\.(jpg|jpeg|png|webp|gif)/i.test(u)) return u;
+        }
+        // 2. media:thumbnail url attribute
+        const mt = el.getElementsByTagNameNS('*','thumbnail');
+        for (let i = 0; i < mt.length; i++) {
+          const u = mt[i].getAttribute('url');
+          if (u && /^https?:\/\//.test(u)) return u;
+        }
+        // 3. enclosure with image type or image url
+        const enc = el.querySelector('enclosure');
+        if (enc) {
+          const u = enc.getAttribute('url'), tp = enc.getAttribute('type') || '';
+          if (u && (tp.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)/i.test(u))) return u;
+        }
+        // 4. Any element with a url attribute that looks like an image
+        const anyUrl = el.querySelector('[url]');
+        if (anyUrl) {
+          const u = anyUrl.getAttribute('url');
+          if (u && /^https?:\/\//.test(u)) return u;
+        }
+        // 5. og:image or similar meta in description/content
+        const descContent = t('description') || t('summary') || t('content\\:encoded') || t('content');
+        const ogMatch = descContent.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']|content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+        if (ogMatch) return ogMatch[1] || ogMatch[2];
+        // 6. img tag inside description/content
+        const imgFromDesc = xi(descContent);
+        if (imgFromDesc && /^https?:\/\//.test(imgFromDesc)) return imgFromDesc;
+        // 7. figure > img in any child element text
+        const figMatch = descContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (figMatch && /^https?:\/\//.test(figMatch[1])) return figMatch[1];
+        return '';
+      })();
       const rawTitle = t('title');
       const cleanTitle = rawTitle.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'");
       return {
@@ -1487,7 +1542,8 @@ function renderTicker(id, items) {
     if (v == null) return '—';
     if (v >= 1000) return '$' + Math.round(v).toLocaleString();
     if (v >= 1) return '$' + v.toFixed(2);
-    return '$' + v.toFixed(6);
+    if (v >= 0.0001) return '$' + v.toFixed(6);
+    return '$' + v.toFixed(8);
   };
   const row = items.map(item => {
     const up = (item.chg || 0) >= 0;
@@ -1527,41 +1583,19 @@ document.querySelectorAll('.modal-wrap').forEach(m => {
   var t = document.getElementById('splash-title');
   if (t) t.setAttribute('data-g', t.textContent);
 
-  var canvas = document.getElementById('splash-canvas');
-  var ctx = canvas.getContext('2d');
-  var W, H, tick = 0, raf;
-  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-  resize();
-  window.addEventListener('resize', resize);
-
-  function draw(){
-    ctx.clearRect(0, 0, W, H);
-    tick += 0.013;
-    var pulse = 0.68 + 0.32 * Math.sin(tick);
-    var r = Math.min(W, H) * 0.52 * pulse, cx = W/2, cy = H/2;
-    var g1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.7);
-    g1.addColorStop(0,   'rgba(180,8,8,' + (0.10*pulse) + ')');
-    g1.addColorStop(0.5, 'rgba(130,0,0,' + (0.05*pulse) + ')');
-    g1.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
-    var g2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g2.addColorStop(0,    'rgba(220,38,38,' + (0.25*pulse) + ')');
-    g2.addColorStop(0.4,  'rgba(180,18,18,' + (0.13*pulse) + ')');
-    g2.addColorStop(0.75, 'rgba(100,0,0,'   + (0.05*pulse) + ')');
-    g2.addColorStop(1,    'rgba(0,0,0,0)');
-    ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
-    for (var y = 0; y < H; y += 4) {
-      ctx.fillStyle = 'rgba(0,0,0,0.035)'; ctx.fillRect(0, y, W, 2);
-    }
-    raf = requestAnimationFrame(draw);
+  // If the gif fails to load (e.g. file not yet uploaded), fall back to solid dark bg
+  var gif = document.getElementById('splash-gif');
+  if (gif) {
+    gif.onerror = function() {
+      document.getElementById('splash').style.background = '#0a0000';
+    };
   }
-  draw();
 
   window.enterSite = function(){
     sessionStorage.setItem('hn_sp', '1');
     var sp = document.getElementById('splash');
     sp.classList.add('sp-out');
-    setTimeout(function(){ sp.style.display = 'none'; cancelAnimationFrame(raf); }, 680);
+    setTimeout(function(){ sp.style.display = 'none'; }, 680);
   };
 
   document.addEventListener('keydown', function(e){
@@ -1575,6 +1609,7 @@ document.querySelectorAll('.modal-wrap').forEach(m => {
 })();
 
 /* ── GEO DETECT ── */
+let geoSwitched = false;
 async function geoDetect(){
   if (sessionStorage.getItem('hn_geo')) return;
   try {
@@ -1584,7 +1619,10 @@ async function geoDetect(){
     const cc = (d.country_code || '').toLowerCase();
     const MAP = {cn:'cn', ru:'ru', hk:'hk', tw:'cn'};
     const mapped = MAP[cc] || (FEEDS[cc] ? cc : null);
-    if (mapped && mapped !== S.country) switchCountry(mapped);
+    if (mapped && mapped !== S.country) {
+      geoSwitched = true;
+      switchCountry(mapped);
+    }
   } catch(_) {} finally {
     sessionStorage.setItem('hn_geo', '1');
   }
@@ -1594,7 +1632,11 @@ async function geoDetect(){
 applyTheme();
 populateUI();
 $('csel').value = S.country;
-geoDetect().then(() => loadNews());
+// geoDetect may call switchCountry (which calls loadNews) if it detects a different country.
+// If it doesn't switch, we call loadNews ourselves after it resolves.
+geoDetect().then(() => {
+  if (!geoSwitched) loadNews();
+});
 loadCrypto();
 setInterval(loadCrypto, 90000);
 setInterval(() => { if (!S.loading) loadNews(); }, 600000);
