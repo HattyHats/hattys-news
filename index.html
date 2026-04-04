@@ -1052,27 +1052,73 @@ function wCache(c, data){
 }
 
 /* ── SINGLE PROXY: rss2json handles CORS + image extraction ── */
-async function fetchFeed(feed, signal) {
+/* ── Parse raw RSS/Atom XML ── */
+function parseXML(xml, feedName, feedCat) {
   try {
-    const url = 'https://api.rss2json.com/v1/api.json?count=20&rss_url=' + encodeURIComponent(feed.u);
-    const res = await fetch(url, {signal});
-    if (!res.ok) return {items:[], ok:false};
-    const d = await res.json();
-    if (d.status !== 'ok' || !Array.isArray(d.items) || !d.items.length) return {items:[], ok:false};
-    const items = d.items.map(i => {
-      const img = (i.thumbnail && /^https?:\/\//.test(i.thumbnail)) ? i.thumbnail
-        : (i.enclosure && i.enclosure.link && /^https?:\/\//.test(i.enclosure.link)) ? i.enclosure.link
-        : xi(i.content||'') || xi(i.description||'') || '';
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+    if (doc.querySelector('parsererror')) return [];
+    const items = Array.from(doc.querySelectorAll('item, entry')).slice(0, 20);
+    return items.map(el => {
+      const g = t => el.getElementsByTagName(t)[0]?.textContent?.trim() || '';
+      // Image from media:content or enclosure
+      let img = '';
+      const mc = el.getElementsByTagName('media:content')[0];
+      if (mc) img = mc.getAttribute('url') || '';
+      if (!img) { const enc = el.getElementsByTagName('enclosure')[0]; if (enc) img = enc.getAttribute('url') || ''; }
+      if (!img) img = xi(g('description')) || xi(g('summary')) || '';
+      const title = g('title').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+      const link = g('link') || el.querySelector('link')?.getAttribute('href') || '#';
       return {
-        title: (i.title||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim(),
-        desc: sh(i.description||'').slice(0,240),
-        url: i.link || '#',
-        img,
-        date: i.pubDate || '',
-        src: feed.n,
-        cat: feed.c || 'general',
+        title, img,
+        desc: sh(g('description') || g('summary') || '').slice(0, 240),
+        url: link,
+        date: g('pubDate') || g('published') || g('updated') || '',
+        src: feedName, cat: feedCat || 'general',
       };
     }).filter(a => a.title.length > 4 && a.url !== '#');
+  } catch(e) { return []; }
+}
+
+async function fetchFeed(feed, signal) {
+  // Try rss2json first (JSON, has thumbnails)
+  const r2j = async () => {
+    const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.u);
+    const res = await fetch(url, {signal});
+    if (!res.ok) throw new Error('r2j:' + res.status);
+    const d = await res.json();
+    if (d.status !== 'ok' || !Array.isArray(d.items) || !d.items.length) throw new Error('r2j:empty');
+    return d.items.map(i => ({
+      title: (i.title||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim(),
+      desc: sh(i.description||'').slice(0,240),
+      url: i.link || '#',
+      img: (i.thumbnail && /^https?:\/\//.test(i.thumbnail)) ? i.thumbnail
+         : (i.enclosure?.link && /^https?:\/\//.test(i.enclosure.link)) ? i.enclosure.link
+         : xi(i.content||'') || xi(i.description||'') || '',
+      date: i.pubDate || '',
+      src: feed.n, cat: feed.c || 'general',
+    })).filter(a => a.title.length > 4 && a.url !== '#');
+  };
+
+  // Fallback: corsproxy raw XML
+  const raw = async () => {
+    const url = 'https://corsproxy.io/?' + encodeURIComponent(feed.u);
+    const res = await fetch(url, {signal});
+    if (!res.ok) throw new Error('raw:' + res.status);
+    return parseXML(await res.text(), feed.n, feed.c);
+  };
+
+  // Fallback 2: allorigins raw XML
+  const ao = async () => {
+    const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(feed.u);
+    const res = await fetch(url, {signal});
+    if (!res.ok) throw new Error('ao:' + res.status);
+    return parseXML(await res.text(), feed.n, feed.c);
+  };
+
+  try {
+    // Race all three — fastest working one wins
+    const items = await Promise.any([r2j(), raw(), ao()]);
+    if (!items || !items.length) return {items:[], ok:false};
     return {items, ok:true};
   } catch(e) {
     if (e.name === 'AbortError') throw e;
@@ -1090,9 +1136,6 @@ async function loadNews() {
   const ctrl = new AbortController();
   S.abortCtrl = ctrl;
   const signal = ctrl.signal;
-
-  await new Promise(r => setTimeout(r, 30));
-  if (mySeq !== loadSeq) return;
 
   S.loading = true;
   S.articles = [];
