@@ -1055,29 +1055,97 @@ function wCache(c, data){
 /* ── Parse raw RSS/Atom XML ── */
 function parseXML(xml, feedName, feedCat) {
   try {
+    if (!xml || xml.trim().length < 100) return [];
+    const t = xml.trim();
+    if (t.startsWith('<html') || t.startsWith('<!DOCTYPE') || t.startsWith('{')) return [];
     const doc = new DOMParser().parseFromString(xml, 'application/xml');
     if (doc.querySelector('parsererror')) return [];
     const items = Array.from(doc.querySelectorAll('item, entry')).slice(0, 20);
+    if (!items.length) return [];
+    const isUrl = u => u && /^https?:\/\//.test(u);
     return items.map(el => {
       const g = t => el.getElementsByTagName(t)[0]?.textContent?.trim() || '';
-      // Image from media:content or enclosure
+      // Image: media:content, media:thumbnail, enclosure, then img in description
       let img = '';
       const mc = el.getElementsByTagName('media:content')[0];
-      if (mc) img = mc.getAttribute('url') || '';
-      if (!img) { const enc = el.getElementsByTagName('enclosure')[0]; if (enc) img = enc.getAttribute('url') || ''; }
+      if (mc && isUrl(mc.getAttribute('url'))) img = mc.getAttribute('url');
+      if (!img) {
+        const mt = el.getElementsByTagName('media:thumbnail')[0];
+        if (mt && isUrl(mt.getAttribute('url'))) img = mt.getAttribute('url');
+      }
+      if (!img) {
+        // namespace wildcard
+        const wild = el.getElementsByTagNameNS('*','content');
+        for (let i=0;i<wild.length;i++){const u=wild[i].getAttribute('url');if(isUrl(u)){img=u;break;}}
+      }
+      if (!img) {
+        const enc = el.getElementsByTagName('enclosure')[0];
+        if (enc) { const u=enc.getAttribute('url'),tp=(enc.getAttribute('type')||'').toLowerCase(); if(isUrl(u)&&(tp.startsWith('image/')||/\.(jpg|jpeg|png|webp|gif)/i.test(u))) img=u; }
+      }
       if (!img) img = xi(g('description')) || xi(g('summary')) || '';
-      const title = g('title').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
-      const link = g('link') || el.querySelector('link')?.getAttribute('href') || '#';
+      const title = g('title').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/\s+/g,' ').trim();
+      const link = g('link') || el.querySelector('link[href]')?.getAttribute('href') || '#';
+      const date = g('pubDate')||g('published')||g('updated')||'';
       return {
         title, img,
-        desc: sh(g('description') || g('summary') || '').slice(0, 240),
-        url: link,
-        date: g('pubDate') || g('published') || g('updated') || '',
-        src: feedName, cat: feedCat || 'general',
+        desc: sh(g('description')||g('summary')||'').slice(0,240),
+        url: link, date, src: feedName, cat: feedCat||'general',
       };
     }).filter(a => a.title.length > 4 && a.url !== '#');
   } catch(e) { return []; }
 }
+
+async function fetchFeed(feed, signal) {
+  const enc = encodeURIComponent(feed.u);
+  const isUrl = u => u && /^https?:\/\//.test(u);
+
+  // allorigins: reliable, no rate limit, returns raw XML
+  const tryAllorigins = async () => {
+    const r = await fetch('https://api.allorigins.win/raw?url=' + enc, {signal});
+    if (!r.ok) throw new Error('ao:'+r.status);
+    const items = parseXML(await r.text(), feed.n, feed.c);
+    if (!items.length) throw new Error('ao:empty');
+    return {items, ok:true};
+  };
+
+  // rss2json: gives better thumbnails when not rate-limited
+  const tryR2j = async () => {
+    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url='+enc, {signal});
+    if (!r.ok) throw new Error('r2j:'+r.status);
+    const d = await r.json();
+    if (d.status !== 'ok' || !d.items?.length) throw new Error('r2j:'+d.message);
+    return {
+      items: d.items.map(i => ({
+        title: (i.title||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim(),
+        desc: sh(i.description||'').slice(0,240),
+        url: i.link||'#',
+        img: isUrl(i.thumbnail)?i.thumbnail : isUrl(i.enclosure?.link)?i.enclosure.link : xi(i.content||'')||xi(i.description||'')||'',
+        date: i.pubDate||'', src: feed.n, cat: feed.c||'general',
+      })).filter(a => a.title.length > 4 && a.url !== '#'),
+      ok: true,
+    };
+  };
+
+  // corsproxy fallback
+  const tryCorsproxy = async () => {
+    const r = await fetch('https://corsproxy.io/?'+enc, {signal});
+    if (!r.ok) throw new Error('cp:'+r.status);
+    const text = await r.text();
+    if (!text.trim().startsWith('<')) throw new Error('cp:not xml');
+    const items = parseXML(text, feed.n, feed.c);
+    if (!items.length) throw new Error('cp:empty');
+    return {items, ok:true};
+  };
+
+  try {
+    // Race allorigins + rss2json simultaneously — fastest working one wins
+    return await Promise.any([tryAllorigins(), tryR2j(), tryCorsproxy()]);
+  } catch(e) {
+    if (e.name === 'AbortError') throw e;
+    return {items:[], ok:false};
+  }
+}
+
 
 async function fetchFeed(feed, signal) {
   // Try rss2json first (JSON, has thumbnails)
