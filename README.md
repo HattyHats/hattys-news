@@ -1,0 +1,1 @@
+I am trying to build a free and easy to use news website where you can see news from all around the world. We are slowly getting there. Some things do not work at the moment but every day I dig at it a little more.
