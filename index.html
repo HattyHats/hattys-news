@@ -425,17 +425,17 @@ const FEEDS = {
 
   /* ─── UNITED STATES ─── */
   us: [
-    // Google News USA — guaranteed country-specific
+    // Google News — thumbnails via rss2json
     {n:'Google News US',u:'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',c:'general',primary:true},
     {n:'Google News US Top',u:'https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRFZxYUdjU0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en',c:'general'},
-    // US National sources
-    {n:'AP News',u:'https://feeds.apnews.com/rss/apf-topnews',c:'general'},
-    {n:'AP Politics',u:'https://feeds.apnews.com/rss/apf-politics',c:'world'},
+    // Image-rich feeds (media:content or good thumbnails)
+    {n:'NBC News',u:'https://feeds.nbcnews.com/nbcnews/public/news',c:'general'},
+    {n:'USA Today',u:'https://rssfeeds.usatoday.com/usatoday-NewsTopStories',c:'general'},
+    {n:'NY Times',u:'https://rss.nytimes.com/services/xml/rss/nf/HomePage.xml',c:'general'},
+    {n:'Fox News',u:'https://moxie.foxnews.com/google-publisher/latest.xml',c:'general'},
     {n:'NPR',u:'https://feeds.npr.org/1001/rss.xml',c:'general'},
-    {n:'NPR News',u:'https://feeds.npr.org/1004/rss.xml',c:'world'},
-    {n:'CNN',u:'http://rss.cnn.com/rss/edition.rss',c:'general'},
-    {n:'CNN Business',u:'http://rss.cnn.com/rss/edition_business.rss',c:'business'},
-    {n:'CBS News',u:'https://www.cbsnews.com/latest/rss/main',c:'general'},
+    {n:'PBS NewsHour',u:'https://www.pbs.org/newshour/feeds/rss/headlines',c:'general'},
+    {n:'The Hill',u:'https://thehill.com/homenews/feed/',c:'general'},
     {n:'ABC News',u:'https://abcnews.go.com/abcnews/topstories',c:'general'},
     {n:'PBS NewsHour',u:'https://www.pbs.org/newshour/feeds/rss/headlines',c:'general'},
     {n:'USA Today',u:'https://rssfeeds.usatoday.com/usatoday-NewsTopStories',c:'general'},
@@ -1082,7 +1082,18 @@ function parseXML(xml, feedName, feedCat) {
         const enc = el.getElementsByTagName('enclosure')[0];
         if (enc) { const u=enc.getAttribute('url'),tp=(enc.getAttribute('type')||'').toLowerCase(); if(isUrl(u)&&(tp.startsWith('image/')||/\.(jpg|jpeg|png|webp|gif)/i.test(u))) img=u; }
       }
-      if (!img) img = xi(g('description')) || xi(g('summary')) || '';
+      if (!img) {
+        const descHtml = g('description') || g('summary') || '';
+        // Try img tag in description
+        const imgMatch = descHtml.match(/<img[^>]+src=["']([^"'>]+)["']/i);
+        if (imgMatch && /^https?:\/\//.test(imgMatch[1])) img = imgMatch[1];
+      }
+      // Also check content:encoded for WordPress-style feeds
+      if (!img) {
+        const ceHtml = g('content:encoded') || g('encoded') || '';
+        const ceMatch = ceHtml.match(/<img[^>]+src=["']([^"'>]+)["']/i);
+        if (ceMatch && /^https?:\/\//.test(ceMatch[1]) && !/\.gif$/i.test(ceMatch[1])) img = ceMatch[1];
+      }
       const title = g('title').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/\s+/g,' ').trim();
       const link = g('link') || el.querySelector('link[href]')?.getAttribute('href') || '#';
       const date = g('pubDate')||g('published')||g('updated')||'';
@@ -1347,42 +1358,65 @@ function applyFilters() {
   });
 }
 
-const FB = [
-  'https://picsum.photos/seed/hn1/600/380','https://picsum.photos/seed/hn2/600/380',
-  'https://picsum.photos/seed/hn3/600/380','https://picsum.photos/seed/hn4/600/380',
-  'https://picsum.photos/seed/hn5/600/380','https://picsum.photos/seed/hn6/600/380',
-  'https://picsum.photos/seed/hn7/600/380','https://picsum.photos/seed/hn8/600/380',
-];
+/* ── BRANDED SVG PLACEHOLDER (used when article has no image) ── */
+function makePlaceholder(src, idx) {
+  const bgs = ['#0d0505','#05050d','#050d05','#0d0800','#050505','#0d050d','#00080d','#050d00'];
+  const acs = ['#dc2626','#2563eb','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#65a30d'];
+  const bg = bgs[idx % bgs.length];
+  const ac = acs[idx % acs.length];
+  const lbl = (src||'NEWS').toUpperCase().replace(/[<>&"]/g,'').slice(0,18);
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="380" viewBox="0 0 600 380">'
+    + '<rect width="600" height="380" fill="' + bg + '"/>'
+    + '<rect x="0" y="0" width="600" height="3" fill="' + ac + '"/>'
+    + '<rect x="0" y="377" width="600" height="3" fill="' + ac + '"/>'
+    + '<text x="300" y="170" font-family="serif" font-size="72" fill="' + ac + '" opacity=".12" text-anchor="middle">&#128240;</text>'
+    + '<rect x="160" y="198" width="280" height="1.5" fill="' + ac + '" opacity=".25"/>'
+    + '<text x="300" y="222" font-family="monospace" font-size="13" fill="' + ac + '" opacity=".6" text-anchor="middle" letter-spacing="3">' + lbl + '</text>'
+    + '<text x="300" y="244" font-family="monospace" font-size="9" fill="#ffffff" opacity=".18" text-anchor="middle" letter-spacing="2">HATTY&#39;S NEWS</text>'
+    + '</svg>';
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
 
 function renderCards() {
-  const grid = $('grid'); grid.innerHTML = '';
+  const grid = $('grid');
+  grid.innerHTML = '';
   if (!S.filtered.length) { $('nores').style.display = 'block'; return; }
   $('nores').style.display = 'none';
+
   S.filtered.forEach((art, i) => {
-    const fb = FB[i % FB.length];
-    const img = (art.img && /^https?:\/\//.test(art.img)) ? art.img : fb;
+    const placeholder = makePlaceholder(art.src, i);
+    const imgSrc = (art.img && /^https?:\/\//.test(art.img)) ? art.img : placeholder;
     const el = document.createElement('article');
-    el.className = 'card'; el.style.animationDelay = `${(i % 20) * 25}ms`;
+    el.className = 'card';
+    el.style.animationDelay = (i % 20 * 25) + 'ms';
+
+    // Build image section via DOM to avoid any encoding issues
+    const imgLink = document.createElement('a');
+    imgLink.href = art.url; imgLink.target = '_blank'; imgLink.rel = 'noopener noreferrer';
+    imgLink.style.display = 'block';
+    const imgEl = document.createElement('img');
+    imgEl.className = 'ci'; imgEl.alt = ''; imgEl.loading = 'lazy';
+    imgEl.src = imgSrc;
+    imgEl.onerror = function() { this.src = placeholder; this.onerror = null; };
+    imgLink.appendChild(imgEl);
+
+    // Body via innerHTML (text content only, safe)
     const {rel, abs} = tago(art.date);
     const timeHtml = rel
-      ? `<div class="card-time">
-           <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;opacity:.6"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-           <span class="card-time-rel">${esc(rel)}</span>
-           <span class="card-time-sep">·</span>
-           <span class="card-time-abs">${esc(abs)}</span>
-         </div>`
+      ? '<div class="card-time"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;opacity:.6"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>'
+        + '<span class="card-time-rel">' + esc(rel) + '</span><span class="card-time-sep">·</span><span class="card-time-abs">' + esc(abs) + '</span></div>'
       : '';
-    el.innerHTML = `
-      <a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer" style="display:block">
-        <img src="${esc(img)}" alt="" class="ci" loading="lazy" onerror="this.src='${fb}';this.onerror=null"/>
-      </a>
-      <div class="cb">
-        <div class="cs">${esc(art.src)}</div>
-        <h2 class="ct"><a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer">${esc(art.title)}</a></h2>
-        ${art.desc ? `<p class="cd">${esc(art.desc)}</p>` : ''}
-        ${timeHtml}
-        <div class="cf"><a href="${esc(art.url)}" target="_blank" rel="noopener noreferrer" class="rbtn">READ →</a></div>
-      </div>`;
+
+    const body = document.createElement('div');
+    body.className = 'cb';
+    body.innerHTML = '<div class="cs">' + esc(art.src) + '</div>'
+      + '<h2 class="ct"><a href="' + esc(art.url) + '" target="_blank" rel="noopener noreferrer">' + esc(art.title) + '</a></h2>'
+      + (art.desc ? '<p class="cd">' + esc(art.desc) + '</p>' : '')
+      + timeHtml
+      + '<div class="cf"><a href="' + esc(art.url) + '" target="_blank" rel="noopener noreferrer" class="rbtn">READ →</a></div>';
+
+    el.appendChild(imgLink);
+    el.appendChild(body);
     grid.appendChild(el);
   });
 }
