@@ -20,6 +20,7 @@ interface FearGreedData {
   value: string;
   value_classification: string;
   timestamp: string;
+  previous_value?: string;
 }
 
 const OTHER_SITES = [
@@ -100,10 +101,14 @@ export default function App() {
 
   const fetchFearGreed = async () => {
     try {
-      const res = await fetch(`https://api.alternative.me/fng/?t=${Date.now()}`);
+      const res = await fetch(`https://api.alternative.me/fng/?limit=2&t=${Date.now()}`);
       const data = await res.json();
       if (data.data && data.data.length > 0) {
-        setFearGreed(data.data[0]);
+        const current = data.data[0];
+        if (data.data[1]) {
+          current.previous_value = data.data[1].value;
+        }
+        setFearGreed(current);
       }
     } catch (e) {
       console.error("Failed to fetch Fear & Greed Index", e);
@@ -224,14 +229,40 @@ export default function App() {
                       {fearGreed.value_classification}
                     </div>
 
+                    {fearGreed.previous_value && (
+                      <div className="flex items-center justify-center gap-4 text-xs font-mono text-[var(--ink-muted)]">
+                        <div className="flex flex-col items-center">
+                          <span className="opacity-50">YESTERDAY</span>
+                          <span className="text-white font-bold">{fearGreed.previous_value}</span>
+                        </div>
+                        <div className="h-4 w-[1px] bg-[var(--border)]" />
+                        <div className="flex flex-col items-center">
+                          <span className="opacity-50">TREND</span>
+                          <span className={parseInt(fearGreed.value) > parseInt(fearGreed.previous_value) ? 'text-green-500' : 'text-red-500'}>
+                            {parseInt(fearGreed.value) > parseInt(fearGreed.previous_value) ? '↑ UP' : '↓ DOWN'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     <p className="text-sm text-[var(--ink-muted)] leading-relaxed text-left bg-[var(--bg)] p-4 rounded-lg border border-[var(--border)]">
                       The Fear & Greed Index is a tool used to gauge the emotions of the market. 
                       <strong> Fear</strong> (0-49) suggests investors are worried, which could be a buying opportunity. 
                       <strong> Greed</strong> (51-100) suggests the market is due for a correction as investors get too greedy.
                     </p>
                     
-                    <div className="text-[10px] font-mono text-[var(--ink-muted)]">
-                      Last Updated: {new Date(parseInt(fearGreed.timestamp) * 1000).toLocaleString()}
+                    <div className="flex flex-col gap-2">
+                      <div className="text-[10px] font-mono text-[var(--ink-muted)]">
+                        Last Updated: {new Date(parseInt(fearGreed.timestamp) * 1000).toLocaleString()}
+                      </div>
+                      <a 
+                        href="https://alternative.me/crypto/fear-and-greed-index/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-mono text-[var(--red)] hover:underline"
+                      >
+                        Source: Alternative.me
+                      </a>
                     </div>
                   </div>
                 ) : (
