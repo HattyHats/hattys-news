@@ -1,3 +1,5 @@
+# 📰 Hatty's News: The Ultimate Crypto Terminal
+
 Welcome to **Hatty's News**, a high-intelligence, real-time crypto news terminal designed for traders, investors, and enthusiasts who need to stay ahead of the curve.
 
 ## 🚀 Why I Built This

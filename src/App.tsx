@@ -57,14 +57,33 @@ export default function App() {
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
 
-      return data.items.map((i: any) => ({
-        title: i.title,
-        link: i.link,
-        img: i.enclosure?.url || i.content || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=500',
-        date: new Date(i.pubDate || i.isoDate),
-        src: feed.n,
-        cat: feed.c
-      }));
+      return data.items.map((i: any) => {
+        // Advanced Image Extraction
+        let img = 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=500';
+        
+        if (i.enclosure?.url) {
+          img = i.enclosure.url;
+        } else if (i['media:content']) {
+          const media = i['media:content'];
+          img = Array.isArray(media) ? (media[0]?.$.url || media[0].url) : (media.$.url || media.url);
+        } else if (i['media:thumbnail']) {
+          img = i['media:thumbnail']?.$.url || i['media:thumbnail']?.url;
+        } else {
+          const content = i.contentEncoded || i.content || i.description || '';
+          const match = content.match(/<img[^>]+src="([^">]+)"/);
+          if (match) img = match[1];
+          else img = `https://picsum.photos/seed/${encodeURIComponent(i.title.slice(0, 10))}/800/450`;
+        }
+
+        return {
+          title: i.title,
+          link: i.link,
+          img,
+          date: new Date(i.pubDate || i.isoDate),
+          src: feed.n,
+          cat: feed.c
+        };
+      });
     } catch (e) {
       console.error("Fetch failed for", feed.n, e);
       return [];
@@ -81,9 +100,11 @@ export default function App() {
 
   const fetchFearGreed = async () => {
     try {
-      const res = await fetch('https://api.alternative.me/fng/');
+      const res = await fetch(`https://api.alternative.me/fng/?t=${Date.now()}`);
       const data = await res.json();
-      setFearGreed(data.data[0]);
+      if (data.data && data.data.length > 0) {
+        setFearGreed(data.data[0]);
+      }
     } catch (e) {
       console.error("Failed to fetch Fear & Greed Index", e);
     }
