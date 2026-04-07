@@ -1,0 +1,5 @@
+{
+  "name": "Hatty's News",
+  "description": "A high-intelligence crypto news terminal with real-time tickers and multi-source RSS feeds.",
+  "requestFramePermissions": []
+}
