@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Hatty's News — Real World Headlines</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23dc2626'/><text x='4' y='24' font-size='22' font-family='serif' fill='white'>H</text></svg>"/>
-<meta name="description" content="Real global news. Country-specific RSS feeds from BBC, Reuters, AP, Al Jazeera, Google News, and 60+ verified sources."/>
+<meta name="description" content="Real global news. Country-specific feeds fetched via Hatty's backend from Google News, Reuters, AP, BBC, Al Jazeera and more."/>
 <!-- Google Auto Ads -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6374033238930580" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -102,879 +102,219 @@ html.dark .inp option{background:#1a1a1a}
 @keyframes pd{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.4)}}
 
 /* ── TOAST ── */
-#toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);color:var(--ink);border:1px solid var(--red);box-shadow:0 0 20px rgba(220,38,38,.3);padding:.45rem 1rem;border-radius:4px;font-size:.72rem;font-weight:600;font-family:'IBM Plex Mono',monospace;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:400;white-space:nowrap}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#nores{display:none;text-align:center;padding:4rem 1rem}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spin{width:34px;height:34px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .6s linear infinite}
-
-/* ── CRYPTO TICKER (LCW widget) ── */
-#tickers{position:fixed;bottom:0;left:0;right:0;z-index:90;background:var(--ticker);border-top:1px solid var(--border);box-shadow:0 -1px 0 rgba(220,38,38,.15),0 -6px 24px rgba(0,0,0,.5);overflow:hidden}
-#tickers .livecoinwatch-widget-5{display:block;width:100%}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:200;background:#171717;color:#e5e5e5;border-radius:999px;padding:.55rem .9rem;font-size:.76rem;border:1px solid rgba(250,250,250,.06);box-shadow:0 10px 40px rgba(0,0,0,.5);display:flex;align-items:center;gap:.5rem;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;pointer-events:auto;transform:translate(-50%,-6px)}
 
 /* ── MOBILE COUNTRY BAR ── */
 #mobile-country-bar{display:none;overflow-x:auto;padding:.5rem 1rem;gap:.4rem;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border);background:var(--bg);scrollbar-width:none}
 #mobile-country-bar::-webkit-scrollbar{display:none}
-.mcbtn{flex-shrink:0;padding:.3rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;font-family:'IBM Plex Mono',monospace;border:1px solid var(--border);background:transparent;color:var(--ink-muted);cursor:pointer;transition:all var(--t);white-space:nowrap}
-.mcbtn.on,.mcbtn:hover{background:var(--red);border-color:var(--red);color:#fff}
-
 @media(max-width:768px){
   #mobile-country-bar{display:flex}
-  body{padding-bottom:60px}
-  #grid{grid-template-columns:1fr}
 }
+.mcbtn{flex:0 0 auto;font-size:.76rem;padding:.28rem .6rem;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--ink-muted);cursor:pointer;white-space:nowrap;transition:all .2s;font-family:'IBM Plex Mono',monospace}
+.mcbtn.on,.mcbtn:hover{border-color:var(--red);background:var(--red);color:#fff}
 
-/* ── COOKIE BANNER ── */
-#cookiebanner{position:fixed;bottom:58px;left:0;right:0;z-index:300;background:var(--surface);border-top:2px solid var(--red);box-shadow:0 -4px 30px rgba(0,0,0,.5);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;transition:opacity .4s ease,transform .4s cubic-bezier(.4,0,.2,1)}
-#cookiebanner.hidden{opacity:0;transform:translateY(200%);pointer-events:none;display:none}
-.cbtext{font-size:.76rem;color:var(--ink-muted);line-height:1.6;flex:1;min-width:220px}
-.cbtext a{color:var(--red);text-decoration:underline;cursor:pointer}
-.cbbtn{background:var(--red);color:#fff;border:none;border-radius:5px;padding:.45rem 1.2rem;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;letter-spacing:.06em;cursor:pointer;white-space:nowrap;transition:background var(--t)}
-.cbbtn:hover{background:var(--red-b)}
-.cbbtn.outline{background:transparent;border:1px solid var(--border);color:var(--ink-muted);margin-right:.4rem}
-.cbbtn.outline:hover{border-color:var(--red);color:var(--red)}
+/* ── NO RESULTS ── */
+#nores{display:none;font-size:.8rem;color:var(--ink-muted);padding:1.5rem .5rem;text-align:center}
 
-/* ── MODALS ── */
-.modal-wrap{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .3s}
-.modal-wrap.open{opacity:1;pointer-events:auto}
-.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:680px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(220,38,38,.15)}
-.modal-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0}
-.modal-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:1.3rem;letter-spacing:.08em;color:var(--red)}
-.modal-close{background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:var(--ink);border-radius:6px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--t);flex-shrink:0}
-.modal-close:hover{background:var(--red);color:#fff}
-.modal-body{overflow-y:auto;padding:1.25rem;font-size:.8rem;color:var(--ink-muted);line-height:1.8}
-.modal-body h2{font-family:'Bebas Neue',Impact,sans-serif;font-size:1rem;letter-spacing:.08em;color:var(--ink);margin:1.2rem 0 .4rem}
-.modal-body h2:first-child{margin-top:0}
-.modal-body p{margin-bottom:.75rem}
-.modal-body ul{padding-left:1.2rem;margin-bottom:.75rem}
-.modal-body ul li{margin-bottom:.3rem}
-.modal-body a{color:var(--red)}
-
-/* ── BREAKING NEWS BANNER ── */
-#breaking-bar{background:var(--red);color:#fff;padding:.35rem 1rem;display:flex;align-items:center;gap:.75rem;overflow:hidden;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;letter-spacing:.04em}
-#breaking-bar .blbl{flex-shrink:0;background:rgba(0,0,0,.3);padding:.1rem .5rem;border-radius:2px;font-size:.65rem;letter-spacing:.1em}
-#breaking-scroll{flex:1;overflow:hidden;white-space:nowrap;mask-image:linear-gradient(to right,transparent,#fff 40px,#fff calc(100% - 40px),transparent)}
-#breaking-inner{display:inline-block;animation:bscroll 40s linear infinite;padding-right:80px}
-@keyframes bscroll{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
-
-/* SPLASH */
-#splash{position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 1s ease;}
-#splash-content{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:1.6rem;text-align:center;padding:2rem 1.5rem;}
-#splash-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:clamp(2.6rem,10vw,8rem);letter-spacing:.07em;color:#fff;line-height:1;opacity:0;animation:spIn 1.6s ease forwards;text-shadow:0 0 30px rgba(220,38,38,1),0 0 80px rgba(220,38,38,.55),0 0 160px rgba(220,38,38,.22);position:relative;user-select:none;display:inline-block;}
-#splash-title::after{content:attr(data-g);position:absolute;inset:0;color:#ff2222;opacity:0;text-shadow:2px 0 #ff0000,-2px 0 #00ffff;animation:gT 5s steps(1) infinite 2.4s;}
-@keyframes gT{0%,87%,100%{opacity:0;transform:translate(0);clip-path:none}88%{opacity:1;transform:translate(-4px,2px);clip-path:inset(10% 0 70% 0)}89%{opacity:0}90%{opacity:1;transform:translate(5px,-2px);clip-path:inset(58% 0 5% 0)}91%{opacity:1;transform:translate(-2px,1px);clip-path:inset(28% 0 30% 0)}92%{opacity:0}94%{opacity:1;transform:translate(3px,2px);clip-path:inset(5% 0 78% 0)}95%{opacity:0}}
-#splash-sub{font-family:'IBM Plex Mono',monospace;font-size:clamp(.78rem,2vw,1.05rem);letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55);opacity:0;animation:spIn .9s ease forwards 1.4s;}
-#splash-hh{color:#dc2626;font-weight:700;display:inline-block;position:relative;animation:gHH 4s steps(1) infinite 2.9s;}
-@keyframes gHH{0%,80%,100%{color:#dc2626;text-shadow:none;transform:translate(0)}81%{color:#ff4444;text-shadow:3px 0 #f00,-3px 0 #0cf;transform:translate(-3px,0)}82%{color:#dc2626;text-shadow:none;transform:translate(2px,1px)}83%{color:#ff6666;text-shadow:-2px 0 #f00,2px 0 #0cf}84%{color:#dc2626;text-shadow:none;transform:translate(0)}89%{color:#ff3333;text-shadow:4px 0 rgba(255,0,0,.55);transform:translate(-2px,0)}90%{color:#dc2626;text-shadow:none;transform:translate(0)}}
-/* splash enter button removed */
-@keyframes spIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-/* LOGO GLITCH */
-.logo-wrap{position:relative;display:inline-block;}
-.logo-wrap::before,.logo-wrap::after{content:attr(data-g);position:absolute;inset:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:1.4rem;letter-spacing:.06em;color:var(--red);pointer-events:none;opacity:0;line-height:1;}
-.logo-wrap::before{text-shadow:-2px 0 #00ffff;animation:lgB 7s steps(1) infinite 1s;}
-.logo-wrap::after{text-shadow:2px 0 #ff0000;animation:lgA 7s steps(1) infinite 1.18s;}
-@keyframes lgB{0%,90%,100%{opacity:0;clip-path:none;transform:translate(0)}91%{opacity:.85;transform:translate(-3px,0);clip-path:inset(8% 0 72% 0)}92%{opacity:0}93%{opacity:.85;transform:translate(2px,1px);clip-path:inset(52% 0 8% 0)}94%{opacity:.85;transform:translate(-1px,-1px);clip-path:inset(22% 0 44% 0)}95%{opacity:0}}
-@keyframes lgA{0%,90%,100%{opacity:0;clip-path:none;transform:translate(0)}91%{opacity:.75;transform:translate(3px,0);clip-path:inset(28% 0 42% 0)}92%{opacity:0}93%{opacity:.75;transform:translate(-2px,1px);clip-path:inset(66% 0 4% 0)}94%{opacity:.75;transform:translate(1px,-1px);clip-path:inset(4% 0 62% 0)}95%{opacity:0}}
-/* MOBILE */
-@media(max-width:520px){#grid{grid-template-columns:1fr!important}.ci{height:155px}#splash-title{font-size:clamp(2.2rem,13vw,3.6rem)}#splash-sub{font-size:.72rem;letter-spacing:.11em}}
-@media(max-width:360px){#splash-title{font-size:2rem}}
-.sdot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#dc2626;animation:sdot 1.2s ease-in-out infinite}.sdot:nth-child(2){animation-delay:.2s}.sdot:nth-child(3){animation-delay:.4s}@keyframes sdot{0%,80%,100%{transform:scale(0);opacity:.3}40%{transform:scale(1);opacity:1}}
+/* ── SPINNER ── */
+#spin{display:none;align-items:center;justify-content:center;padding:1.2rem 0}
+.sp{width:18px;height:18px;border-radius:999px;border:2px solid var(--border);border-top-color:var(--red);animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
-<body>
-
-<!-- SPLASH — must be first, z-index 99999 -->
-<div id="splash" role="dialog" aria-modal="true" aria-label="Welcome to Hatty's News">
-  <img id="splash-gif" src="newsworld.gif" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0"/>
-  <div style="position:absolute;inset:0;background:rgba(0,0,0,.52);z-index:1;pointer-events:none"></div>
-  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 25%,rgba(0,0,0,.72) 100%);z-index:2;pointer-events:none"></div>
-  <div id="splash-content">
-    <div id="splash-title" data-g="HATTY'S NEWS">HATTY'S NEWS</div>
-    <div id="splash-sub">Created by <span id="splash-hh">HattyHats</span></div>
-    <div id="splash-loading" style="font-family:'IBM Plex Mono',monospace;font-size:clamp(.72rem,1.6vw,.88rem);font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.7);opacity:0;animation:spIn .8s ease forwards 2.1s;display:flex;align-items:center;gap:.7rem">
-      LOADING
-      <div style="display:flex;gap:4px"><span class="sdot"></span><span class="sdot"></span><span class="sdot"></span></div>
-    </div>
-  </div>
-</div>
-
-<div id="ovl"></div>
-
-<!-- COOKIE BANNER -->
-<div id="cookiebanner">
-  <p class="cbtext">🍪 We use cookies and display ads via Google AdSense to keep this site free. By clicking <strong>Accept</strong> you agree to our <a onclick="openModal('privacy')">Privacy Policy</a> and <a onclick="openModal('terms')">Terms of Service</a>.</p>
-  <div style="display:flex;align-items:center;flex-shrink:0">
-    <button class="cbbtn outline" onclick="declineCookies()">Decline</button>
-    <button class="cbbtn" onclick="acceptCookies()">Accept All</button>
-  </div>
-</div>
-
-<!-- PRIVACY POLICY MODAL -->
-<div class="modal-wrap" id="modal-privacy">
-  <div class="modal-box">
-    <div class="modal-head"><div class="modal-title">Privacy Policy</div><button class="modal-close" onclick="closeModal('privacy')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="modal-body">
-      <p><em>Last updated: March 2026</em></p>
-      <h2>1. Who We Are</h2><p>Hatty's News is operated by Hatty's Network. We aggregate publicly available RSS news feeds and display live financial data. Available at earnwithhatty.com and associated Netlify properties.</p>
-      <h2>2. Information We Collect</h2><p>We do not directly collect personally identifiable information. Third-party services may collect data automatically:</p>
-      <ul><li><strong>Google AdSense</strong> — displays personalised or non-personalised ads and may use cookies.</li><li><strong>Google Fonts & Google News</strong> — may log your IP address when content is loaded.</li><li><strong>CoinGecko</strong> — provides live crypto price data; your browser makes direct requests.</li><li><strong>RSS proxy services</strong> (rss2json.com, allorigins.win) — used to fetch news feeds; your IP may be logged.</li></ul>
-      <h2>3. Cookies</h2><p>We store two small items in your browser's localStorage: your selected country and your theme preference. These never leave your device. Google AdSense sets its own cookies. You can opt out at <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">google.com/settings/ads</a>.</p>
-      <h2>4. Your Rights</h2><p>Depending on your location you may have rights under GDPR, CCPA, or other laws. Please refer to <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a> for details on data they collect.</p>
-      <h2>5. Contact</h2><p>Questions? Reach us via <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener">earnwithhatty.com</a>.</p>
-    </div>
-  </div>
-</div>
-
-<!-- TERMS OF SERVICE MODAL -->
-<div class="modal-wrap" id="modal-terms">
-  <div class="modal-box">
-    <div class="modal-head"><div class="modal-title">Terms of Service</div><button class="modal-close" onclick="closeModal('terms')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-    <div class="modal-body">
-      <p><em>Last updated: March 2026</em></p>
-      <h2>1. Acceptance of Terms</h2><p>By accessing or using Hatty's News you agree to be bound by these Terms. If you do not agree, please do not use the site.</p>
-      <h2>2. Description of Service</h2><p>Hatty's News is a free news aggregator that fetches and displays publicly available RSS feeds from third-party publishers alongside live cryptocurrency data. We do not produce original news content.</p>
-      <h2>3. Content & Copyright</h2><p>All news headlines, summaries, and images are the property of their respective publishers. We display them via public RSS feeds in accordance with standard syndication practices.</p>
-      <h2>4. Financial Data Disclaimer</h2><p>Cryptocurrency prices shown are for informational purposes only. Nothing on this site constitutes financial advice.</p>
-      <h2>5. No Warranties</h2><p>This site is provided "as is" without warranties of any kind. We do not guarantee the accuracy, completeness, or availability of any content.</p>
-      <h2>6. Contact</h2><p>Questions? Contact us at <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener">earnwithhatty.com</a>.</p>
-    </div>
-  </div>
-</div>
-
-<!-- DRAWER -->
-<nav id="drw" aria-label="Navigation">
-  <div style="background:var(--red);padding:1rem .9rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-    <div>
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:#fff;font-size:1.25rem;letter-spacing:.1em">HATTY'S NETWORK</div>
-      <div style="color:rgba(255,255,255,.6);font-size:.62rem;letter-spacing:.08em;font-family:'IBM Plex Mono',monospace">ALL SITES</div>
-    </div>
-    <button id="drw-close" class="ibtn" style="background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.2)" aria-label="Close">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-    </button>
-  </div>
-  <div style="padding:.4rem 0;flex:1">
-    <div style="padding:.4rem .9rem .2rem;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace">HATTY'S SITES</div>
-    <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" class="nl"><div class="ni">🏠</div><div><div>Home</div><div style="font-size:.66rem;color:var(--ink-muted)">earnwithhatty.com</div></div></a>
-    <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" class="nl"><div class="ni">🛠️</div><div><div>Hatty's Tools</div><div style="font-size:.66rem;color:var(--ink-muted)">Useful online tools</div></div></a>
-    <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" class="nl"><div class="ni">🔒</div><div><div>Privacy Gadgets</div><div style="font-size:.66rem;color:var(--ink-muted)">Stay private online</div></div></a>
-    <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" class="nl"><div class="ni">🌌</div><div><div>Hatty's Universe</div><div style="font-size:.66rem;color:var(--ink-muted)">Explore the cosmos</div></div></a>
-    <div style="height:1px;background:var(--border);margin:.5rem .9rem"></div>
-    <div style="padding:.4rem .9rem .2rem;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace">SETTINGS</div>
-    <button class="nl" id="theme-drw-btn"><div class="ni" id="theme-drw-icon">🌙</div><div><div>Toggle Theme</div><div style="font-size:.66rem;color:var(--ink-muted)">Dark / Light</div></div></button>
-  </div>
-  <div style="padding:.7rem .9rem;border-top:1px solid var(--border);font-size:.62rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;text-align:center">© 2026 HATTY'S NETWORK</div>
-</nav>
-
-<!-- HEADER -->
+<body class="text-sm">
 <header id="hdr">
-  <div style="max-width:1440px;margin:0 auto;padding:.55rem 1rem">
-    <!-- Desktop row -->
-    <div style="display:flex;align-items:center;gap:.5rem">
-      <button class="ibtn" id="ham" aria-label="Menu">
-        <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
-      <a href="/" style="text-decoration:none;flex-shrink:0">
-        <span class="logo logo-wrap" data-g="HATTY'S NEWS" style="font-size:1.4rem">HATTY'S <span style="opacity:.55">NEWS</span></span>
-      </a>
-      <div style="display:flex;align-items:center;gap:.3rem;color:var(--ink-muted);font-size:.6rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;flex-shrink:0">
-        <div class="ldot"></div><span class="hidden sm:inline">LIVE</span>
-      </div>
-      <!-- Search — takes remaining space -->
-      <div style="flex:1;display:flex;gap:.35rem;min-width:0">
-        <input id="si" type="search" placeholder="Search headlines…" autocomplete="off" class="inp" style="flex:1;min-width:0;border-radius:6px;padding:.38rem .75rem;font-size:.8rem;height:36px"/>
-        <button id="sb" class="ibtn" aria-label="Search">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        </button>
-      </div>
-      <!-- Desktop-only country select -->
-      <select id="csel" class="inp hidden md:block" style="padding:.35rem .6rem;font-size:.75rem;border-radius:6px;cursor:pointer;height:36px;flex-shrink:0"></select>
-      <button class="ibtn" id="thbtn" aria-label="Toggle theme"><span id="thicon">☀️</span></button>
-      <button class="ibtn" id="rfbtn" aria-label="Refresh">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+  <div class="max-w-6xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-3">
+    <button id="mnav" class="ibtn sm:hidden" aria-label="Open menu">
+      <span class="material-symbols-rounded" style="font-size:20px">menu</span>
+    </button>
+    <div class="flex items-center gap-2">
+      <div class="logo text-2xl tracking-[0.2em]">HATTY'S NEWS</div>
+      <div class="hidden md:inline-flex text-[10px] font-mono text-red-400 border border-red-500/40 rounded px-1.5 py-0.5 ml-1 tracking-[0.16em]">LIVE</div>
+    </div>
+    <div class="flex-1 flex justify-end items-center gap-2">
+      <button id="themeToggle" class="ibtn" aria-label="Toggle theme">
+        <span class="material-symbols-rounded" id="themeIcon" style="font-size:18px">dark_mode</span>
       </button>
     </div>
   </div>
+  <div id="mobile-country-bar" role="tablist" aria-label="Select country"></div>
 </header>
 
-<!-- BREAKING NEWS BAR -->
-<div id="breaking-bar" style="display:none">
-  <span class="blbl">BREAKING</span>
-  <div id="breaking-scroll"><div id="breaking-inner"></div></div>
-</div>
+<div id="ovl"></div>
+<aside id="drw" aria-label="Navigation">
+  <div class="flex items-center justify-between px-3 pt-3 pb-1">
+    <div class="flex items-center gap-2">
+      <div class="logo text-xl">HATTY'S NEWS</div>
+      <span class="text-[10px] font-mono text-red-400 border border-red-500/40 rounded px-1.5 py-0.5 tracking-[0.16em]">LIVE</span>
+    </div>
+    <button id="mclose" class="ibtn" aria-label="Close menu">
+      <span class="material-symbols-rounded" style="font-size:18px">close</span>
+    </button>
+  </div>
+  <div class="px-2 pb-4">
+    <button class="nl" id="drw-home">
+      <span class="ni">🏠</span>
+      <span>Top Stories</span>
+    </button>
+    <button class="nl" id="drw-privacy">
+      <span class="ni">🔒</span>
+      <span>Privacy & Terms</span>
+    </button>
+    <a class="nl" href="https://earnwithhatty.com" target="_blank" rel="noopener">
+      <span class="ni">💼</span>
+      <span>Earn with Hatty</span>
+    </a>
+  </div>
+</aside>
 
-<!-- MOBILE COUNTRY SCROLL BAR (below header, no overlap) -->
-<div id="mobile-country-bar" role="tablist" aria-label="Select country"></div>
-
-<!-- MAIN -->
-<div style="max-width:1440px;margin:0 auto;padding:1rem 1rem">
-  <div style="display:flex;gap:1.1rem;align-items:flex-start">
-    <main style="flex:1;min-width:0">
-
-      <!-- Title row -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem;flex-wrap:wrap;gap:.4rem">
-        <div>
-          <h1 id="clbl" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.75rem;letter-spacing:.08em;line-height:1">TOP HEADLINES</h1>
-          <p id="acnt" style="font-size:.65rem;color:var(--ink-muted);margin-top:.22rem;font-family:'IBM Plex Mono',monospace"></p>
+<main class="max-w-6xl mx-auto px-3 sm:px-4 pb-10 pt-4">
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2.4fr)_minmax(0,1fr)] gap-4 lg:gap-6 items-start">
+    <section aria-label="Headlines">
+      <div class="flex flex-wrap items-center gap-3 mb-3">
+        <select id="csel" class="inp text-xs px-2 py-1.5 rounded border border-red-900/50 bg-black/30 text-red-100 font-mono tracking-[0.18em] uppercase">
+          <!-- options are built by JS from COUNTRIES -->
+        </select>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="fp on" data-cat="general">General</button>
+          <button class="fp" data-cat="world">World</button>
+          <button class="fp" data-cat="business">Business</button>
+          <button class="fp" data-cat="technology">Tech</button>
+          <button class="fp" data-cat="science">Science</button>
+          <button class="fp" data-cat="health">Health</button>
+          <button class="fp" data-cat="sports">Sports</button>
+          <button class="fp" data-cat="entertainment">Culture</button>
+        </div>
+        <div class="flex-1 flex justify-end">
+          <input id="q" class="inp text-xs px-2 py-1.5 rounded w-full max-w-xs" type="search" placeholder="Search headlines (title/summary)…"/>
         </div>
       </div>
 
-      <!-- Feed status -->
-      <div id="fsb"></div>
+      <div id="fsb" aria-live="polite"></div>
       <div id="covn" class="covn" style="display:none"></div>
+      <div id="spin"><div class="sp"></div></div>
+      <div id="nores">NO HEADLINES FOUND<br/>Try a different country, category, or clear your search.</div>
+      <div id="grid" class="mt-2"></div>
+    </section>
 
-      <!-- Category pills -->
-      <div style="display:flex;gap:.35rem;overflow-x:auto;padding-bottom:.45rem;margin-bottom:.45rem;-webkit-overflow-scrolling:touch;scrollbar-width:none">
-        <button class="fp on" data-cat="general">🌍 ALL</button>
-        <button class="fp" data-cat="world">🗺 WORLD</button>
-        <button class="fp" data-cat="business">💼 BUSINESS</button>
-        <button class="fp" data-cat="technology">💻 TECH</button>
-        <button class="fp" data-cat="sports">⚽ SPORTS</button>
-        <button class="fp" data-cat="health">🏥 HEALTH</button>
-        <button class="fp" data-cat="science">🔬 SCIENCE</button>
-        <button class="fp" data-cat="entertainment">🎬 ENTS</button>
-      </div>
-
-      <!-- Source bar -->
-      <div id="srcbar" style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.75rem"></div>
-
-      <!-- Grid -->
-      <div id="grid" aria-live="polite"></div>
-      <div id="lsp" style="display:none;justify-content:center;padding:3rem"><div class="spin"></div></div>
-      <div id="nores">
-        <div style="font-size:3rem;margin-bottom:.75rem">📭</div>
-        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.7rem;letter-spacing:.08em">NO HEADLINES FOUND</div>
-        <div style="font-size:.8rem;color:var(--ink-muted);margin-top:.3rem">Try a different country, category, or clear your search.</div>
-        <button id="rstbtn" class="rbtn" style="margin-top:1rem;padding:.45rem 1.1rem;font-size:.76rem">RESET</button>
-      </div>
-    </main>
-
-    <!-- SIDEBAR -->
-    <aside style="width:216px;flex-shrink:0" class="hidden lg:block">
+    <aside aria-label="Quick links" class="space-y-3">
       <div class="sbox">
         <div class="stitle">🌐 COUNTRIES</div>
-        <p style="font-size:.6rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;margin-bottom:.55rem;letter-spacing:.04em">CLICK TO SWITCH</p>
-        <div id="clist" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:.08rem"></div>
-        <div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)">
-          <div style="font-size:.56rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.06em;margin-bottom:.35rem">COVERAGE KEY</div>
-          <div style="display:flex;flex-direction:column;gap:.28rem;font-size:.63rem;color:var(--ink-muted)">
-            <span><span class="qb qs" style="margin-right:.25rem">STR</span>Dedicated local English RSS</span>
-            <span><span class="qb qg" style="margin-right:.25rem">GD</span>Reliable int'l + Google News</span>
-            <span><span class="qb ql" style="margin-right:.25rem">LTD</span>Google News + best available</span>
-          </div>
+        <div id="clist" class="space-y-0.5"></div>
+      </div>
+      <div class="sbox">
+        <div class="stitle">🎥 HATTY'S NETWORK</div>
+        <div class="space-y-2 text-xs text-[0.74rem]" style="color:var(--ink-muted)">
+          <p>🇺🇸 Curated by Tony D’Andria (<span style="font-family:'IBM Plex Mono',monospace">@HattyHats</span>). Real-world news, crypto data, and tools.</p>
+          <p>📺 YouTube: <a href="https://www.youtube.com/@hattyhats0" target="_blank" rel="noopener" class="text-red-400 hover:text-red-300 underline">youtube.com/@hattyhats0</a></p>
+          <p>🐦 X (Twitter): <a href="https://x.com/hatty_hats" target="_blank" rel="noopener" class="text-red-400 hover:text-red-300 underline">@hatty_hats</a></p>
+          <p>🧢 Merch: <a href="https://learn-with-hatty.printify.me/" target="_blank" rel="noopener" class="text-red-400 hover:text-red-300 underline">learn-with-hatty.printify.me</a></p>
+          <p>💌 Contact: <a href="mailto:hattyhatss@icloud.com" class="text-red-400 hover:text-red-300 underline">hattyhatss@icloud.com</a></p>
+          <p>💚 Tip via Cash App: <span style="font-family:'IBM Plex Mono',monospace">$hattyhatss</span></p>
         </div>
       </div>
       <div class="sbox">
-        <div class="stitle">📡 SOURCES</div>
-        <p style="font-size:.69rem;color:var(--ink-muted);line-height:1.65">60+ named outlets including BBC, Reuters, AP, Al Jazeera, NHK, DW, France 24, CBC, ABC AUS, The Guardian, Sky News, NPR, CNN, CNA, Google News per-country RSS, and more. Sources shown live after load.</p>
+        <div class="stitle">⚖️ PRIVACY & TERMS</div>
+        <p style="font-size:.72rem;color:var(--ink-muted);line-height:1.6">Hatty's News is a read-only aggregator. We do not store your browsing history or profile you. Theme & country stay in your browser only.</p>
+        <button id="open-legal" class="mt-2 text-[.7rem] text-red-300 hover:text-red-200 underline">View full Privacy & Terms</button>
       </div>
     </aside>
   </div>
+
+  <footer class="mt-6 pt-4 border-t border-red-900/40 text-[.68rem] text-center text-zinc-500">
+    <p>Built by Tony D’Andria (HattyHats). Not financial advice. Headlines fetched from third-party publishers via Hatty's backend.</p>
+    <p class="mt-1">© 2026 HATTY'S NETWORK · Live feeds from Google News, Reuters, AP, BBC, Al Jazeera & others.</p>
+  </footer>
+</main>
+
+<div id="toast" role="status" aria-live="polite">
+  <span id="toast-msg">Saved.</span>
 </div>
 
-<!-- FOOTER -->
-<footer style="border-top:1px solid var(--border);margin-bottom:60px;padding:1.25rem 1rem;text-align:center">
-  <div style="max-width:1440px;margin:0 auto">
-    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:.9rem;margin-bottom:.75rem">
-      <a href="https://www.earnwithhatty.com" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🏠 EarnWithHatty</a>
-      <a href="https://earn-with-hatty-tools.netlify.app/" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🛠️ Hatty's Tools</a>
-      <a href="https://privacy-gadgets-hub.netlify.app/" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🔒 Privacy Gadgets</a>
-      <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener noreferrer" style="color:var(--red);font-size:.78rem;font-weight:700;text-decoration:none">🌌 Hatty's Universe</a>
+<!-- LEGAL MODAL -->
+<div id="legal-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:300;">
+  <div style="max-width:680px;width:100%;max-height:80vh;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.4rem;box-shadow:0 20px 60px rgba(0,0,0,.8);font-size:.8rem;color:var(--ink-muted);line-height:1.7">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.16em;color:var(--red);font-size:.9rem">PRIVACY & TERMS</div>
+      <button id="legal-close" class="ibtn" type="button"><span class="material-symbols-rounded" style="font-size:18px">close</span></button>
     </div>
-    <p style="font-size:.62rem;color:var(--ink-faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em">© 2026 HATTY'S NETWORK · 60+ VERIFIED PUBLIC RSS SOURCES · NOT RESPONSIBLE FOR EXTERNAL CONTENT</p>
-    <div style="display:flex;justify-content:center;gap:1.2rem;margin-top:.6rem">
-      <a onclick="openModal('privacy')" style="color:var(--ink-faint);font-size:.62rem;font-family:'IBM Plex Mono',monospace;cursor:pointer;text-decoration:underline">Privacy Policy</a>
-      <a onclick="openModal('terms')" style="color:var(--ink-faint);font-size:.62rem;font-family:'IBM Plex Mono',monospace;cursor:pointer;text-decoration:underline">Terms of Service</a>
-    </div>
+    <p><em>Last updated: March 2026</em></p>
+    <p style="margin-top:.7rem">Hatty's News is operated by Hatty's Network. We aggregate publicly available RSS news feeds and display live financial data. Available at earnwithhatty.com and associated Netlify properties.</p>
+    <h2 style="margin-top:1rem;font-weight:700;font-size:.86rem;color:var(--ink)">1. Who We Are</h2>
+    <p>We do not directly collect personally identifiable information. Third-party services may collect data automatically:</p>
+    <ul style="margin-left:1rem;margin-top:.4rem">
+      <li><strong>Google AdSense</strong> — displays personalised or non-personalised ads and may use cookies.</li>
+      <li><strong>Google Fonts & Google News</strong> — may log your IP address when content is loaded.</li>
+      <li><strong>CoinGecko</strong> — provides live crypto price data; your browser makes direct requests.</li>
+      <li><strong>Backend RSS services</strong> — our Netlify function fetches RSS feeds; upstream providers may log requests.</li>
+    </ul>
+    <h2 style="margin-top:1rem;font-weight:700;font-size:.86rem;color:var(--ink)">2. Description of Service</h2>
+    <p>Hatty's News is a free news aggregator that fetches and displays publicly available news feeds from third-party publishers alongside live cryptocurrency data. We do not produce original news content.</p>
+    <h2 style="margin-top:1rem;font-weight:700;font-size:.86rem;color:var(--ink)">3. Content & Copyright</h2>
+    <p>All news headlines, summaries, and images are the property of their respective publishers. We display them via public feeds in accordance with standard syndication practices.</p>
+    <h2 style="margin-top:1rem;font-weight:700;font-size:.86rem;color:var(--ink)">4. Financial Disclaimer</h2>
+    <p>Cryptocurrency prices shown are for informational purposes only. Nothing on this site constitutes financial advice.</p>
+    <h2 style="margin-top:1rem;font-weight:700;font-size:.86rem;color:var(--ink)">5. No Warranty</h2>
+    <p>This site is provided “as is” without warranties of any kind. We do not guarantee the accuracy, completeness, or availability of any content.</p>
+    <p style="margin-top:1rem"><strong>Questions?</strong> Reach us via earnwithhatty.com.</p>
   </div>
-</footer>
-
-<!-- CRYPTO TICKER -->
-<div id="tickers">
-  <script defer src="https://www.livecoinwatch.com/static/lcw-widget.js"></script>
-  <div class="livecoinwatch-widget-5" lcw-base="USD" lcw-color-tx="#abb8c3" lcw-marquee-1="coins" lcw-marquee-2="movers" lcw-marquee-items="20"></div>
 </div>
-
-<div id="toast"></div>
 
 <script>
-'use strict';
-
-/* ══════════════════════════════════════════════════════════════
-   COUNTRY-SPECIFIC FEED DATABASE
-   Each country has ONLY its own local/national sources.
-   Google News RSS is used as the primary guaranteed source per country.
-   Format: {n: name, u: url, c: category, primary: bool}
-══════════════════════════════════════════════════════════════ */
-const FEEDS = {
-
-  /* ─── UNITED STATES ─── */
-  us: [
-    // All produce real images via rss2json or allorigins
-    {n:'ABC News',u:'https://abcnews.go.com/abcnews/topstories',c:'general',primary:true},
-    {n:'NPR',u:'https://feeds.npr.org/1001/rss.xml',c:'general'},
-    {n:'NPR World',u:'https://feeds.npr.org/1004/rss.xml',c:'world'},
-    {n:'NPR Technology',u:'https://feeds.npr.org/1019/rss.xml',c:'technology'},
-    {n:'NPR Science',u:'https://feeds.npr.org/1007/rss.xml',c:'science'},
-    {n:'NPR Health',u:'https://feeds.npr.org/1128/rss.xml',c:'health'},
-    {n:'The Hill',u:'https://thehill.com/homenews/feed/',c:'general'},
-    {n:'PBS NewsHour',u:'https://www.pbs.org/newshour/feeds/rss/headlines',c:'general'},
-    {n:'NY Times',u:'https://rss.nytimes.com/services/xml/rss/nf/HomePage.xml',c:'general'},
-    {n:'NY Times World',u:'https://rss.nytimes.com/services/xml/rss/nf/World.xml',c:'world'},
-    {n:'NY Times Tech',u:'https://rss.nytimes.com/services/xml/rss/nf/Technology.xml',c:'technology'},
-    {n:'NY Times Science',u:'https://rss.nytimes.com/services/xml/rss/nf/Science.xml',c:'science'},
-    {n:'NY Times Health',u:'https://rss.nytimes.com/services/xml/rss/nf/Health.xml',c:'health'},
-    {n:'Washington Post',u:'https://feeds.washingtonpost.com/rss/national',c:'general'},
-    {n:'LA Times',u:'https://www.latimes.com/rss2.0.xml',c:'general'},
-    {n:'Politico',u:'https://www.politico.com/rss/politicopicks.xml',c:'world'},
-    {n:'TechCrunch',u:'https://techcrunch.com/feed',c:'technology'},
-    {n:'Ars Technica',u:'http://feeds.arstechnica.com/arstechnica/index/',c:'technology'},
-    {n:'Wired',u:'https://www.wired.com/feed/rss',c:'technology'},
-    {n:'The Verge',u:'https://www.theverge.com/rss/index.xml',c:'technology'},
-    {n:'ESPN',u:'https://www.espn.com/espn/rss/news',c:'sports'},
-    {n:'MarketWatch',u:'https://www.marketwatch.com/rss/topstories',c:'business'},
-    {n:'Bloomberg',u:'https://feeds.bloomberg.com/markets/news.rss',c:'business'},
-    {n:'Science Daily',u:'https://www.sciencedaily.com/rss/all.xml',c:'science'},
-    {n:'Space.com',u:'https://www.space.com/feeds/all',c:'science'},
-    {n:'Variety',u:'https://variety.com/feed/',c:'entertainment'},
-  ],
-
-  /* ─── UNITED KINGDOM ─── */
-  gb: [
-    {n:'BBC News',u:'http://feeds.bbci.co.uk/news/rss.xml',c:'general',primary:true ,primary:true},
-    {n:'BBC UK',u:'http://feeds.bbci.co.uk/news/uk/rss.xml',c:'general'},
-    {n:'BBC Business',u:'http://feeds.bbci.co.uk/news/business/rss.xml',c:'business'},
-    {n:'BBC Tech',u:'http://feeds.bbci.co.uk/news/technology/rss.xml',c:'technology'},
-    {n:'BBC Science',u:'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml',c:'science'},
-    {n:'BBC Health',u:'http://feeds.bbci.co.uk/news/health/rss.xml',c:'health'},
-    {n:'BBC Sport',u:'http://feeds.bbci.co.uk/sport/rss.xml',c:'sports'},
-    {n:'BBC Politics',u:'http://feeds.bbci.co.uk/news/politics/rss.xml',c:'world'},
-    {n:'The Guardian UK',u:'https://www.theguardian.com/uk/rss',c:'general'},
-    {n:'Guardian Politics',u:'https://www.theguardian.com/politics/rss',c:'world'},
-    {n:'Guardian Tech',u:'https://www.theguardian.com/technology/rss',c:'technology'},
-    {n:'Guardian Science',u:'https://www.theguardian.com/science/rss',c:'science'},
-    {n:'Sky News',u:'https://feeds.skynews.com/feeds/rss/home.xml',c:'general'},
-    {n:'Sky News UK',u:'https://feeds.skynews.com/feeds/rss/uk.xml',c:'general'},
-    {n:'The Independent',u:'https://www.independent.co.uk/rss',c:'general'},
-    {n:'The Register',u:'https://www.theregister.com/headlines.atom',c:'technology'},
-    {n:'The Economist',u:'https://www.economist.com/latest/rss.xml',c:'business'},
-  ],
-
-  /* ─── CANADA ─── */
-  ca: [
-    {n:'CBC Top Stories',u:'https://www.cbc.ca/cmlink/rss-topstories',c:'general',primary:true ,primary:true},
-    {n:'CBC Canada',u:'https://www.cbc.ca/cmlink/rss-canada',c:'general'},
-    {n:'CBC World',u:'https://www.cbc.ca/cmlink/rss-world',c:'world'},
-    {n:'CBC Business',u:'https://www.cbc.ca/cmlink/rss-business',c:'business'},
-    {n:'CBC Tech',u:'https://www.cbc.ca/cmlink/rss-technology',c:'technology'},
-    {n:'CBC Sports',u:'https://www.cbc.ca/cmlink/rss-sports',c:'sports'},
-    {n:'CBC Health',u:'https://www.cbc.ca/cmlink/rss-health',c:'health'},
-    {n:'Global News',u:'https://globalnews.ca/feed/',c:'general'},
-    {n:'Globe & Mail',u:'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/canada/',c:'general'},
-    {n:'Toronto Star',u:'https://www.thestar.com/content/thestar/feed.topstories.rss',c:'general'},
-    {n:'National Post',u:'https://nationalpost.com/feed',c:'general'},
-    {n:'CTV News',u:'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009',c:'general'},
-  ],
-
-  /* ─── AUSTRALIA ─── */
-  au: [
-    {n:'ABC Australia',u:'https://www.abc.net.au/news/feed/51120/rss.xml',c:'general',primary:true ,primary:true},
-    {n:'ABC World',u:'https://www.abc.net.au/news/feed/51892/rss.xml',c:'world'},
-    {n:'ABC Science',u:'https://www.abc.net.au/news/feed/52498/rss.xml',c:'science'},
-    {n:'ABC Sport',u:'https://www.abc.net.au/news/feed/52278/rss.xml',c:'sports'},
-    {n:'ABC Business',u:'https://www.abc.net.au/news/feed/52309/rss.xml',c:'business'},
-    {n:'ABC Health',u:'https://www.abc.net.au/news/feed/52456/rss.xml',c:'health'},
-    {n:'SBS News',u:'https://www.sbs.com.au/news/feed',c:'general'},
-    {n:'The Age',u:'https://www.theage.com.au/rss/feed.xml',c:'general'},
-    {n:'Sydney Morning Herald',u:'https://www.smh.com.au/rss/feed.xml',c:'general'},
-    {n:'The Australian',u:'https://www.theaustralian.com.au/feed',c:'general'},
-    {n:'Sky News AU',u:'https://www.skynews.com.au/feed',c:'general'},
-    {n:'Herald Sun',u:'https://www.heraldsun.com.au/feed',c:'general'},
-  ],
-
-  /* ─── NEW ZEALAND ─── */
-  nz: [
-    {n:'RNZ National',u:'https://www.rnz.co.nz/rss/national.xml',c:'general',primary:true ,primary:true},
-    {n:'RNZ World',u:'https://www.rnz.co.nz/rss/world.xml',c:'world'},
-    {n:'RNZ Business',u:'https://www.rnz.co.nz/rss/business.xml',c:'business'},
-    {n:'RNZ Sport',u:'https://www.rnz.co.nz/rss/sport.xml',c:'sports'},
-    {n:'Stuff NZ',u:'https://www.stuff.co.nz/rss',c:'general'},
-    {n:'NZ Herald',u:'https://www.nzherald.co.nz/arc/outboundfeeds/rss/',c:'general'},
-    {n:'1News NZ',u:'https://www.1news.co.nz/rss',c:'general'},
-  ],
-
-  /* ─── GERMANY ─── */
-  de: [
-    {n:'DW Top',u:'https://rss.dw.com/rdf/rss-en-all',c:'general',primary:true ,primary:true},
-    {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
-    {n:'DW Germany',u:'https://rss.dw.com/xml/rss-en-ger',c:'general'},
-    {n:'DW Business',u:'https://rss.dw.com/xml/rss-en-eco',c:'business'},
-    {n:'DW Science',u:'https://rss.dw.com/xml/rss-en-sci',c:'science'},
-    {n:'DW Sport',u:'https://rss.dw.com/xml/rss-en-sport',c:'sports'},
-    {n:'DW Culture',u:'https://rss.dw.com/xml/rss-en-cul',c:'entertainment'},
-    {n:'Local Germany',u:'https://feeds.thelocal.com/rss/de',c:'general'},
-    {n:'EURACTIV',u:'https://www.euractiv.com/feed/',c:'world'},
-  ],
-
-  /* ─── FRANCE ─── */
-  fr: [
-    {n:'France 24 Top',u:'https://www.france24.com/en/top-stories/rss',c:'general',primary:true ,primary:true},
-    {n:'France 24',u:'https://www.france24.com/en/rss',c:'general'},
-    {n:'France 24 France',u:'https://www.france24.com/en/france/rss',c:'general'},
-    {n:'France 24 World',u:'https://www.france24.com/en/world/rss',c:'world'},
-    {n:'France 24 Economy',u:'https://www.france24.com/en/economy/rss',c:'business'},
-    {n:'France 24 Tech',u:'https://www.france24.com/en/tech-science/rss',c:'technology'},
-    {n:'France 24 Sport',u:'https://www.france24.com/en/sport/rss',c:'sports'},
-    {n:'RFI English',u:'https://en.rfi.fr/rss',c:'general'},
-    {n:'The Local France',u:'https://feeds.thelocal.com/rss/fr',c:'general'},
-  ],
-
-  /* ─── JAPAN ─── */
-  jp: [
-    {n:'NHK World',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/all.xml',c:'general',primary:true ,primary:true},
-    {n:'NHK Business',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/business.xml',c:'business'},
-    {n:'NHK Science',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/science.xml',c:'science'},
-    {n:'NHK Sport',u:'https://www3.nhk.or.jp/nhkworld/en/news/feeds/sport.xml',c:'sports'},
-    {n:'Japan Times',u:'https://www.japantimes.co.jp/feed',c:'general'},
-    {n:'Kyodo News',u:'https://english.kyodonews.net/rss/all.xml',c:'general'},
-    {n:'Diplomat Japan',u:'https://thediplomat.com/regions/japan/feed',c:'world'},
-    {n:'Asahi Shimbun',u:'https://www.asahi.com/rss/asahi/newsheadlines.rdf',c:'general'},
-    {n:'Nikkei Asia',u:'https://asia.nikkei.com/rss/feed/nar',c:'business'},
-  ],
-
-  /* ─── INDIA ─── */
-  in: [
-    {n:'The Hindu',u:'https://www.thehindu.com/feeder/default.rss',c:'general',primary:true ,primary:true},
-    {n:'Hindu Business',u:'https://www.thehindu.com/business/feeder/default.rss',c:'business'},
-    {n:'Hindu Science',u:'https://www.thehindu.com/sci-tech/science/feeder/default.rss',c:'science'},
-    {n:'Times of India',u:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms',c:'general'},
-    {n:'TOI India',u:'https://timesofindia.indiatimes.com/rssfeeds/296589292.cms',c:'general'},
-    {n:'Economic Times',u:'https://economictimes.indiatimes.com/rssfeedstopstories.cms',c:'business'},
-    {n:'NDTV',u:'https://feeds.feedburner.com/ndtvnews-top-stories',c:'general'},
-    {n:'NDTV India',u:'https://feeds.feedburner.com/ndtvnews-india-news',c:'general'},
-    {n:'Indian Express',u:'https://indianexpress.com/feed/',c:'general'},
-    {n:'Hindustan Times',u:'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml',c:'general'},
-    {n:'India Today',u:'https://www.indiatoday.in/rss/home',c:'general'},
-    {n:'The Wire',u:'https://thewire.in/feed',c:'general'},
-    {n:'Deccan Herald',u:'https://www.deccanherald.com/rss-feed/india-news/rss',c:'general'},
-  ],
-
-  /* ─── SINGAPORE ─── */
-  sg: [
-    {n:'CNA',u:'https://www.channelnewsasia.com/rssfeeds/8395884',c:'general',primary:true ,primary:true},
-    {n:'CNA Singapore',u:'https://www.channelnewsasia.com/rssfeeds/8395890',c:'general'},
-    {n:'CNA Asia',u:'https://www.channelnewsasia.com/rssfeeds/8395910',c:'world'},
-    {n:'CNA Business',u:'https://www.channelnewsasia.com/rssfeeds/8395952',c:'business'},
-    {n:'CNA Tech',u:'https://www.channelnewsasia.com/rssfeeds/8395968',c:'technology'},
-    {n:'CNA Sport',u:'https://www.channelnewsasia.com/rssfeeds/8395972',c:'sports'},
-    {n:'Straits Times',u:'https://www.straitstimes.com/news/singapore/rss.xml',c:'general'},
-    {n:'TODAY Online',u:'https://www.todayonline.com/rss',c:'general'},
-    {n:'Diplomat SE Asia',u:'https://thediplomat.com/regions/southeast-asia/feed',c:'world'},
-  ],
-
-  /* ─── UAE ─── */
-  ae: [
-    {n:'Gulf News',u:'https://gulfnews.com/rss/news',c:'general',primary:true ,primary:true},
-    {n:'The National UAE',u:'https://www.thenationalnews.com/rss/home.xml',c:'general'},
-    {n:'Khaleej Times',u:'https://www.khaleejtimes.com/rss',c:'general'},
-    {n:'Arabian Business',u:'https://www.arabianbusiness.com/rss',c:'business'},
-    {n:'Emirates 24|7',u:'https://www.emirates247.com/rss',c:'general'},
-    {n:'Gulf Business',u:'https://gulfbusiness.com/feed/',c:'business'},
-  ],
-
-  /* ─── SOUTH AFRICA ─── */
-  za: [
-    {n:'Daily Maverick',u:'https://www.dailymaverick.co.za/feed',c:'general',primary:true ,primary:true},
-    {n:'News24',u:'https://feeds.news24.com/articles/news24/TopStories/rss',c:'general'},
-    {n:'TimesLive',u:'https://www.timeslive.co.za/rss/',c:'general'},
-    {n:'IOL',u:'https://www.iol.co.za/rss',c:'general'},
-    {n:'Business Day',u:'https://www.businesslive.co.za/rss/bd/',c:'business'},
-    {n:'Mail & Guardian',u:'https://mg.co.za/feed/',c:'general'},
-    {n:'eNCA',u:'https://www.enca.com/rss.xml',c:'general'},
-  ],
-
-  /* ─── NIGERIA ─── */
-  ng: [
-    {n:'Punch Nigeria',u:'https://punchng.com/feed',c:'general',primary:true ,primary:true},
-    {n:'Vanguard NG',u:'https://www.vanguardngr.com/feed',c:'general'},
-    {n:'Premium Times',u:'https://www.premiumtimesng.com/feed',c:'general'},
-    {n:'The Guardian NG',u:'https://guardian.ng/feed/',c:'general'},
-    {n:'Channels TV',u:'https://www.channelstv.com/feed/',c:'general'},
-    {n:'This Day',u:'https://www.thisdaylive.com/feed/',c:'general'},
-    {n:'Sahara Reporters',u:'https://saharareporters.com/rss.xml',c:'general'},
-    {n:'Business Day NG',u:'https://businessday.ng/feed/',c:'business'},
-  ],
-
-  /* ─── KENYA ─── */
-  ke: [
-    {n:'Nation Africa',u:'https://nation.africa/kenya/rss.xml',c:'general',primary:true ,primary:true},
-    {n:'The Star Kenya',u:'https://www.the-star.co.ke/feed/',c:'general'},
-    {n:'Daily Nation',u:'https://nation.africa/kenya/news/rss.xml',c:'general'},
-    {n:'Business Daily',u:'https://www.businessdailyafrica.com/rss/news/rss.xml',c:'business'},
-    {n:'Standard Kenya',u:'https://www.standardmedia.co.ke/rss/news.php',c:'general'},
-  ],
-
-  /* ─── ITALY ─── */
-  it: [
-    {n:'ANSA English',u:'https://www.ansa.it/sito/ansait_rss.xml',c:'general',primary:true ,primary:true},
-    {n:'The Local Italy',u:'https://feeds.thelocal.com/rss/it',c:'general'},
-    {n:'Italy 24',u:'https://www.italy24.ilsole24ore.com/rss/en/latest-news.xml',c:'general'},
-  ],
-
-  /* ─── SPAIN ─── */
-  es: [
-    {n:'El País English',u:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada',c:'general',primary:true ,primary:true},
-    {n:'The Local Spain',u:'https://feeds.thelocal.com/rss/es',c:'general'},
-    {n:'EFE News',u:'https://efenoticias.com/feed/',c:'general'},
-  ],
-
-  /* ─── NETHERLANDS ─── */
-  nl: [
-    {n:'DutchNews.nl',u:'https://www.dutchnews.nl/feed',c:'general',primary:true ,primary:true},
-    {n:'The Local NL',u:'https://feeds.thelocal.com/rss/nl',c:'general'},
-    {n:'NL Times',u:'https://nltimes.nl/rss.xml',c:'general'},
-    {n:'Dutch Review',u:'https://dutchreview.com/feed/',c:'general'},
-  ],
-
-  /* ─── SWEDEN ─── */
-  se: [
-    {n:'The Local SE',u:'https://feeds.thelocal.com/rss/se',c:'general',primary:true ,primary:true},
-    {n:'Sweden Herald',u:'https://swedenherald.com/feed/',c:'general'},
-    {n:'Radio Sweden',u:'https://sverigesradio.se/topnyheter/rss.xml',c:'general'},
-  ],
-
-  /* ─── NORWAY ─── */
-  no: [
-    {n:'Norway Today',u:'https://norwaytoday.info/feed',c:'general',primary:true ,primary:true},
-    {n:'The Local NO',u:'https://feeds.thelocal.com/rss/no',c:'general'},
-    {n:'Aftenposten EN',u:'https://www.aftenposten.no/rss/',c:'general'},
-  ],
-
-  /* ─── CHINA ─── */
-  cn: [
-    {n:'SCMP China',u:'https://www.scmp.com/rss/4/feed',c:'general',primary:true},
-    {n:'SCMP HK',u:'https://www.scmp.com/rss/2/feed',c:'general'},
-    {n:'SCMP Business',u:'https://www.scmp.com/rss/92/feed',c:'business'},
-    {n:'SCMP Tech',u:'https://www.scmp.com/rss/36/feed',c:'technology'},
-    {n:'SCMP Asia',u:'https://www.scmp.com/rss/3/feed',c:'world'},
-    {n:'Diplomat China',u:'https://thediplomat.com/regions/east-asia/feed',c:'world'},
-    {n:'Sixth Tone',u:'https://www.sixthtone.com/rss.xml',c:'general'},
-    {n:'Caixin Global',u:'https://www.caixinglobal.com/rss.xml',c:'business'},
-    {n:'Nikkei Asia',u:'https://asia.nikkei.com/rss/feed/nar',c:'business'},
-  ],
-
-  /* ─── RUSSIA ─── */
-  ru: [
-    {n:'Moscow Times',u:'https://www.themoscowtimes.com/rss/news',c:'general',primary:true},
-    {n:'Moscow Times Business',u:'https://www.themoscowtimes.com/rss/business',c:'business'},
-    {n:'The Insider RU',u:'https://theins.ru/en/feed',c:'general'},
-    {n:'Meduza English',u:'https://meduza.io/en/rss/all',c:'general'},
-    {n:'Russia Beyond',u:'https://www.rbth.com/rss/russian_news.xml',c:'general'},
-  ],
-
-  /* ─── BRAZIL ─── */
-  br: [
-    {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general',primary:true ,primary:true},
-    {n:'Brazil Reports',u:'https://brazilreports.com/feed/',c:'general'},
-    {n:'Rio Times',u:'https://riotimesonline.com/feed/',c:'general'},
-    {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
-    {n:'AgênciaBrasil EN',u:'https://agenciabrasil.ebc.com.br/en/rss/news',c:'general'},
-  ],
-
-  /* ─── MEXICO ─── */
-  mx: [
-    {n:'Mexico News Daily',u:'https://mexiconewsdaily.com/feed',c:'general',primary:true ,primary:true},
-    {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
-    {n:'Mexico Business',u:'https://www.mexicobusiness.news/feed/',c:'business'},
-    {n:'El Universal EN',u:'https://www.eluniversal.com.mx/english/rss.xml',c:'general'},
-  ],
-
-  /* ─── ARGENTINA ─── */
-  ar: [
-    {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general',primary:true ,primary:true},
-    {n:'Buenos Aires Herald',u:'https://buenosairesherald.com/feed',c:'general'},
-    {n:'Argentina Reports',u:'https://argentinareports.com/feed/',c:'general'},
-    {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
-  ],
-
-  /* ─── EGYPT ─── */
-  eg: [
-    {n:'Al-Ahram',u:'https://english.ahram.org.eg/RSS/1.aspx',c:'general',primary:true ,primary:true},
-    {n:'Egypt Independent',u:'https://www.egyptindependent.com/feed',c:'general'},
-    {n:'Daily News Egypt',u:'https://dailynewsegypt.com/feed/',c:'general'},
-    {n:'Egypt Today',u:'https://www.egypttoday.com/rss',c:'general'},
-  ],
-
-  /* ─── SOUTH KOREA ─── */
-  kr: [
-    {n:'Korea Herald',u:'http://www.koreaherald.com/rss/00100000.xml',c:'general',primary:true ,primary:true},
-    {n:'Korea Times',u:'https://www.koreatimes.co.kr/www/rss/rss.xml',c:'general'},
-    {n:'Yonhap News',u:'https://en.yna.co.kr/RSS/news.xml',c:'general'},
-    {n:'Diplomat Korea',u:'https://thediplomat.com/regions/south-korea/feed',c:'world'},
-  ],
-
-  /* ─── INDONESIA ─── */
-  id: [
-    {n:'Jakarta Post',u:'https://www.thejakartapost.com/rss',c:'general',primary:true ,primary:true},
-    {n:'Jakarta Globe',u:'https://jakartaglobe.id/feed',c:'general'},
-    {n:'Diplomat SE Asia',u:'https://thediplomat.com/regions/southeast-asia/feed',c:'world'},
-    {n:'BeritaSatu EN',u:'https://www.beritasatu.com/rss/homefeed.rss',c:'general'},
-  ],
-
-  /* ─── PHILIPPINES ─── */
-  ph: [
-    {n:'Philippine Daily Inquirer',u:'https://newsinfo.inquirer.net/feed',c:'general',primary:true ,primary:true},
-    {n:'Manila Times',u:'https://www.manilatimes.net/feed',c:'general'},
-    {n:'Rappler',u:'https://www.rappler.com/rss/',c:'general'},
-    {n:'Philippine Star',u:'https://www.philstar.com/rss/headlines',c:'general'},
-    {n:'ABS-CBN News',u:'https://news.abs-cbn.com/rss/news',c:'general'},
-  ],
-
-  /* ─── PAKISTAN ─── */
-  pk: [
-    {n:'Dawn',u:'https://www.dawn.com/feeds/home',c:'general',primary:true ,primary:true},
-    {n:'The News PK',u:'https://www.thenews.com.pk/rss/1/1',c:'general'},
-    {n:'Geo TV',u:'https://www.geo.tv/rss/10/pakistan',c:'general'},
-    {n:'The Express Tribune',u:'https://tribune.com.pk/feed/home',c:'general'},
-  ],
-
-  /* ─── TURKEY ─── */
-  tr: [
-    {n:'Hurriyet Daily News',u:'https://www.hurriyetdailynews.com/rss',c:'general',primary:true ,primary:true},
-    {n:'Daily Sabah',u:'https://www.dailysabah.com/rss',c:'general'},
-    {n:'TRT World',u:'https://www.trtworld.com/rss',c:'general'},
-    {n:'Anadolu Agency',u:'https://www.aa.com.tr/en/rss/default?cat=economy',c:'business'},
-  ],
-
-  /* ─── ISRAEL ─── */
-  il: [
-    {n:'Haaretz English',u:'https://www.haaretz.com/cmlink/1.4968842',c:'general',primary:true ,primary:true},
-    {n:'Jerusalem Post',u:'https://www.jpost.com/rss/rssfeedsfrontpage.aspx',c:'general'},
-    {n:'Times of Israel',u:'https://www.timesofisrael.com/feed/',c:'general'},
-    {n:'Ynetnews',u:'https://www.ynetnews.com/home/0,7340,L-3,00.xml',c:'general'},
-  ],
-
-  /* ─── IRELAND ─── */
-  ie: [
-    {n:'RTE News',u:'https://www.rte.ie/news/rss/news-headlines.xml',c:'general',primary:true ,primary:true},
-    {n:'Irish Times',u:'https://www.irishtimes.com/rss/',c:'general'},
-    {n:'Irish Examiner',u:'https://www.irishexaminer.com/feed/',c:'general'},
-    {n:'The Journal',u:'https://www.thejournal.ie/feed/',c:'general'},
-  ],
-
-  /* ─── POLAND ─── */
-  pl: [
-    {n:'Notes from Poland',u:'https://notesfrompoland.com/feed/',c:'general',primary:true ,primary:true},
-    {n:'Warsaw Voice',u:'https://www.warsawvoice.pl/rss',c:'general'},
-    {n:'Poland In',u:'https://polandin.com/feed',c:'general'},
-  ],
-
-  /* ─── UKRAINE ─── */
-  ua: [
-    {n:'Kyiv Independent',u:'https://kyivindependent.com/rss/',c:'general',primary:true ,primary:true},
-    {n:'Ukrinform',u:'https://www.ukrinform.net/rss/block-lastnews',c:'general'},
-    {n:'Kyiv Post',u:'https://www.kyivpost.com/rss',c:'general'},
-    {n:'Ukraine Business News',u:'https://ubn.news/feed/',c:'business'},
-  ],
-
-  /* ─── GHANA ─── */
-  gh: [
-    {n:'GhanaWeb',u:'https://www.ghanaweb.com/GhanaHomePage/NewsArchive/rss.php',c:'general',primary:true ,primary:true},
-    {n:'Ghana Broadcasting',u:'https://www.gbcghana.com/feed',c:'general'},
-    {n:'Citi Newsroom',u:'https://citinewsroom.com/feed/',c:'general'},
-  ],
-
-  /* ─── ETHIOPIA ─── */
-  et: [
-    {n:'Addis Standard',u:'https://addisstandard.com/feed/',c:'general',primary:true ,primary:true},
-    {n:'Ethiopia Insight',u:'https://www.ethiopia-insight.com/feed/',c:'general'},
-    {n:'Fana Broadcasting',u:'https://www.fanabc.com/english/feed/',c:'general'},
-  ],
-
-  /* ─── BANGLADESH ─── */
-  bd: [
-    {n:'Daily Star BD',u:'https://www.thedailystar.net/frontpage/rss.xml',c:'general',primary:true ,primary:true},
-    {n:'Dhaka Tribune',u:'https://www.dhakatribune.com/feed',c:'general'},
-    {n:'BD News 24',u:'https://bdnews24.com/?wm=rss&cat=1',c:'general'},
-    {n:'New Age BD',u:'https://www.newagebd.net/rss.xml',c:'general'},
-  ],
-
-  /* ─── THAILAND ─── */
-  th: [
-    {n:'Bangkok Post',u:'https://www.bangkokpost.com/rss/data/topstories.xml',c:'general',primary:true ,primary:true},
-    {n:'Thai PBS World',u:'https://www.thaipbsworld.com/feed/',c:'general'},
-    {n:'The Nation TH',u:'https://www.nationthailand.com/rss',c:'general'},
-    {n:'Khaosod English',u:'https://www.khaosodenglish.com/feed/',c:'general'},
-  ],
-
-  /* ─── MALAYSIA ─── */
-  my: [
-    {n:'Free Malaysia Today',u:'https://www.freemalaysiatoday.com/feed/',c:'general',primary:true ,primary:true},
-    {n:'Malay Mail',u:'https://www.malaymail.com/feed',c:'general'},
-    {n:'New Straits Times',u:'https://www.nst.com.my/rss/news',c:'general'},
-    {n:'The Edge MY',u:'https://www.theedgemarkets.com/rss.xml',c:'business'},
-  ],
-
-  /* ─── HONG KONG ─── */
-  hk: [
-    {n:'SCMP HK',u:'https://www.scmp.com/rss/2/feed',c:'general',primary:true},
-    {n:'SCMP China',u:'https://www.scmp.com/rss/4/feed',c:'general'},
-    {n:'HK Free Press',u:'https://hongkongfp.com/feed/',c:'general'},
-    {n:'HK01 English',u:'https://www.hk01.com/rss/hot',c:'general'},
-  ],
-
-  /* ─── PORTUGAL ─── */
-  pt: [
-    {n:'Portugal Resident',u:'https://www.theportugalnews.com/en/feed',c:'general',primary:true ,primary:true},
-    {n:'The Portugal News',u:'https://www.theportugalnews.com/en/rss',c:'general'},
-    {n:'Lusa EN',u:'https://feeds.lusa.pt/EN/NEWS',c:'general'},
-  ],
-
-  /* ─── SWITZERLAND ─── */
-  ch: [
-    {n:'Swissinfo',u:'https://www.swissinfo.ch/eng/rss/news',c:'general',primary:true ,primary:true},
-    {n:'The Local CH',u:'https://feeds.thelocal.com/rss/ch',c:'general'},
-  ],
-
-  /* ─── AUSTRIA ─── */
-  at: [
-    {n:'The Local AT',u:'https://feeds.thelocal.com/rss/at',c:'general',primary:true ,primary:true},
-    {n:'Vienna Online EN',u:'https://www.vienna.at/rss/international',c:'general'},
-  ],
-
-  /* ─── DENMARK ─── */
-  dk: [
-    {n:'The Local DK',u:'https://feeds.thelocal.com/rss/dk',c:'general',primary:true ,primary:true},
-    {n:'Copenhagen Post',u:'https://cphpost.dk/?feed=rss2',c:'general'},
-  ],
-
-  /* ─── FINLAND ─── */
-  fi: [
-    {n:'YLE News',u:'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_NEWS&concepts=18-34953',c:'general',primary:true ,primary:true},
-    {n:'Yle English',u:'https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_NEWS',c:'general'},
-  ],
-
-  /* ─── BELGIUM ─── */
-  be: [
-    {n:'The Brussels Times',u:'https://www.brusselstimes.com/feed',c:'general',primary:true ,primary:true},
-    {n:'Politico EU',u:'https://www.politico.eu/feed/',c:'world'},
-  ],
-
-  /* ─── GREECE ─── */
-  gr: [
-    {n:'Ekathimerini',u:'https://www.ekathimerini.com/rss/?lang=en',c:'general',primary:true ,primary:true},
-    {n:'Greece Is',u:'https://www.greece-is.com/feed/',c:'general'},
-    {n:'Keep Talking Greece',u:'https://www.keeptalkinggreece.com/feed/',c:'general'},
-  ],
-
-  /* ─── IRAN ─── */
-  ir: [
-    {n:'Tehran Times',u:'https://www.tehrantimes.com/rss',c:'general',primary:true ,primary:true},
-    {n:'Iran International',u:'https://www.iranintl.com/en/rss',c:'general'},
-    {n:'Iran Daily',u:'http://www.iran-daily.com/rss/',c:'general'},
-  ],
-
-  /* ─── SAUDI ARABIA ─── */
-  sa: [
-    {n:'Arab News',u:'https://www.arabnews.com/rss.xml',c:'general',primary:true ,primary:true},
-    {n:'Saudi Gazette',u:'https://saudigazette.com.sa/rss',c:'general'},
-    {n:'Al Arabiya EN',u:'https://english.alarabiya.net/rss',c:'general'},
-  ],
-
-  /* ─── MYANMAR ─── */
-  mm: [
-    {n:'Irrawaddy',u:'https://www.irrawaddy.com/feed',c:'general',primary:true ,primary:true},
-    {n:'Myanmar Now',u:'https://myanmar-now.org/en/feed/',c:'general'},
-    {n:'Mizzima English',u:'https://mizzima.com/content/mizzima-news/en/feed',c:'general'},
-  ],
-
-  /* ─── COLOMBIA ─── */
-  co: [
-    {n:'Colombia Reports',u:'https://colombiareports.com/feed/',c:'general',primary:true ,primary:true},
-    {n:'Bogota Post',u:'https://thebogotapost.com/feed/',c:'general'},
-    {n:'Latin Dispatch',u:'https://latindispatch.com/feed',c:'general'},
-  ],
-
-  /* ─── GLOBAL WORLD ─── */
-  _world: [
-    {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'},
-    {n:'Reuters World',u:'https://feeds.reuters.com/reuters/worldNews',c:'world'},
-    {n:'BBC World',u:'http://feeds.bbci.co.uk/news/world/rss.xml',c:'world'},
-    {n:'AP International',u:'https://feeds.apnews.com/rss/apf-intlnews',c:'world'},
-    {n:'VOA News',u:'https://www.voanews.com/api/zmorq$epiqy',c:'world'},
-    {n:'Global Voices',u:'https://globalvoices.org/feed',c:'world'},
-    {n:'RFE/RL',u:'https://www.rferl.org/api/zyr$piv',c:'world'},
-    {n:'France 24 Top',u:'https://www.france24.com/en/top-stories/rss',c:'general'},
-    {n:'DW World',u:'https://rss.dw.com/xml/rss-en-world',c:'world'},
-  ]
-};
-
-/* ── COUNTRY METADATA ── */
-const COV = {
-  us:'strong',gb:'strong',ca:'strong',au:'strong',nz:'strong',de:'strong',fr:'strong',jp:'strong',
-  in:'strong',sg:'strong',kr:'strong',ph:'strong',pk:'strong',ua:'strong',ie:'strong',
-  ae:'good',za:'good',ng:'good',ke:'good',it:'good',es:'good',nl:'good',se:'good',no:'good',
-  il:'good',tr:'good',bd:'good',th:'good',my:'good',hk:'good',id:'good',pl:'good',br:'good',
-  pt:'good',ch:'good',at:'good',dk:'good',fi:'good',be:'good',gr:'good',ir:'good',sa:'good',co:'good',
-  cn:'limited',ru:'limited',mx:'limited',ar:'limited',eg:'limited',mm:'limited',gh:'limited',et:'limited',
-};
-
+// COUNTRY LIST FOR UI
 const COUNTRIES = [
-  // Group 1: Strong English-language coverage
   {code:'us',name:'USA 🇺🇸',q:'strong'},{code:'gb',name:'UK 🇬🇧',q:'strong'},
   {code:'ca',name:'Canada 🇨🇦',q:'strong'},{code:'au',name:'Australia 🇦🇺',q:'strong'},
   {code:'nz',name:'New Zealand 🇳🇿',q:'strong'},{code:'ie',name:'Ireland 🇮🇪',q:'strong'},
   {code:'in',name:'India 🇮🇳',q:'strong'},{code:'sg',name:'Singapore 🇸🇬',q:'strong'},
   {code:'ph',name:'Philippines 🇵🇭',q:'strong'},{code:'pk',name:'Pakistan 🇵🇰',q:'strong'},
   {code:'ua',name:'Ukraine 🇺🇦',q:'strong'},{code:'kr',name:'South Korea 🇰🇷',q:'strong'},
-  // Group 2: Good coverage
   {code:'de',name:'Germany 🇩🇪',q:'good'},{code:'fr',name:'France 🇫🇷',q:'good'},
   {code:'jp',name:'Japan 🇯🇵',q:'good'},{code:'ae',name:'UAE 🇦🇪',q:'good'},
   {code:'za',name:'S. Africa 🇿🇦',q:'good'},{code:'ng',name:'Nigeria 🇳🇬',q:'good'},
   {code:'ke',name:'Kenya 🇰🇪',q:'good'},{code:'il',name:'Israel 🇮🇱',q:'good'},
   {code:'tr',name:'Turkey 🇹🇷',q:'good'},{code:'bd',name:'Bangladesh 🇧🇩',q:'good'},
   {code:'th',name:'Thailand 🇹🇭',q:'good'},{code:'my',name:'Malaysia 🇲🇾',q:'good'},
-  {code:'hk',name:'Hong Kong 🇭🇰',q:'good'},{code:'id',name:'Indonesia 🇮🇩',q:'good'},
-  {code:'pl',name:'Poland 🇵🇱',q:'good'},{code:'br',name:'Brazil 🇧🇷',q:'good'},
-  {code:'it',name:'Italy 🇮🇹',q:'good'},{code:'es',name:'Spain 🇪🇸',q:'good'},
-  {code:'nl',name:'Netherlands 🇳🇱',q:'good'},{code:'se',name:'Sweden 🇸🇪',q:'good'},
-  {code:'no',name:'Norway 🇳🇴',q:'good'},{code:'pt',name:'Portugal 🇵🇹',q:'good'},
-  {code:'ch',name:'Switzerland 🇨🇭',q:'good'},{code:'at',name:'Austria 🇦🇹',q:'good'},
-  {code:'dk',name:'Denmark 🇩🇰',q:'good'},{code:'fi',name:'Finland 🇫🇮',q:'good'},
-  {code:'be',name:'Belgium 🇧🇪',q:'good'},{code:'gr',name:'Greece 🇬🇷',q:'good'},
+  {code:'id',name:'Indonesia 🇮🇩',q:'good'},{code:'pl',name:'Poland 🇵🇱',q:'good'},
+  {code:'br',name:'Brazil 🇧🇷',q:'good'},{code:'it',name:'Italy 🇮🇹',q:'good'},
+  {code:'es',name:'Spain 🇪🇸',q:'good'},{code:'nl',name:'Netherlands 🇳🇱',q:'good'},
+  {code:'se',name:'Sweden 🇸🇪',q:'good'},{code:'no',name:'Norway 🇳🇴',q:'good'},
   {code:'sa',name:'Saudi Arabia 🇸🇦',q:'good'},{code:'co',name:'Colombia 🇨🇴',q:'good'},
-  // Group 3: Limited (Google News primary)
   {code:'cn',name:'China 🇨🇳',q:'limited'},{code:'ru',name:'Russia 🇷🇺',q:'limited'},
   {code:'mx',name:'Mexico 🇲🇽',q:'limited'},{code:'ar',name:'Argentina 🇦🇷',q:'limited'},
   {code:'eg',name:'Egypt 🇪🇬',q:'limited'},{code:'ir',name:'Iran 🇮🇷',q:'limited'},
   {code:'mm',name:'Myanmar 🇲🇲',q:'limited'},{code:'gh',name:'Ghana 🇬🇭',q:'limited'},
-  {code:'et',name:'Ethiopia 🇪🇹',q:'limited'},
+  {code:'et',name:'Ethiopia 🇪🇹',q:'limited'}
 ];
 
 const COVNOTE = {
-  cn:'Showing SCMP, Caixin, Sixth Tone & Nikkei Asia. Mainland state media blocked by most CORS proxies.',
-  ru:'Showing Moscow Times, Meduza & Russia Beyond — independent sources only.',
+  cn:'Showing independent and business-focused sources; some official sources blocked.',
+  ru:'Showing independent sources only (Moscow Times, Meduza, etc.).',
   ir:'Limited English-language independent sources available for Iran.',
-  mm:'Coverage from Irrawaddy and Myanmar Now — independent journalism sources.',
+  mm:'Coverage from independent journalism sources only.'
 };
 
 let S = {
   country: localStorage.getItem('hn_country') || 'us',
   theme: localStorage.getItem('hn_theme') || 'dark',
-  query: '', category: 'general', source: 'all',
-  articles: [], filtered: [], loading: false, feedResults: [],
+  query: '',
+  category: 'general',
+  source: 'all',
+  articles: [],
+  filtered: [],
+  loading: false,
+  feedResults: [],
   abortCtrl: null
 };
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-/* ── FETCH HELPERS ── */
 function sh(h){const d=document.createElement('div');d.innerHTML=h;return(d.textContent||'').replace(/\s+/g,' ').trim();}
-function xi(h){const m=(h||'').match(/<img[^>]+src=["']([^"']+)["']/i);return m?m[1]:'';}
 
-/* ── 5-MIN CACHE ── */
 const CACHE_TTL = 5 * 60 * 1000;
-function cKey(c){ return 'hn_c_' + c; }
+function cKey(c){ return 'hn_c_' + c + '_' + (S.category||'general'); }
 function rCache(c){
   try {
     const raw = localStorage.getItem(cKey(c));
@@ -988,161 +328,162 @@ function wCache(c, data){
   try { localStorage.setItem(cKey(c), JSON.stringify({ts:Date.now(), data})); } catch(_) {}
 }
 
-/* ── SINGLE PROXY: rss2json handles CORS + image extraction ── */
-/* ── Parse raw RSS/Atom XML ── */
-function parseXML(xml, feedName, feedCat) {
-  try {
-    if (!xml || xml.trim().length < 100) return [];
-    const t = xml.trim();
-    if (t.startsWith('<html') || t.startsWith('<!DOCTYPE') || t.startsWith('{')) return [];
-    const doc = new DOMParser().parseFromString(xml, 'application/xml');
-    if (doc.querySelector('parsererror')) return [];
-    const items = Array.from(doc.querySelectorAll('item, entry')).slice(0, 20);
-    if (!items.length) return [];
-    const isUrl = u => u && /^https?:\/\//.test(u);
-    return items.map(el => {
-      const g = t => el.getElementsByTagName(t)[0]?.textContent?.trim() || '';
-      // Image: media:content, media:thumbnail, enclosure, then img in description
-      let img = '';
-      const mc = el.getElementsByTagName('media:content')[0];
-      if (mc && isUrl(mc.getAttribute('url'))) img = mc.getAttribute('url');
-      if (!img) {
-        const mt = el.getElementsByTagName('media:thumbnail')[0];
-        if (mt && isUrl(mt.getAttribute('url'))) img = mt.getAttribute('url');
-      }
-      if (!img) {
-        // namespace wildcard
-        const wild = el.getElementsByTagNameNS('*','content');
-        for (let i=0;i<wild.length;i++){const u=wild[i].getAttribute('url');if(isUrl(u)){img=u;break;}}
-      }
-      if (!img) {
-        const enc = el.getElementsByTagName('enclosure')[0];
-        if (enc) { const u=enc.getAttribute('url'),tp=(enc.getAttribute('type')||'').toLowerCase(); if(isUrl(u)&&(tp.startsWith('image/')||/\.(jpg|jpeg|png|webp|gif)/i.test(u))) img=u; }
-      }
-      if (!img) {
-        const descHtml = g('description') || g('summary') || '';
-        // Try img tag in description
-        const imgMatch = descHtml.match(/<img[^>]+src=["']([^"'>]+)["']/i);
-        if (imgMatch && /^https?:\/\//.test(imgMatch[1])) img = imgMatch[1];
-      }
-      // Also check content:encoded for WordPress-style feeds
-      if (!img) {
-        const ceHtml = g('content:encoded') || g('encoded') || '';
-        const ceMatch = ceHtml.match(/<img[^>]+src=["']([^"'>]+)["']/i);
-        if (ceMatch && /^https?:\/\//.test(ceMatch[1]) && !/\.gif$/i.test(ceMatch[1])) img = ceMatch[1];
-      }
-      const title = g('title').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/\s+/g,' ').trim();
-      const link = g('link') || el.querySelector('link[href]')?.getAttribute('href') || '#';
-      const date = g('pubDate')||g('published')||g('updated')||'';
-      return {
-        title, img,
-        desc: sh(g('description')||g('summary')||'').slice(0,240),
-        url: link, date, src: feedName, cat: feedCat||'general',
-      };
-    }).filter(a => a.title.length > 4 && a.url !== '#');
-  } catch(e) { return []; }
+function toast(msg){
+  const t = $('toast'); const m = $('toast-msg');
+  m.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1800);
 }
 
-async function fetchFeed(feed, signal) {
-  const enc = encodeURIComponent(feed.u);
-  const isUrl = u => u && /^https?:\/\//.test(u);
+function applyTheme(){
+  const html = document.documentElement;
+  if (S.theme === 'light') {
+    html.classList.remove('dark'); html.classList.add('light');
+    $('themeIcon').textContent = 'light_mode';
+  } else {
+    html.classList.add('dark'); html.classList.remove('light');
+    $('themeIcon').textContent = 'dark_mode';
+  }
+}
+function toggleTheme(){
+  S.theme = S.theme === 'light' ? 'dark' : 'light';
+  localStorage.setItem('hn_theme', S.theme);
+  applyTheme();
+  toast('Theme: '+S.theme.toUpperCase());
+}
 
-  // allorigins: reliable, no rate limit, returns raw XML
-  const tryAllorigins = async () => {
-    const r = await fetch('https://api.allorigins.win/raw?url=' + enc, {signal});
-    if (!r.ok) throw new Error('ao:'+r.status);
-    const items = parseXML(await r.text(), feed.n, feed.c);
-    if (!items.length) throw new Error('ao:empty');
-    return {items, ok:true};
-  };
+function buildStatusFromFunction(data) {
+  const fsb = $('fsb');
+  if (!fsb) return;
+  fsb.innerHTML = '';
+  const b = document.createElement('span');
+  b.className = 'fb ' + (data.count > 0 ? 'fok' : 'ffail');
+  b.textContent = `Backend: ${data.count || 0} articles`;
+  fsb.appendChild(b);
+}
 
-  // rss2json: gives better thumbnails when not rate-limited
-  const tryR2j = async () => {
-    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url='+enc, {signal});
-    if (!r.ok) throw new Error('r2j:'+r.status);
-    const d = await r.json();
-    if (d.status !== 'ok' || !d.items?.length) throw new Error('r2j:'+d.message);
-    return {
-      items: d.items.map(i => ({
-        title: (i.title||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim(),
-        desc: sh(i.description||'').slice(0,240),
-        url: i.link||'#',
-        img: isUrl(i.thumbnail)?i.thumbnail : isUrl(i.enclosure?.link)?i.enclosure.link : xi(i.content||'')||xi(i.description||'')||'',
-        date: i.pubDate||'', src: feed.n, cat: feed.c||'general',
-      })).filter(a => a.title.length > 4 && a.url !== '#'),
-      ok: true,
-    };
-  };
+function buildSrcBar(){ /* no-op now, backend handles sources */ }
+function buildStatus(){ /* kept for compatibility; backend status replaces */ }
 
-  // corsproxy fallback
-  const tryCorsproxy = async () => {
-    const r = await fetch('https://corsproxy.io/?'+enc, {signal});
-    if (!r.ok) throw new Error('cp:'+r.status);
-    const text = await r.text();
-    if (!text.trim().startsWith('<')) throw new Error('cp:not xml');
-    const items = parseXML(text, feed.n, feed.c);
-    if (!items.length) throw new Error('cp:empty');
-    return {items, ok:true};
-  };
-
-  try {
-    // Race allorigins + rss2json simultaneously — fastest working one wins
-    return await Promise.any([tryAllorigins(), tryR2j(), tryCorsproxy()]);
-  } catch(e) {
-    if (e.name === 'AbortError') throw e;
-    return {items:[], ok:false};
+function updateCovNote(){
+  const box = $('covn');
+  const note = COVNOTE[S.country];
+  if (note) {
+    box.textContent = note;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
   }
 }
 
-
-async function fetchFeed(feed, signal) {
-  // Try rss2json first (JSON, has thumbnails)
-  const r2j = async () => {
-    const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.u);
-    const res = await fetch(url, {signal});
-    if (!res.ok) throw new Error('r2j:' + res.status);
-    const d = await res.json();
-    if (d.status !== 'ok' || !Array.isArray(d.items) || !d.items.length) throw new Error('r2j:empty');
-    return d.items.map(i => ({
-      title: (i.title||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim(),
-      desc: sh(i.description||'').slice(0,240),
-      url: i.link || '#',
-      img: (i.thumbnail && /^https?:\/\//.test(i.thumbnail)) ? i.thumbnail
-         : (i.enclosure?.link && /^https?:\/\//.test(i.enclosure.link)) ? i.enclosure.link
-         : xi(i.content||'') || xi(i.description||'') || '',
-      date: i.pubDate || '',
-      src: feed.n, cat: feed.c || 'general',
-    })).filter(a => a.title.length > 4 && a.url !== '#');
-  };
-
-  // Fallback: corsproxy raw XML
-  const raw = async () => {
-    const url = 'https://corsproxy.io/?' + encodeURIComponent(feed.u);
-    const res = await fetch(url, {signal});
-    if (!res.ok) throw new Error('raw:' + res.status);
-    return parseXML(await res.text(), feed.n, feed.c);
-  };
-
-  // Fallback 2: allorigins raw XML
-  const ao = async () => {
-    const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(feed.u);
-    const res = await fetch(url, {signal});
-    if (!res.ok) throw new Error('ao:' + res.status);
-    return parseXML(await res.text(), feed.n, feed.c);
-  };
-
-  try {
-    // Race all three — fastest working one wins
-    const items = await Promise.any([r2j(), raw(), ao()]);
-    if (!items || !items.length) return {items:[], ok:false};
-    return {items, ok:true};
-  } catch(e) {
-    if (e.name === 'AbortError') throw e;
-    return {items:[], ok:false};
-  }
+function relTime(dateStr){
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  const diff = Date.now() - d.getTime();
+  const mins = Math.round(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return mins+' min ago';
+  const hrs = Math.round(mins/60);
+  if (hrs < 24) return hrs+' hr'+(hrs>1?'s':'')+' ago';
+  const days = Math.round(hrs/24);
+  return days+' day'+(days>1?'s':'')+' ago';
 }
 
-/* ── LOAD NEWS ── */
+function renderCards(){
+  const grid = $('grid');
+  grid.innerHTML = '';
+  const list = S.filtered.length ? S.filtered : S.articles;
+  if (!list.length) {
+    $('nores').style.display = 'block';
+    return;
+  }
+  $('nores').style.display = 'none';
+  list.forEach(a => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    const img = document.createElement('img');
+    img.className = 'ci';
+    img.alt = a.title;
+    img.loading = 'lazy';
+    img.src = a.img || 'https://images.pexels.com/photos/2619496/pexels-photo-2619496.jpeg?auto=compress&cs=tinysrgb&w=800';
+    card.appendChild(img);
+    const body = document.createElement('div');
+    body.className = 'cb';
+    const src = document.createElement('div');
+    src.className = 'cs';
+    src.textContent = a.src || 'Source';
+    body.appendChild(src);
+    const title = document.createElement('div');
+    title.className = 'ct';
+    const link = document.createElement('a');
+    link.href = a.url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = a.title;
+    title.appendChild(link);
+    body.appendChild(title);
+    const desc = document.createElement('div');
+    desc.className = 'cd';
+    desc.textContent = a.desc || '';
+    body.appendChild(desc);
+    const t = document.createElement('div');
+    t.className = 'card-time';
+    const dot = document.createElement('div');
+    dot.className = 'ldot';
+    const rel = document.createElement('span');
+    rel.className = 'card-time-rel';
+    rel.textContent = relTime(a.date) || 'Updated';
+    const sep = document.createElement('span');
+    sep.className = 'card-time-sep';
+    sep.textContent = '•';
+    const abs = document.createElement('span');
+    abs.className = 'card-time-abs';
+    abs.textContent = a.date ? new Date(a.date).toLocaleString() : '';
+    t.append(dot, rel, sep, abs);
+    body.appendChild(t);
+    const foot = document.createElement('div');
+    foot.className = 'cf';
+    const btn = document.createElement('a');
+    btn.className = 'rbtn';
+    btn.href = a.url;
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+    btn.textContent = 'READ FULL STORY →';
+    foot.appendChild(btn);
+    body.appendChild(foot);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+}
+
+function applyFilters(){
+  const q = (S.query || '').toLowerCase();
+  const cat = S.category || 'general';
+  let list = [...S.articles];
+  if (cat && cat !== 'general') {
+    list = list.filter(a => (a.cat || '').toLowerCase() === cat || a.title.toLowerCase().includes(cat));
+  }
+  if (q) {
+    list = list.filter(a =>
+      (a.title||'').toLowerCase().includes(q) ||
+      (a.desc||'').toLowerCase().includes(q) ||
+      (a.src||'').toLowerCase().includes(q)
+    );
+  }
+  S.filtered = list;
+}
+
+function updateMeta(){
+  const c = COUNTRIES.find(x => x.code === S.country);
+  document.title = (c ? c.name.split(' ')[0]+' ' : '') + 'News — Hatty\'s News';
+}
+
+function showSpin(on){ $('spin').style.display = on ? 'flex' : 'none'; }
+
+function updateBreaking(arts){
+  // No ticker in this version, placeholder for future
+}
+
 let loadSeq = 0;
 
 async function loadNews() {
@@ -1158,7 +499,7 @@ async function loadNews() {
   S.feedResults = [];
   $('grid').innerHTML = '';
   $('nores').style.display = 'none';
-  $('srcbar').innerHTML = '';
+  $('srcbar') && ($('srcbar').innerHTML = '');
   $('fsb').innerHTML = '';
   $('covn').style.display = 'none';
   showSpin(true);
@@ -1169,406 +510,165 @@ async function loadNews() {
     S.articles = cached;
     applyFilters(); renderCards(); updateMeta(); updateBreaking(S.articles);
     showSpin(false);
+    buildStatusFromFunction({count: cached.length});
   }
 
-  const countryFeeds = FEEDS[S.country] || FEEDS.us;
-  const selected = [
-    ...countryFeeds.filter(f => f.primary),
-    ...countryFeeds.filter(f => !f.primary)
-  ].slice(0, 10);
+  updateCovNote();
 
-  const seen = new Set();
-  const fresh = [];
-
-  function addArticles(items) {
-    let n = 0;
-    items.forEach(art => {
-      const key = art.title.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,50);
-      if (!key || seen.has(key)) return;
-      seen.add(key);
-      fresh.push(art);
-      n++;
-    });
-    return n;
-  }
-
-  function flush() {
+  try {
+    const res = await fetch(
+      `/.netlify/functions/news?country=${encodeURIComponent(S.country)}&category=${encodeURIComponent(S.category || 'general')}`,
+      { signal }
+    );
+    if (!res.ok) throw new Error('Function failed');
+    const data = await res.json();
     if (mySeq !== loadSeq) return;
-    fresh.sort((a,b) => new Date(b.date) - new Date(a.date));
-    S.articles = [...fresh];
-    applyFilters(); renderCards(); updateMeta();
-    updateBreaking(S.articles); buildStatus(); buildSrcBar();
+
+    const arts = Array.isArray(data.articles) ? data.articles : [];
+    if (!arts.length) {
+      S.articles = [];
+      S.filtered = [];
+      $('grid').innerHTML = '';
+      $('nores').style.display = 'block';
+      showSpin(false);
+      buildStatusFromFunction({count:0});
+      return;
+    }
+
+    S.articles = arts;
+    wCache(S.country, arts);
+    applyFilters();
+    renderCards();
+    updateMeta();
+    updateBreaking(S.articles);
+    buildStatusFromFunction(data);
     showSpin(false);
-  }
-
-  const promises = selected.map(feed =>
-    fetchFeed(feed, signal)
-      .then(result => {
-        if (mySeq !== loadSeq) return;
-        S.feedResults.push({name: feed.n, ok: result.ok});
-        if (result.ok && addArticles(result.items) > 0) flush();
-      })
-      .catch(e => { if (e.name !== 'AbortError') S.feedResults.push({name: feed.n, ok: false}); })
-  );
-
-  await Promise.allSettled(promises);
-  if (mySeq !== loadSeq) { S.loading = false; return; }
-
-  flush();
-  buildTrending(S.articles);
-  S.loading = false;
-
-  if (fresh.length) {
-    wCache(S.country, fresh);
-  } else if (!cached || !cached.length) {
+  } catch (e) {
+    if (mySeq !== loadSeq) return;
+    S.articles = [];
+    S.filtered = [];
+    $('grid').innerHTML = '';
     $('nores').style.display = 'block';
+    showSpin(false);
+    buildStatusFromFunction({count:0});
   }
 }
 
-function updateBreaking(articles) {
-  if (!articles.length) { $('breaking-bar').style.display = 'none'; return; }
-  $('breaking-inner').textContent = articles.slice(0,5).map(a=>a.title).join('  ·  ');
-  $('breaking-bar').style.display = 'flex';
-}
-
-function buildStatus() {
-  const ok = S.feedResults.filter(f=>f.ok);
-  const fail = S.feedResults.filter(f=>!f.ok);
-  let h = '<span style="font-family:&quot;IBM Plex Mono&quot;,monospace;font-size:.58rem;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase;margin-right:.2rem">SOURCES:</span>';
-  ok.forEach(f=>{h+='<span class="fb fok">✓ '+esc(f.name)+'</span>';});
-  fail.forEach(f=>{h+='<span class="fb ffail">✗ '+esc(f.name)+'</span>';});
-  $('fsb').innerHTML = h;
-}
-
-function buildSrcBar() {
-  const bar = $('srcbar');
-  const srcs = [...new Set(S.articles.map(a=>a.src).filter(Boolean))];
-  if (srcs.length < 2) { bar.innerHTML=''; return; }
-  let h = '<button class="fp on" data-src="all" style="font-size:.62rem;min-height:26px;padding:.2rem .6rem">ALL</button>';
-  srcs.slice(0,12).forEach(s=>{
-    h += '<button class="fp" data-src="'+esc(s)+'" style="font-size:.62rem;min-height:26px;padding:.2rem .6rem">'+esc(s)+'</button>';
+function switchCountry(code) {
+  if (!COUNTRIES.find(c => c.code === code)) return;
+  S.country = code;
+  localStorage.setItem('hn_country', code);
+  $('csel').value = code;
+  document.querySelectorAll('.cc').forEach(b => {
+    b.classList.toggle('on', b.getAttribute('data-code') === code);
   });
-  bar.innerHTML = h;
-  bar.querySelectorAll('[data-src]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      bar.querySelectorAll('[data-src]').forEach(b=>b.classList.remove('on'));
-      btn.classList.add('on'); S.source=btn.dataset.src;
-      applyFilters(); renderCards(); updateMeta();
-    });
+  document.querySelectorAll('#mobile-country-bar .mcbtn').forEach(b => {
+    b.classList.toggle('on', b.getAttribute('data-code') === code);
   });
+  loadNews();
 }
 
-function buildTrending(articles) {
-  const bar = $('trending-bar');
-  if (!bar || !articles.length) return;
-  const stop = new Set('the a an in on at to for of and or but is are was were has have had will be been its it s that this with from by as not after over than says amid new'.split(' '));
-  const freq = {};
-  articles.forEach(art=>{
-    (art.title||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/)
-      .filter(w=>w.length>3&&!stop.has(w))
-      .forEach(w=>{freq[w]=(freq[w]||0)+1;});
-  });
-  const top = Object.entries(freq).filter(([,v])=>v>=2).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([w])=>w);
-  if (!top.length) { bar.style.display='none'; return; }
-  bar.querySelectorAll('.trend-chip').forEach(c=>c.remove());
-  top.forEach(word=>{
-    const chip=document.createElement('button');
-    chip.className='trend-chip';
-    chip.textContent=word.charAt(0).toUpperCase()+word.slice(1);
-    chip.onclick=()=>{
-      bar.querySelectorAll('.trend-chip').forEach(c=>{ c.style.color=''; c.style.borderColor=''; });
-      chip.style.color='var(--red)'; chip.style.borderColor='var(--red)';
-      $('si').value=word; S.query=word;
-      applyFilters(); renderCards(); updateMeta();
-    };
-    bar.appendChild(chip);
-  });
-  bar.style.display='flex';
-}
-
-function applyFilters() {
-  const q = S.query.toLowerCase().trim();
-  S.filtered = S.articles.filter(a => {
-    const mQ = !q || (a.title||'').toLowerCase().includes(q) || (a.desc||'').toLowerCase().includes(q);
-    const mS = S.source === 'all' || a.src === S.source;
-    return mQ && mS;
-  });
-}
-
-/* ── BRANDED SVG PLACEHOLDER (used when article has no image) ── */
-function makePlaceholder(src, idx) {
-  const bgs = ['#0d0505','#05050d','#050d05','#0d0800','#050505','#0d050d','#00080d','#050d00'];
-  const acs = ['#dc2626','#2563eb','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#65a30d'];
-  const bg = bgs[idx % bgs.length];
-  const ac = acs[idx % acs.length];
-  const lbl = (src||'NEWS').toUpperCase().replace(/[<>&"]/g,'').slice(0,18);
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="380" viewBox="0 0 600 380">'
-    + '<rect width="600" height="380" fill="' + bg + '"/>'
-    + '<rect x="0" y="0" width="600" height="3" fill="' + ac + '"/>'
-    + '<rect x="0" y="377" width="600" height="3" fill="' + ac + '"/>'
-    + '<text x="300" y="170" font-family="serif" font-size="72" fill="' + ac + '" opacity=".12" text-anchor="middle">&#128240;</text>'
-    + '<rect x="160" y="198" width="280" height="1.5" fill="' + ac + '" opacity=".25"/>'
-    + '<text x="300" y="222" font-family="monospace" font-size="13" fill="' + ac + '" opacity=".6" text-anchor="middle" letter-spacing="3">' + lbl + '</text>'
-    + '<text x="300" y="244" font-family="monospace" font-size="9" fill="#ffffff" opacity=".18" text-anchor="middle" letter-spacing="2">HATTY&#39;S NEWS</text>'
-    + '</svg>';
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-}
-
-function renderCards() {
-  const grid = $('grid');
-  grid.innerHTML = '';
-  if (!S.filtered.length) { $('nores').style.display = 'block'; return; }
-  $('nores').style.display = 'none';
-
-  S.filtered.forEach((art, i) => {
-    const placeholder = makePlaceholder(art.src, i);
-    const imgSrc = (art.img && /^https?:\/\//.test(art.img)) ? art.img : placeholder;
-    const el = document.createElement('article');
-    el.className = 'card';
-    el.style.animationDelay = (i % 20 * 25) + 'ms';
-
-    // Build image section via DOM to avoid any encoding issues
-    const imgLink = document.createElement('a');
-    imgLink.href = art.url; imgLink.target = '_blank'; imgLink.rel = 'noopener noreferrer';
-    imgLink.style.display = 'block';
-    const imgEl = document.createElement('img');
-    imgEl.className = 'ci'; imgEl.alt = ''; imgEl.loading = 'lazy';
-    imgEl.src = imgSrc;
-    imgEl.onerror = function() { this.src = placeholder; this.onerror = null; };
-    imgLink.appendChild(imgEl);
-
-    // Body via innerHTML (text content only, safe)
-    const {rel, abs} = tago(art.date);
-    const timeHtml = rel
-      ? '<div class="card-time"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;opacity:.6"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>'
-        + '<span class="card-time-rel">' + esc(rel) + '</span><span class="card-time-sep">·</span><span class="card-time-abs">' + esc(abs) + '</span></div>'
-      : '';
-
-    const body = document.createElement('div');
-    body.className = 'cb';
-    body.innerHTML = '<div class="cs">' + esc(art.src) + '</div>'
-      + '<h2 class="ct"><a href="' + esc(art.url) + '" target="_blank" rel="noopener noreferrer">' + esc(art.title) + '</a></h2>'
-      + (art.desc ? '<p class="cd">' + esc(art.desc) + '</p>' : '')
-      + timeHtml
-      + '<div class="cf"><a href="' + esc(art.url) + '" target="_blank" rel="noopener noreferrer" class="rbtn">READ →</a></div>';
-
-    el.appendChild(imgLink);
-    el.appendChild(body);
-    grid.appendChild(el);
-  });
-}
-
-function updateMeta() {
-  const c = COUNTRIES.find(x => x.code === S.country);
-  const flag = c ? c.name.split(' ').slice(-1)[0] : '';
-  const name = c ? c.name.replace(/[^\w ]/g,'').trim().toUpperCase() : 'TOP';
-  $('clbl').textContent = flag + ' ' + name + ' HEADLINES';
-  const loaded = S.feedResults.filter(f => f.ok).length;
-  $('acnt').textContent = `${S.filtered.length} articles from ${loaded}/${S.feedResults.length} sources`;
-}
-
-function tago(iso) {
-  if (!iso) return {rel:'', abs:''};
-  const dt = new Date(iso);
-  if (isNaN(dt.getTime())) return {rel:'', abs:''};
-  const d = Math.floor((Date.now() - dt.getTime()) / 1000);
-  let rel = '';
-  if (d < 0) rel = 'just now';
-  else if (d < 60) rel = d + 's ago';
-  else if (d < 3600) rel = Math.floor(d / 60) + 'm ago';
-  else if (d < 86400) rel = Math.floor(d / 3600) + 'h ago';
-  else rel = Math.floor(d / 86400) + 'd ago';
-  // Format absolute time: "Mar 12, 3:45 PM" or "Mar 12, 2025, 3:45 PM" if older than this year
-  const now = new Date();
-  const sameYear = dt.getFullYear() === now.getFullYear();
-  const abs = dt.toLocaleString('en-US', {
-    month:'short', day:'numeric',
-    ...(sameYear ? {} : {year:'numeric'}),
-    hour:'numeric', minute:'2-digit', hour12:true
-  });
-  return {rel, abs};
-}
-
-function showSpin(v) { $('lsp').style.display = v ? 'flex' : 'none'; }
-function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3200);
-}
-
-/* ── THEME ── */
-function applyTheme() {
-  const d = S.theme === 'dark';
-  document.documentElement.classList.toggle('dark', d);
-  document.documentElement.classList.toggle('light', !d);
-  $('thicon').textContent = d ? '☀️' : '🌙';
-  const di = $('theme-drw-icon'); if (di) di.textContent = d ? '☀️' : '🌙';
-}
-
-/* ── POPULATE UI ── */
-function populateUI() {
-  // Desktop select
-  const sel = $('csel');
+function initCountries(){
+  const csel = $('csel');
+  csel.innerHTML = '';
   COUNTRIES.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c.code; o.textContent = c.name;
-    if (c.code === S.country) o.selected = true;
-    sel.appendChild(o);
+    const opt = document.createElement('option');
+    opt.value = c.code;
+    opt.textContent = c.name;
+    csel.appendChild(opt);
   });
+  if (!COUNTRIES.find(c => c.code === S.country)) S.country = 'us';
+  csel.value = S.country;
 
-  // Sidebar country list
-  const list = $('clist');
+  const clist = $('clist');
+  clist.innerHTML = '';
   COUNTRIES.forEach(c => {
     const btn = document.createElement('button');
-    btn.className = 'cc' + (c.code === S.country ? ' on' : '');
-    const qc = c.q === 'strong' ? 'qs' : c.q === 'good' ? 'qg' : 'ql';
-    const ql = c.q === 'strong' ? 'STR' : c.q === 'good' ? 'GD' : 'LTD';
-    btn.innerHTML = `<span>${esc(c.name)}</span><span class="qb ${qc}">${ql}</span>`;
+    btn.type = 'button';
+    btn.className = 'cc';
+    btn.setAttribute('data-code', c.code);
+    if (c.code === S.country) btn.classList.add('on');
+    const left = document.createElement('span');
+    left.textContent = c.name;
+    const right = document.createElement('span');
+    right.className = 'qb ' + (c.q === 'strong' ? 'qs' : c.q === 'good' ? 'qg' : 'ql');
+    right.textContent = (c.q === 'strong' ? 'STR' : c.q === 'good' ? 'OK' : 'LIM');
+    btn.append(left, right);
     btn.onclick = () => switchCountry(c.code);
-    list.appendChild(btn);
+    clist.appendChild(btn);
   });
 
-  // Mobile country scroll bar
   const mbar = $('mobile-country-bar');
+  mbar.innerHTML = '';
   COUNTRIES.forEach(c => {
     const btn = document.createElement('button');
-    btn.className = 'mcbtn' + (c.code === S.country ? ' on' : '');
-    btn.textContent = c.name;
-    btn.dataset.code = c.code;
+    btn.type = 'button';
+    btn.className = 'mcbtn';
+    btn.setAttribute('data-code', c.code);
+    btn.textContent = c.name.split(' ')[0];
+    if (c.code === S.country) btn.classList.add('on');
     btn.onclick = () => switchCountry(c.code);
     mbar.appendChild(btn);
   });
 }
 
-function switchCountry(code) {
-  if (code === S.country) return;      // already on this country — no-op
-
-  S.country  = code;
-  S.source   = 'all';
-  S.query    = '';                     // clear search so it doesn't filter new country
-  $('si').value = '';
-  localStorage.setItem('hn_country', code);
-
-  // Sync desktop select
-  $('csel').value = code;
-
-  // Sync sidebar list
-  document.querySelectorAll('#clist .cc').forEach((b, i) => {
-    b.classList.toggle('on', COUNTRIES[i]?.code === code);
+function initFilters(){
+  document.querySelectorAll('.fp').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.fp').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      S.category = btn.getAttribute('data-cat') || 'general';
+      loadNews();
+    });
   });
-
-  // Sync mobile chip bar
-  document.querySelectorAll('#mobile-country-bar .mcbtn').forEach(b => {
-    b.classList.toggle('on', b.dataset.code === code);
-  });
-
-  // Scroll mobile bar to show selected chip
-  const active = document.querySelector('#mobile-country-bar .mcbtn.on');
-  if (active) active.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
-
-  // loadNews handles aborting any in-flight load itself — just call it
-  loadNews();
 }
 
-/* ── DRAWER ── */
-const drw = $('drw'), ovl = $('ovl');
-function openDrw() { drw.classList.add('open'); ovl.classList.add('open'); document.body.style.overflow = 'hidden'; }
-function closeDrw() { drw.classList.remove('open'); ovl.classList.remove('open'); document.body.style.overflow = ''; }
-$('ham').addEventListener('click', openDrw);
-$('drw-close').addEventListener('click', closeDrw);
-ovl.addEventListener('click', closeDrw);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrw(); }});
-
-/* ── EVENTS ── */
-function toggleTheme() { S.theme = S.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('hn_theme', S.theme); applyTheme(); }
-$('thbtn').addEventListener('click', toggleTheme);
-$('theme-drw-btn').addEventListener('click', () => { closeDrw(); toggleTheme(); });
-$('csel').addEventListener('change', e => switchCountry(e.target.value));
-
-function doSearch() { S.query = $('si').value; applyFilters(); renderCards(); updateMeta(); }
-$('sb').addEventListener('click', doSearch);
-$('si').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-$('si').addEventListener('input', e => { if (!e.target.value) { S.query = ''; applyFilters(); renderCards(); updateMeta(); }});
-
-document.querySelectorAll('[data-cat]').forEach(p => {
-  p.addEventListener('click', () => {
-    document.querySelectorAll('[data-cat]').forEach(x => x.classList.remove('on'));
-    p.classList.add('on'); S.category = p.dataset.cat; S.source = 'all';
-    loadNews();
+function initSearch(){
+  const q = $('q');
+  let t = null;
+  q.addEventListener('input', () => {
+    S.query = q.value || '';
+    if (t) clearTimeout(t);
+    t = setTimeout(() => {
+      applyFilters(); renderCards();
+    }, 200);
   });
-});
+}
 
-$('rfbtn').addEventListener('click', () => { toast('🔄 REFRESHING…'); loadNews(); });
-$('rstbtn').addEventListener('click', () => {
-  S.query = ''; S.category = 'general'; S.source = 'all'; $('si').value = '';
-  document.querySelectorAll('[data-cat]').forEach((p, i) => p.classList.toggle('on', i === 0));
+function initTheme(){
+  applyTheme();
+  $('themeToggle').addEventListener('click', toggleTheme);
+}
+
+function initDrawer(){
+  const drw = $('drw');
+  const ovl = $('ovl');
+  $('mnav').onclick = () => { drw.classList.add('open'); ovl.classList.add('open'); };
+  $('mclose').onclick = () => { drw.classList.remove('open'); ovl.classList.remove('open'); };
+  ovl.onclick = () => { drw.classList.remove('open'); ovl.classList.remove('open'); };
+  $('drw-privacy').onclick = () => {
+    $('legal-modal').style.display = 'flex';
+  };
+}
+
+function initLegal(){
+  $('open-legal').onclick = () => { $('legal-modal').style.display = 'flex'; };
+  $('legal-close').onclick = () => { $('legal-modal').style.display = 'none'; };
+  $('legal-modal').addEventListener('click', e => {
+    if (e.target.id === 'legal-modal') $('legal-modal').style.display = 'none';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  initCountries();
+  initFilters();
+  initSearch();
+  initDrawer();
+  initLegal();
+  $('csel').addEventListener('change', e => switchCountry(e.target.value));
   loadNews();
 });
-
-/* ── CRYPTO TICKER handled by LCW widget ── */
-
-/* ── COOKIE BANNER ── */
-function hideCookieBanner() {
-  const b = $('cookiebanner');
-  b.style.opacity = '0'; b.style.transform = 'translateY(200%)';
-  setTimeout(() => { b.style.display = 'none'; }, 420);
-}
-function acceptCookies() { localStorage.setItem('hn_cookies', 'accepted'); hideCookieBanner(); }
-function declineCookies() { localStorage.setItem('hn_cookies', 'declined'); hideCookieBanner(); }
-function initCookieBanner() {
-  const choice = localStorage.getItem('hn_cookies');
-  if (choice) $('cookiebanner').style.display = 'none';
-}
-
-/* ── MODALS ── */
-function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); document.body.style.overflow = 'hidden'; }
-function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); document.body.style.overflow = ''; }
-document.querySelectorAll('.modal-wrap').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) { m.classList.remove('open'); document.body.style.overflow = ''; }});
-});
-
-/* ── SPLASH ── */
-(function(){
-  var sp = document.getElementById('splash');
-  if (!sp) return;
-  // Gif fallback if file missing
-  var gif = document.getElementById('splash-gif');
-  if (gif) gif.onerror = function(){ sp.style.background = '#0a0000'; };
-  // Skip if already seen this session
-  if (sessionStorage.getItem('hn_sp_v4')) { sp.style.display = 'none'; return; }
-  // Show for 6s then fade out over 1s
-  setTimeout(function() {
-    sp.style.opacity = '0';
-    setTimeout(function() {
-      sp.style.display = 'none';
-      sessionStorage.setItem('hn_sp_v4', '1');
-    }, 1000);
-  }, 6000);
-})();
-
-/* ── GEO DETECT (non-blocking) ── */
-let geoSwitched = false;
-async function geoDetect(){
-  if (sessionStorage.getItem('hn_geo')) return;
-  try {
-    const res = await fetch('https://ipapi.co/json/');
-    if (!res.ok) return;
-    const d = await res.json();
-    const cc = (d.country_code||'').toLowerCase();
-    const mapped = FEEDS[cc] ? cc : null;
-    if (mapped && mapped !== S.country) { geoSwitched = true; switchCountry(mapped); }
-  } catch(_) {} finally {
-    sessionStorage.setItem('hn_geo','1');
-  }
-}
-
-/* ── BOOT ── */
-applyTheme();
-populateUI();
-$('csel').value = S.country;
-loadNews();
-geoDetect().catch(()=>{});
-setInterval(()=>{ if(!S.loading) loadNews(); }, 300000);
-initCookieBanner();
 </script>
 </body>
 </html>
