@@ -405,93 +405,6 @@ html.dark .inp option{background:#1a1a1a}
    Google News RSS is used as the primary guaranteed source per country.
    Format: {n: name, u: url, c: category, primary: bool}
 ══════════════════════════════════════════════════════════════ */
-const COUNTRY_NAMES = {
-  us:'United States',gb:'United Kingdom',ca:'Canada',au:'Australia',nz:'New Zealand',
-  de:'Germany',fr:'France',jp:'Japan',in:'India',sg:'Singapore',za:'South Africa',
-  ng:'Nigeria',ke:'Kenya',it:'Italy',es:'Spain',nl:'Netherlands',se:'Sweden',
-  no:'Norway',cn:'China',ru:'Russia',br:'Brazil',mx:'Mexico',ar:'Argentina',
-  eg:'Egypt',kr:'South Korea',id:'Indonesia',ph:'Philippines',pk:'Pakistan',
-  tr:'Turkey',il:'Israel',ie:'Ireland',pl:'Poland',ua:'Ukraine',gh:'Ghana',
-  et:'Ethiopia',bd:'Bangladesh',th:'Thailand',my:'Malaysia',vn:'Vietnam',
-  sa:'Saudi Arabia',ae:'United Arab Emirates',iq:'Iraq',ir:'Iran',
-  co:'Colombia',cl:'Chile',pe:'Peru',ve:'Venezuela',
-  pt:'Portugal',at:'Austria',ch:'Switzerland',be:'Belgium',dk:'Denmark',
-  fi:'Finland',cz:'Czech Republic',ro:'Romania',hu:'Hungary',gr:'Greece',
-  rs:'Serbia',hr:'Croatia',bg:'Bulgaria',sk:'Slovakia',si:'Slovenia',
-  lv:'Latvia',lt:'Lithuania',ee:'Estonia',
-  tz:'Tanzania',ug:'Uganda',rw:'Rwanda',sn:'Senegal',ci:"Cote d'Ivoire",
-  cm:'Cameroon',ao:'Angola',ma:'Morocco',tn:'Tunisia',dz:'Algeria',ly:'Libya',
-  sd:'Sudan',zw:'Zimbabwe',zm:'Zambia',bw:'Botswana',na:'Namibia',mz:'Mozambique',
-  mg:'Madagascar',mu:'Mauritius',
-  lk:'Sri Lanka',np:'Nepal',kh:'Cambodia',mm:'Myanmar',la:'Laos',
-  mn:'Mongolia',kz:'Kazakhstan',uz:'Uzbekistan',az:'Azerbaijan',ge:'Georgia',am:'Armenia',
-  qa:'Qatar',kw:'Kuwait',bh:'Bahrain',om:'Oman',jo:'Jordan',lb:'Lebanon',sy:'Syria',ye:'Yemen',
-  fj:'Fiji',pg:'Papua New Guinea',
-  uy:'Uruguay',ec:'Ecuador',bo:'Bolivia',py:'Paraguay',cr:'Costa Rica',pa:'Panama',
-  gt:'Guatemala',hn:'Honduras',sv:'El Salvador',ni:'Nicaragua',cu:'Cuba',do:'Dominican Republic',
-  ht:'Haiti',jm:'Jamaica',tt:'Trinidad and Tobago',
-  is:'Iceland',lu:'Luxembourg',mt:'Malta',cy:'Cyprus',al:'Albania',mk:'North Macedonia',
-  ba:'Bosnia and Herzegovina',me:'Montenegro',xk:'Kosovo',md:'Moldova',by:'Belarus'
-};
-
-const REGION_FALLBACKS = {
-  asia: [
-    {n:'CNA Asia',u:'https://www.channelnewsasia.com/rssfeeds/8395910',c:'world'},
-    {n:'Nikkei Asia',u:'https://asia.nikkei.com/rss/feed/nar',c:'business'},
-    {n:'Diplomat Asia',u:'https://thediplomat.com/feed/',c:'world'},
-    {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'}
-  ],
-  europe: [
-    {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
-    {n:'EURACTIV',u:'https://www.euractiv.com/feed/',c:'world'},
-    {n:'France 24 World',u:'https://www.france24.com/en/world/rss',c:'world'},
-    {n:'BBC World',u:'http://feeds.bbci.co.uk/news/world/rss.xml',c:'world'}
-  ],
-  africa: [
-    {n:'AllAfrica',u:'https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf',c:'general'},
-    {n:'Africa News',u:'https://www.africanews.com/feed/rss',c:'general'},
-    {n:'BBC Africa',u:'http://feeds.bbci.co.uk/news/world/africa/rss.xml',c:'world'},
-    {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'}
-  ],
-  middleeast: [
-    {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'},
-    {n:'Arab News',u:'https://www.arabnews.com/rss.xml',c:'general'},
-    {n:'The National',u:'https://www.thenationalnews.com/rss/home.xml',c:'general'},
-    {n:'Middle East Eye',u:'https://www.middleeasteye.net/rss',c:'general'}
-  ],
-  latam: [
-    {n:'MercoPress',u:'https://en.mercopress.com/rss',c:'general'},
-    {n:'Latin America Reports',u:'https://latinarepublic.com/feed/',c:'general'},
-    {n:'Rio Times',u:'https://riotimesonline.com/feed/',c:'general'},
-    {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'}
-  ],
-  northamerica: [
-    {n:'AP News',u:'https://apnews.com/hub/ap-top-news?output=xml',c:'general'},
-    {n:'Reuters World',u:'https://www.reutersagency.com/feed/?best-topics=world&post_type=best',c:'world'},
-    {n:'NPR World',u:'https://feeds.npr.org/1004/rss.xml',c:'world'}
-  ],
-  oceania: [
-    {n:'ABC World',u:'https://www.abc.net.au/news/feed/51892/rss.xml',c:'world'},
-    {n:'RNZ World',u:'https://www.rnz.co.nz/rss/world.xml',c:'world'},
-    {n:'SBS News',u:'https://www.sbs.com.au/news/feed',c:'general'}
-  ]
-};
-
-const COUNTRY_REGION = {
-  ph:'asia',pk:'asia',tr:'middleeast',il:'middleeast',ie:'europe',pl:'europe',ua:'europe',gh:'africa',et:'africa',
-  bd:'asia',th:'asia',my:'asia',vn:'asia',sa:'middleeast',ae:'middleeast',iq:'middleeast',ir:'middleeast',
-  co:'latam',cl:'latam',pe:'latam',ve:'latam',br:'latam',mx:'northamerica',ar:'latam',eg:'middleeast',kr:'asia',
-  id:'asia',cn:'asia',ru:'europe',it:'europe',es:'europe',nl:'europe',se:'europe',no:'europe',de:'europe',fr:'europe',
-  jp:'asia',in:'asia',sg:'asia',za:'africa',ng:'africa',ke:'africa',au:'oceania',nz:'oceania',ca:'northamerica',us:'northamerica'
-};
-
-const GLOBAL_FALLBACKS = [
-  {n:'Reuters World',u:'https://www.reutersagency.com/feed/?best-topics=world&post_type=best',c:'world'},
-  {n:'AP News',u:'https://apnews.com/hub/ap-top-news?output=xml',c:'general'},
-  {n:'BBC World',u:'http://feeds.bbci.co.uk/news/world/rss.xml',c:'world'},
-  {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'}
-];
-
 const FEEDS = {
 
   /* ─── UNITED STATES ─── */
@@ -702,22 +615,16 @@ const FEEDS = {
 
   /* ─── ITALY ─── */
   it: [
-    {n:'ANSA English',u:'https://www.ansa.it/sito/ansait_rss.xml',c:'general',primary:true},
+    {n:'ANSA English',u:'https://www.ansa.it/sito/ansait_rss.xml',c:'general',primary:true ,primary:true},
     {n:'The Local Italy',u:'https://feeds.thelocal.com/rss/it',c:'general'},
     {n:'Italy 24',u:'https://www.italy24.ilsole24ore.com/rss/en/latest-news.xml',c:'general'},
-    {n:'Vatican News',u:'https://www.vaticannews.va/en/rss.xml',c:'general'},
-    {n:'EURACTIV Italy',u:'https://www.euractiv.com/section/politics/feed/',c:'world'},
-    {n:'Al Jazeera',u:'https://www.aljazeera.com/xml/rss/all.xml',c:'world'},
   ],
 
   /* ─── SPAIN ─── */
   es: [
-    {n:'El País English',u:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada',c:'general',primary:true},
+    {n:'El País English',u:'https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada',c:'general',primary:true ,primary:true},
     {n:'The Local Spain',u:'https://feeds.thelocal.com/rss/es',c:'general'},
     {n:'EFE News',u:'https://efenoticias.com/feed/',c:'general'},
-    {n:'Spain News',u:'https://www.spainenglish.com/feed/',c:'general'},
-    {n:'EURACTIV',u:'https://www.euractiv.com/feed/',c:'world'},
-    {n:'The Corner',u:'https://thecorner.eu/feed/',c:'business'},
   ],
 
   /* ─── NETHERLANDS ─── */
@@ -730,20 +637,16 @@ const FEEDS = {
 
   /* ─── SWEDEN ─── */
   se: [
-    {n:'The Local SE',u:'https://feeds.thelocal.com/rss/se',c:'general',primary:true},
+    {n:'The Local SE',u:'https://feeds.thelocal.com/rss/se',c:'general',primary:true ,primary:true},
     {n:'Sweden Herald',u:'https://swedenherald.com/feed/',c:'general'},
     {n:'Radio Sweden',u:'https://sverigesradio.se/topnyheter/rss.xml',c:'general'},
-    {n:'The Nordic Page',u:'https://www.tnp.no/feed/',c:'general'},
-    {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
   ],
 
   /* ─── NORWAY ─── */
   no: [
-    {n:'Norway Today',u:'https://norwaytoday.info/feed',c:'general',primary:true},
+    {n:'Norway Today',u:'https://norwaytoday.info/feed',c:'general',primary:true ,primary:true},
     {n:'The Local NO',u:'https://feeds.thelocal.com/rss/no',c:'general'},
     {n:'Aftenposten EN',u:'https://www.aftenposten.no/rss/',c:'general'},
-    {n:'The Nordic Page',u:'https://www.tnp.no/feed/',c:'general'},
-    {n:'High North News',u:'https://www.highnorthnews.com/en/rss.xml',c:'general'},
   ],
 
   /* ─── CHINA ─── */
@@ -860,12 +763,9 @@ const FEEDS = {
 
   /* ─── POLAND ─── */
   pl: [
-    {n:'Notes from Poland',u:'https://notesfrompoland.com/feed/',c:'general',primary:true},
+    {n:'Notes from Poland',u:'https://notesfrompoland.com/feed/',c:'general',primary:true ,primary:true},
     {n:'Warsaw Voice',u:'https://www.warsawvoice.pl/rss',c:'general'},
     {n:'Poland In',u:'https://polandin.com/feed',c:'general'},
-    {n:'TVP World',u:'https://tvpworld.com/rss',c:'general'},
-    {n:'EURACTIV',u:'https://www.euractiv.com/feed/',c:'world'},
-    {n:'DW Europe',u:'https://rss.dw.com/xml/rss-en-eu',c:'world'},
   ],
 
   /* ─── UKRAINE ─── */
@@ -1143,6 +1043,104 @@ function parseXML(xml, feedName, feedCat) {
   } catch(e) { return []; }
 }
 
+async function fetchFeed(feed, signal) {
+  const enc = encodeURIComponent(feed.u);
+  const isUrl = u => u && /^https?:\/\//.test(u);
+
+  // allorigins: reliable, no rate limit, returns raw XML
+  const tryAllorigins = async () => {
+    const r = await fetch('https://api.allorigins.win/raw?url=' + enc, {signal});
+    if (!r.ok) throw new Error('ao:'+r.status);
+    const items = parseXML(await r.text(), feed.n, feed.c);
+    if (!items.length) throw new Error('ao:empty');
+    return {items, ok:true};
+  };
+
+  // rss2json: gives better thumbnails when not rate-limited
+  const tryR2j = async () => {
+    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url='+enc, {signal});
+    if (!r.ok) throw new Error('r2j:'+r.status);
+    const d = await r.json();
+    if (d.status !== 'ok' || !d.items?.length) throw new Error('r2j:'+d.message);
+    return {
+      items: d.items.map(i => ({
+        title: (i.title||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim(),
+        desc: sh(i.description||'').slice(0,240),
+        url: i.link||'#',
+        img: isUrl(i.thumbnail)?i.thumbnail : isUrl(i.enclosure?.link)?i.enclosure.link : xi(i.content||'')||xi(i.description||'')||'',
+        date: i.pubDate||'', src: feed.n, cat: feed.c||'general',
+      })).filter(a => a.title.length > 4 && a.url !== '#'),
+      ok: true,
+    };
+  };
+
+  // corsproxy fallback
+  const tryCorsproxy = async () => {
+    const r = await fetch('https://corsproxy.io/?'+enc, {signal});
+    if (!r.ok) throw new Error('cp:'+r.status);
+    const text = await r.text();
+    if (!text.trim().startsWith('<')) throw new Error('cp:not xml');
+    const items = parseXML(text, feed.n, feed.c);
+    if (!items.length) throw new Error('cp:empty');
+    return {items, ok:true};
+  };
+
+  try {
+    // Race allorigins + rss2json simultaneously — fastest working one wins
+    return await Promise.any([tryAllorigins(), tryR2j(), tryCorsproxy()]);
+  } catch(e) {
+    if (e.name === 'AbortError') throw e;
+    return {items:[], ok:false};
+  }
+}
+
+
+async function fetchFeed(feed, signal) {
+  // Try rss2json first (JSON, has thumbnails)
+  const r2j = async () => {
+    const url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feed.u);
+    const res = await fetch(url, {signal});
+    if (!res.ok) throw new Error('r2j:' + res.status);
+    const d = await res.json();
+    if (d.status !== 'ok' || !Array.isArray(d.items) || !d.items.length) throw new Error('r2j:empty');
+    return d.items.map(i => ({
+      title: (i.title||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim(),
+      desc: sh(i.description||'').slice(0,240),
+      url: i.link || '#',
+      img: (i.thumbnail && /^https?:\/\//.test(i.thumbnail)) ? i.thumbnail
+         : (i.enclosure?.link && /^https?:\/\//.test(i.enclosure.link)) ? i.enclosure.link
+         : xi(i.content||'') || xi(i.description||'') || '',
+      date: i.pubDate || '',
+      src: feed.n, cat: feed.c || 'general',
+    })).filter(a => a.title.length > 4 && a.url !== '#');
+  };
+
+  // Fallback: corsproxy raw XML
+  const raw = async () => {
+    const url = 'https://corsproxy.io/?' + encodeURIComponent(feed.u);
+    const res = await fetch(url, {signal});
+    if (!res.ok) throw new Error('raw:' + res.status);
+    return parseXML(await res.text(), feed.n, feed.c);
+  };
+
+  // Fallback 2: allorigins raw XML
+  const ao = async () => {
+    const url = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(feed.u);
+    const res = await fetch(url, {signal});
+    if (!res.ok) throw new Error('ao:' + res.status);
+    return parseXML(await res.text(), feed.n, feed.c);
+  };
+
+  try {
+    // Race all three — fastest working one wins
+    const items = await Promise.any([r2j(), raw(), ao()]);
+    if (!items || !items.length) return {items:[], ok:false};
+    return {items, ok:true};
+  } catch(e) {
+    if (e.name === 'AbortError') throw e;
+    return {items:[], ok:false};
+  }
+}
 
 /* ── LOAD NEWS ── */
 let loadSeq = 0;
@@ -1173,46 +1171,26 @@ async function loadNews() {
     showSpin(false);
   }
 
-  updateCovNote();
+  const countryFeeds = FEEDS[S.country] || FEEDS.us;
+  const selected = [
+    ...countryFeeds.filter(f => f.primary),
+    ...countryFeeds.filter(f => !f.primary)
+  ].slice(0, 10);
 
-  try {
-    const res = await fetch(
-      `/.netlify/functions/news?country=${encodeURIComponent(S.country)}&category=${encodeURIComponent(S.category || 'general')}`,
-      { signal }
-    );
-    if (!res.ok) throw new Error('Function failed');
-    const data = await res.json();
-    if (mySeq !== loadSeq) return;
+  const seen = new Set();
+  const fresh = [];
 
-    const arts = Array.isArray(data.articles) ? data.articles : [];
-    if (!arts.length) {
-      S.articles = [];
-      S.filtered = [];
-      $('grid').innerHTML = '';
-      $('nores').style.display = 'block';
-      $('fsb').innerHTML = '<span class="fb ffail">Backend: 0 articles</span>';
-      showSpin(false);
-      return;
-    }
-
-    S.articles = arts;
-    wCache(S.country, arts);
-    applyFilters();
-    renderCards();
-    updateMeta();
-    updateBreaking(S.articles);
-    $('fsb').innerHTML = `<span class="fb fok">Backend: ${arts.length} articles</span>`;
-    showSpin(false);
-  } catch (e) {
-    if (mySeq !== loadSeq) return;
-    S.articles = [];
-    S.filtered = [];
-    $('grid').innerHTML = '';
-    $('nores').style.display = 'block';
-    $('fsb').innerHTML = '<span class="fb ffail">Backend error</span>';
-    showSpin(false);
+  function addArticles(items) {
+    let n = 0;
+    items.forEach(art => {
+      const key = art.title.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,50);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      fresh.push(art);
+      n++;
+    });
+    return n;
   }
-}
 
   function flush() {
     if (mySeq !== loadSeq) return;
