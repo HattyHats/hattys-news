@@ -9,7 +9,6 @@ exports.handler = async (event, context) => {
     'Access-Control-Allow-Methods': 'GET, OPTIONS'
   };
 
-  // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
   }
@@ -19,9 +18,8 @@ exports.handler = async (event, context) => {
     const country = (params.country || 'us').toLowerCase();
     const category = (params.category || 'general').toLowerCase();
 
-    // For now, we just use Google News + a couple global sources per country.
-    // You can expand this later with your FEEDS map.
-    const feeds = buildFeeds(country, category);
+    // Use stable global feeds for now so EVERY country gets news
+    const feeds = buildGlobalFeeds(category);
 
     const articles = [];
     const seen = new Set();
@@ -29,7 +27,7 @@ exports.handler = async (event, context) => {
     for (const feed of feeds) {
       try {
         const url = `https://rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.u)}`;
-        const res = await fetch(url, { timeout: 10000 });
+        const res = await fetch(url, { timeout: 12000 });
         if (!res.ok) continue;
         const data = await res.json();
         if (data.status !== 'ok' || !Array.isArray(data.items)) continue;
@@ -60,7 +58,6 @@ exports.handler = async (event, context) => {
       }
     }
 
-    // Sort by date newest-first if possible
     articles.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
     return {
@@ -81,73 +78,10 @@ function stripHtml(html) {
   return String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-function countryName(code) {
-  const map = {
-    us: 'United States',
-    gb: 'United Kingdom',
-    ca: 'Canada',
-    au: 'Australia',
-    nz: 'New Zealand',
-    ie: 'Ireland',
-    in: 'India',
-    sg: 'Singapore',
-    ph: 'Philippines',
-    pk: 'Pakistan',
-    ua: 'Ukraine',
-    kr: 'South Korea',
-    de: 'Germany',
-    fr: 'France',
-    jp: 'Japan',
-    ae: 'United Arab Emirates',
-    za: 'South Africa',
-    ng: 'Nigeria',
-    ke: 'Kenya',
-    il: 'Israel',
-    tr: 'Turkey',
-    bd: 'Bangladesh',
-    th: 'Thailand',
-    my: 'Malaysia',
-    id: 'Indonesia',
-    pl: 'Poland',
-    br: 'Brazil',
-    it: 'Italy',
-    es: 'Spain',
-    nl: 'Netherlands',
-    se: 'Sweden',
-    no: 'Norway',
-    sa: 'Saudi Arabia',
-    co: 'Colombia',
-    cn: 'China',
-    ru: 'Russia',
-    mx: 'Mexico',
-    ar: 'Argentina',
-    eg: 'Egypt',
-    ir: 'Iran',
-    mm: 'Myanmar',
-    gh: 'Ghana',
-    et: 'Ethiopia'
-  };
-  return map[code] || code;
-}
-
-function buildFeeds(country, category) {
-  const name = countryName(country);
-  const countryQuery = `${name}`;
-  const catQuery = category && category !== 'general'
-    ? `${name} ${category}`
-    : name;
-
+// For now we ignore country and return solid global headlines for everyone.
+// Later we can re-introduce per-country logic once basic coverage is stable.
+function buildGlobalFeeds(category) {
   const feeds = [
-    {
-      n: 'Google News – Country',
-      u: `https://news.google.com/rss/search?q=${encodeURIComponent(countryQuery)}&hl=en&gl=${country.toUpperCase()}&ceid=${country.toUpperCase()}:en`,
-      c: 'general'
-    },
-    {
-      n: 'Google News – Topic',
-      u: `https://news.google.com/rss/search?q=${encodeURIComponent(catQuery)}&hl=en&gl=${country.toUpperCase()}&ceid=${country.toUpperCase()}:en`,
-      c: category || 'general'
-    },
     {
       n: 'Reuters World',
       u: 'https://www.reutersagency.com/feed/?best-topics=world&post_type=best',
@@ -167,9 +101,26 @@ function buildFeeds(country, category) {
       n: 'Al Jazeera – All',
       u: 'https://www.aljazeera.com/xml/rss/all.xml',
       c: 'world'
+    },
+    {
+      n: 'France 24 – World',
+      u: 'https://www.france24.com/en/world/rss',
+      c: 'world'
+    },
+    {
+      n: 'DW Top Stories',
+      u: 'https://rss.dw.com/rdf/rss-en-all',
+      c: 'world'
     }
   ];
 
-  // You can add country-specific extras here later if you want.
+  if (category && category !== 'general') {
+    feeds.push({
+      n: `Google News – ${category}`,
+      u: `https://news.google.com/rss/search?q=${encodeURIComponent(category)}&hl=en-US&gl=US&ceid=US:en`,
+      c: category
+    });
+  }
+
   return feeds;
 }
