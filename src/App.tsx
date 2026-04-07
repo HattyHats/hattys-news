@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Sun, Moon, RefreshCw } from 'lucide-react';
+import { Search, Sun, Moon, RefreshCw, Menu, ExternalLink, Gauge, X } from 'lucide-react';
 
 interface Article {
   title: string;
@@ -15,6 +15,19 @@ interface Article {
   src: string;
   cat: string;
 }
+
+interface FearGreedData {
+  value: string;
+  value_classification: string;
+  timestamp: string;
+}
+
+const OTHER_SITES = [
+  { name: 'Learn With Hatty', url: 'https://earnwithhatty.com/' },
+  { name: 'Token-Tokens', url: 'https://hattyhats.github.io/token-tokens/' },
+  { name: 'Open-Focus', url: 'https://hattyhats.github.io/Open-Focus/' },
+  { name: 'Hatty\'s Universe', url: 'https://hatty-universe.netlify.app/' },
+];
 
 const FEEDS = [
   { n: 'CoinTelegraph', u: 'https://cointelegraph.com/rss', c: 'all' },
@@ -34,6 +47,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
+  const [showMenu, setShowMenu] = useState(false);
+  const [fearGreed, setFearGreed] = useState<FearGreedData | null>(null);
+  const [showFearGreed, setShowFearGreed] = useState(false);
 
   const fetchFeed = async (feed: typeof FEEDS[0]): Promise<Article[]> => {
     try {
@@ -63,8 +79,19 @@ export default function App() {
     setLoading(false);
   }, []);
 
+  const fetchFearGreed = async () => {
+    try {
+      const res = await fetch('https://api.alternative.me/fng/');
+      const data = await res.json();
+      setFearGreed(data.data[0]);
+    } catch (e) {
+      console.error("Failed to fetch Fear & Greed Index", e);
+    }
+  };
+
   useEffect(() => {
     loadNews();
+    fetchFearGreed();
     const timer = setTimeout(() => setShowSplash(false), 3000);
     return () => clearTimeout(timer);
   }, [loadNews]);
@@ -104,20 +131,94 @@ export default function App() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1 }}
-            className="fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center overflow-hidden"
           >
+            {/* Background GIF */}
+            <div className="absolute inset-0 z-0 opacity-40">
+              <img 
+                src="/newsworld.gif" 
+                alt="Background" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+            
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.5 }}
-              className="font-display text-[clamp(2.5rem,10vw,7rem)] text-white drop-shadow-[0_0_30px_#dc2626]"
+              className="relative z-10 font-display text-[clamp(2.5rem,10vw,7rem)] text-white drop-shadow-[0_0_30px_#dc2626]"
             >
               HATTY'S NEWS
             </motion.div>
-            <div className="font-mono text-[rgba(255,255,255,0.4)] tracking-[4px] mt-[10px]">
+            <div className="relative z-10 font-mono text-[rgba(255,255,255,0.4)] tracking-[4px] mt-[10px]">
               CRYPTO TERMINAL
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showFearGreed && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              onClick={() => setShowFearGreed(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 shadow-2xl"
+            >
+              <button 
+                className="absolute top-4 right-4 text-[var(--ink-muted)] hover:text-white"
+                onClick={() => setShowFearGreed(false)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="text-center">
+                <div className="cs mb-2">Market Sentiment</div>
+                <h2 className="font-display text-4xl text-white mb-6">FEAR & GREED INDEX</h2>
+                
+                {fearGreed ? (
+                  <div className="space-y-6">
+                    <div className="relative inline-flex items-center justify-center">
+                      <div className="text-6xl font-bold text-[var(--red)] drop-shadow-[0_0_15px_rgba(220,38,38,0.4)]">
+                        {fearGreed.value}
+                      </div>
+                    </div>
+                    
+                    <div className="text-2xl font-bold uppercase tracking-widest" style={{ color: 
+                      parseInt(fearGreed.value) > 75 ? '#22c55e' : 
+                      parseInt(fearGreed.value) > 50 ? '#84cc16' : 
+                      parseInt(fearGreed.value) > 25 ? '#eab308' : '#ef4444'
+                    }}>
+                      {fearGreed.value_classification}
+                    </div>
+
+                    <p className="text-sm text-[var(--ink-muted)] leading-relaxed text-left bg-[var(--bg)] p-4 rounded-lg border border-[var(--border)]">
+                      The Fear & Greed Index is a tool used to gauge the emotions of the market. 
+                      <strong> Fear</strong> (0-49) suggests investors are worried, which could be a buying opportunity. 
+                      <strong> Greed</strong> (51-100) suggests the market is due for a correction as investors get too greedy.
+                    </p>
+                    
+                    <div className="text-[10px] font-mono text-[var(--ink-muted)]">
+                      Last Updated: {new Date(parseInt(fearGreed.timestamp) * 1000).toLocaleString()}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-10 animate-pulse text-[var(--ink-muted)] font-mono">LOADING DATA...</div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
@@ -137,9 +238,52 @@ export default function App() {
           <button className="ibtn" onClick={() => setIsDark(!isDark)}>
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+          
+          <button className="ibtn" onClick={() => setShowFearGreed(true)}>
+            <Gauge className="w-4 h-4" />
+          </button>
+
           <button className="ibtn" onClick={loadNews}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
+          
+          <div className="relative">
+            <button className="ibtn" onClick={() => setShowMenu(!showMenu)}>
+              <Menu className="w-4 h-4" />
+            </button>
+            <AnimatePresence>
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-2 w-56 bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-2xl z-20 overflow-hidden"
+                  >
+                    <div className="p-3 text-[10px] font-mono text-[var(--ink-muted)] uppercase border-b border-[var(--border)] bg-[var(--bg)]">
+                      Hatty's Network
+                    </div>
+                    <div className="py-1">
+                      {OTHER_SITES.map((site) => (
+                        <a
+                          key={site.url}
+                          href={site.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between px-4 py-3 text-xs hover:bg-[var(--red)] hover:text-white transition-colors group"
+                          onClick={() => setShowMenu(false)}
+                        >
+                          <span>{site.name}</span>
+                          <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </header>
 
