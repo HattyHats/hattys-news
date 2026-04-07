@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+  # no build command needed for a static site
+  command = ""
+
+[functions]
+  # This tells Netlify to look in /netlify/functions for your Node functions
+  directory = "netlify/functions"
