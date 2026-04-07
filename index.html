@@ -91,7 +91,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;min-
 </div>
 
 <script>
-// SOURCES UPDATED FOR CRYPTO
+// UPDATED SOURCES & CATEGORIES
 const FEEDS = [
   {n:'CoinTelegraph', u:'https://cointelegraph.com/rss', c:'all'},
   {n:'CoinDesk', u:'https://www.coindesk.com/arc/outboundfeeds/rss/', c:'all'},
@@ -99,51 +99,73 @@ const FEEDS = [
   {n:'NewsBTC', u:'https://www.newsbtc.com/feed/', c:'bitcoin'},
   {n:'Decrypt', u:'https://decrypt.co/feed', c:'nft'},
   {n:'CryptoSlate', u:'https://cryptoslate.com/feed/', c:'altcoin'},
-  {n:'The Block', u:'https://www.theblock.co/rss.xml', c:'regulation'}
+  {n:'The Block', u:'https://www.theblock.co/rss.xml', c:'regulation'},
+  {n:'CryptoNews', u:'https://cryptonews.com/news/feed/', c:'altcoin'}
 ];
 
 let state = { articles: [], filter: 'all', query: '' };
 const $ = id => document.getElementById(id);
 
+// NEW: Advanced Fetcher to bypass blocks
+async function fetchWithFallback(feed) {
+  const encUrl = encodeURIComponent(feed.u);
+  
+  // Try 1: rss2json (Most reliable for images/formatting)
+  try {
+    const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encUrl}`);
+    const d = await r.json();
+    if (d.status === 'ok') {
+      return d.items.map(i => ({
+        title: i.title,
+        link: i.link,
+        img: i.thumbnail || i.enclosure?.link || 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=500&auto=format',
+        date: new Date(i.pubDate),
+        src: feed.n,
+        cat: feed.c
+      }));
+    }
+  } catch (e) { console.warn(`rss2json failed for ${feed.n}`); }
+
+  // Try 2: Corsproxy.io (Raw XML)
+  try {
+    const r = await fetch(`https://corsproxy.io/?${encUrl}`);
+    const text = await r.text();
+    return parseXML(text, feed);
+  } catch (e) { console.warn(`Corsproxy failed for ${feed.n}`); }
+
+  return [];
+}
+
+function parseXML(xml, feed) {
+  const doc = new DOMParser().parseFromString(xml, "text/xml");
+  const items = Array.from(doc.querySelectorAll('item')).slice(0, 8);
+  return items.map(item => {
+    const desc = item.querySelector('description')?.textContent || '';
+    const imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
+    return {
+      title: item.querySelector('title')?.textContent || '',
+      link: item.querySelector('link')?.textContent || '',
+      img: imgMatch ? imgMatch[1] : 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=500&auto=format',
+      date: new Date(item.querySelector('pubDate')?.textContent || Date.now()),
+      src: feed.n,
+      cat: feed.c
+    };
+  });
+}
+
 async function loadNews() {
   $('lsp').style.display = 'flex';
   $('grid').innerHTML = '';
   
-  const results = await Promise.all(FEEDS.map(async feed => {
-    try {
-      // Robust Fallback Proxy System
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.u)}`;
-      const res = await fetch(proxyUrl);
-      if(!res.ok) return [];
-      
-      const xml = await res.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(xml, "text/xml");
-      const items = Array.from(doc.querySelectorAll('item')).slice(0, 10);
-      
-      return items.map(item => {
-        const title = item.querySelector('title')?.textContent || '';
-        const link = item.querySelector('link')?.textContent || '';
-        const pubDate = item.querySelector('pubDate')?.textContent || '';
-        const desc = item.querySelector('description')?.textContent || '';
-        
-        // Better Image Extraction
-        let img = 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=500&auto=format';
-        const media = item.getElementsByTagName('media:content')[0];
-        if(media) img = media.getAttribute('url');
-        else {
-            const imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
-            if(imgMatch) img = imgMatch[1];
-        }
-
-        return { title, link, img, date: new Date(pubDate), src: feed.n, cat: feed.c };
-      });
-    } catch (e) { console.error("Feed error:", feed.n); return []; }
-  }));
-
+  const results = await Promise.all(FEEDS.map(f => fetchWithFallback(f)));
   state.articles = results.flat().sort((a,b) => b.date - a.date);
+  
   $('lsp').style.display = 'none';
-  render();
+  if (state.articles.length === 0) {
+    $('grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--ink-muted)">No news found. Try refreshing in a moment.</div>';
+  } else {
+    render();
+  }
 }
 
 function render() {
@@ -160,13 +182,13 @@ function render() {
         <div class="cs">${a.src} • ${a.date.toLocaleDateString()}</div>
         <h2 class="ct">${a.title}</h2>
         <div style="flex:1"></div>
-        <a href="${a.link}" target="_blank" class="rbtn">VIEW ARTICLE</a>
+        <a href="${a.link}" target="_blank" class="rbtn">READ FULL STORY</a>
       </div>
     </article>
   `).join('');
 }
 
-// UI LOGIC
+// UI HANDLERS
 $('si').addEventListener('input', e => { state.query = e.target.value; render(); });
 $('rfbtn').addEventListener('click', loadNews);
 $('thbtn').addEventListener('click', () => {
@@ -183,7 +205,6 @@ document.querySelectorAll('[data-cat]').forEach(btn => {
   });
 });
 
-// Splash timeout
 setTimeout(() => {
   $('splash').style.opacity = '0';
   setTimeout(() => $('splash').style.display = 'none', 1000);
