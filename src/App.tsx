@@ -107,10 +107,13 @@ function LiveTicker() {
   const [eth, setEth] = useState({ price: '---', change: '---', color: 'text-gray-400' });
 
   useEffect(() => {
-    const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker/ethusdt@ticker');
+    const ws = new WebSocket('wss://stream.binance.us:9443/stream?streams=btcusdt@ticker/ethusdt@ticker');
     
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      const payload = JSON.parse(event.data);
+      if (!payload.data) return;
+      const data = payload.data;
+      
       if (data.s === 'BTCUSDT') {
         const pChange = parseFloat(data.P);
         setBtc({
