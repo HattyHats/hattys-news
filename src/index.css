@@ -8,25 +8,29 @@
 
 @layer base {
   :root {
-    --bg: #050505;
-    --bg2: #0d0d0d;
-    --surface: #111111;
-    --border: #252525;
+    --bg: #030303;
+    --bg2: #080808;
+    --surface: rgba(15, 15, 15, 0.7);
+    --surface-solid: #0f0f0f;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(220, 38, 38, 0.4);
     --ink: #f0f0f0;
     --ink-muted: #888;
     --red: #dc2626;
     --red-b: #ef4444;
-    --glow: 0 0 20px rgba(220, 38, 38, 0.15);
+    --glow: 0 0 30px rgba(220, 38, 38, 0.2);
     --ticker: #080808;
-    --t: 0.2s ease;
-    --r: 10px;
+    --t: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --r: 12px;
   }
 
   html.light {
     --bg: #f4f4f4;
     --bg2: #e5e5e5;
-    --surface: #ffffff;
-    --border: #d1d1d1;
+    --surface: rgba(255, 255, 255, 0.8);
+    --surface-solid: #ffffff;
+    --border: rgba(0, 0, 0, 0.1);
+    --border-hover: rgba(220, 38, 38, 0.5);
     --ink: #111;
     --ink-muted: #555;
   }
@@ -37,6 +41,8 @@
     font-family: var(--font-body);
     min-height: 100vh;
     padding-bottom: 80px;
+    background-image: radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.03) 0%, transparent 50%);
+    background-attachment: fixed;
   }
 }
 
@@ -50,19 +56,24 @@
 
   .card {
     background: var(--surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border);
     border-radius: var(--r);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: all 0.25s;
+    transition: all var(--t);
     animation: fadeIn 0.4s ease both;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   }
 
   .card:hover {
-    border-color: var(--red);
-    transform: translateY(-3px);
-    box-shadow: var(--glow);
+    border-color: var(--border-hover);
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 10px 40px -10px rgba(220, 38, 38, 0.2);
+    background: var(--surface-solid);
   }
 
   @keyframes fadeIn {
@@ -119,17 +130,19 @@
   }
 
   .fp {
-    padding: 0.4rem 1rem;
-    border-radius: 6px;
-    font-size: 0.65rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
     font-weight: 800;
     border: 1px solid var(--border);
-    background: var(--bg);
+    background: var(--surface);
     color: var(--ink-muted);
     cursor: pointer;
     white-space: nowrap;
     font-family: var(--font-mono);
-    transition: all 0.2s;
+    transition: all var(--t);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   .fp.on,
@@ -137,6 +150,8 @@
     border-color: var(--red);
     background: var(--red);
     color: #fff;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.3);
+    transform: translateY(-1px);
   }
 
   .ibtn {

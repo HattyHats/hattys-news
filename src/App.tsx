@@ -38,8 +38,115 @@ const FEEDS = [
   { n: 'CryptoSlate', u: 'https://news.google.com/rss/search?q=site:cryptoslate.com', c: 'altcoin' },
   { n: 'The Block', u: 'https://www.theblock.co/rss.xml', c: 'regulation' },
   { n: 'Mining News', u: 'https://news.google.com/rss/search?q=crypto+mining', c: 'mining' },
-  { n: 'Whale Alerts', u: 'https://news.google.com/rss/search?q=crypto+whale+transfer', c: 'whales' }
+  { n: 'Whale Alerts', u: 'https://news.google.com/rss/search?q=crypto+whale+transfer', c: 'whales' },
+  { n: 'TechCrunch', u: 'https://techcrunch.com/feed/', c: 'all' },
+  { n: 'Wired', u: 'https://wired.com/feed/rss', c: 'all' },
+  { n: 'The Verge', u: 'https://theverge.com/rss/index.xml', c: 'all' },
+  { n: 'Crypto.News', u: 'https://crypto.news/feed/', c: 'altcoin' },
+  { n: 'NewsBTC', u: 'https://newsbtc.com/feed/', c: 'bitcoin' },
+  { n: 'Bitcoin.com', u: 'https://news.bitcoin.com/feed/', c: 'bitcoin' }
 ];
+
+const FLYING_TEXTS = [
+  "Bitcoin Breaks Resistance", "Ethereum Updates Rollout", "SEC Evaluates ETF", "Whales Moving Millions", 
+  "DeFi TVL Skyrockets", "New NFT Collection Drops", "Mining Difficulty ATH", "Central Bank Crypto", 
+  "Web3 Adoption Accelerates", "Global Regulations Shift", "Smart Contract Audits", "Layer 2 Solutions"
+];
+
+function FlyingArticles() {
+  const [particles, setParticles] = useState<any[]>([]);
+
+  useEffect(() => {
+    const items = Array.from({ length: 25 }).map((_, i) => ({
+      id: i,
+      text: FLYING_TEXTS[Math.floor(Math.random() * FLYING_TEXTS.length)],
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 2.5,
+      duration: 1.5 + Math.random() * 2,
+    }));
+    setParticles(items);
+  }, []);
+
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" style={{ perspective: '800px' }}>
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          initial={{ opacity: 0, scale: 0.1, z: -800 }}
+          animate={{ opacity: [0, 0.8, 0], scale: [0.1, 1.5, 4], z: [ -800, 0, 400 ] }}
+          transition={{
+            duration: p.duration,
+            delay: p.delay,
+            repeat: Infinity,
+            ease: "easeIn"
+          }}
+          style={{
+            position: 'absolute',
+            left: `${p.left}%`,
+            top: `${p.top}%`,
+            transformStyle: 'preserve-3d'
+          }}
+          className="bg-[rgba(15,15,15,0.8)] border border-[rgba(255,255,255,0.1)] p-4 rounded-xl backdrop-blur-md shadow-[0_0_20px_rgba(220,38,38,0.15)] flex flex-col gap-2 min-w-[150px]"
+        >
+          <div className="w-10 h-1.5 bg-[var(--red)] rounded-full opacity-80"></div>
+          <div className="text-white font-mono text-[10px] sm:text-xs whitespace-nowrap opacity-90">{p.text}</div>
+          <div className="flex gap-1 mt-1">
+            <div className="w-16 h-1 bg-[rgba(255,255,255,0.2)] rounded-full"></div>
+            <div className="w-8 h-1 bg-[rgba(255,255,255,0.1)] rounded-full"></div>
+          </div>
+        </motion.div>
+      ))}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000_100%)] z-10" />
+    </div>
+  );
+}
+
+function LiveTicker() {
+  const [btc, setBtc] = useState({ price: '---', change: '---', color: 'text-gray-400' });
+  const [eth, setEth] = useState({ price: '---', change: '---', color: 'text-gray-400' });
+
+  useEffect(() => {
+    const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker/ethusdt@ticker');
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.s === 'BTCUSDT') {
+        const pChange = parseFloat(data.P);
+        setBtc({
+          price: parseFloat(data.c).toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
+          change: `${pChange > 0 ? '+' : ''}${pChange.toFixed(2)}%`,
+          color: pChange >= 0 ? 'text-green-500' : 'text-red-500'
+        });
+      } else if (data.s === 'ETHUSDT') {
+        const pChange = parseFloat(data.P);
+        setEth({
+          price: parseFloat(data.c).toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
+          change: `${pChange > 0 ? '+' : ''}${pChange.toFixed(2)}%`,
+          color: pChange >= 0 ? 'text-green-500' : 'text-red-500'
+        });
+      }
+    };
+
+    return () => ws.close();
+  }, []);
+
+  return (
+    <div className="flex gap-4 font-mono text-xs sm:text-sm items-center py-2 px-5 bg-[rgba(10,10,10,0.6)] border border-[var(--border)] rounded-full backdrop-blur-md shadow-lg shrink-0 w-max">
+      <div className="flex gap-2 items-center">
+        <span className="font-bold text-[#f7931a]">BTC</span>
+        <span className="text-white font-semibold">{btc.price}</span>
+        <span className={btc.color}>{btc.change}</span>
+      </div>
+      <div className="w-px h-4 bg-[var(--border)]" />
+      <div className="flex gap-2 items-center">
+        <span className="font-bold text-[#627eea]">ETH</span>
+        <span className="text-white font-semibold">{eth.price}</span>
+        <span className={eth.color}>{eth.change}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -159,17 +266,8 @@ export default function App() {
             transition={{ duration: 1 }}
             className="fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center overflow-hidden"
           >
-            {/* Background GIF */}
-            <div className="absolute inset-0 z-0 opacity-40">
-              <img 
-                src="/newsworld.gif" 
-                alt="Background" 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </div>
+            {/* Animated Flying Articles */}
+            <FlyingArticles />
             
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -274,7 +372,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <header id="hdr" className="sticky top-0 z-80 bg-[rgba(5,5,5,0.8)] backdrop-blur-[12px] border-b border-[var(--border)]">
+      <header id="hdr" className="sticky top-0 z-80 bg-[var(--surface)] backdrop-blur-xl border-b border-[var(--border)] shadow-sm">
         <div className="max-w-[1400px] mx-auto p-[0.6rem_1rem] flex items-center gap-4">
           <div className="logo text-2xl">HATTY'S NEWS</div>
           <div className="flex-1 relative">
@@ -340,25 +438,31 @@ export default function App() {
       </header>
 
       <main className="max-w-[1400px] mx-auto my-6 px-4">
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-none">
-          {[
-            { id: 'all', label: '⚡ ALL' },
-            { id: 'bitcoin', label: '₿ BITCOIN' },
-            { id: 'ethereum', label: 'Ξ ETHEREUM' },
-            { id: 'defi', label: '🏦 DEFI' },
-            { id: 'nft', label: '🖼️ NFT/WEB3' },
-            { id: 'altcoin', label: '🚀 ALTCOINS' },
-            { id: 'mining', label: '⛏️ MINING' },
-            { id: 'regulation', label: '⚖️ POLICY' }
-          ].map(cat => (
-            <button
-              key={cat.id}
-              className={`fp ${filter === cat.id ? 'on' : ''}`}
-              onClick={() => setFilter(cat.id)}
-            >
-              {cat.label}
-            </button>
-          ))}
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none w-full lg:w-auto">
+            {[
+              { id: 'all', label: '⚡ ALL' },
+              { id: 'bitcoin', label: '₿ BITCOIN' },
+              { id: 'ethereum', label: 'Ξ ETHEREUM' },
+              { id: 'defi', label: '🏦 DEFI' },
+              { id: 'nft', label: '🖼️ NFT/WEB3' },
+              { id: 'altcoin', label: '🚀 ALTCOINS' },
+              { id: 'mining', label: '⛏️ MINING' },
+              { id: 'regulation', label: '⚖️ POLICY' }
+            ].map(cat => (
+              <button
+                key={cat.id}
+                className={`fp shrink-0 ${filter === cat.id ? 'on' : ''}`}
+                onClick={() => setFilter(cat.id)}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+          
+          <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+            <LiveTicker />
+          </div>
         </div>
 
         {loading && articles.length === 0 ? (
@@ -376,9 +480,9 @@ export default function App() {
             {filtered.map((a, idx) => (
               <motion.article
                 key={idx}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                transition={{ duration: 0.4, delay: Math.min(idx * 0.05, 1.2), ease: [0.2, 0.8, 0.2, 1] }}
                 className="card"
               >
                 <img
