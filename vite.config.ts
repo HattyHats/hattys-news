@@ -68,23 +68,42 @@ export default defineConfig(({mode}) => {
       apiNewsPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
-          name: "Hatty's News Terminal",
-          short_name: 'HattyNews',
-          description: 'A premium Crypto and Technology news platform.',
+          name: "Hatty's News — Global & Crypto Terminal",
+          short_name: "Hatty's News",
+          description: "Real-time Crypto Intelligence & Verified World News Terminal.",
           theme_color: '#030303',
           background_color: '#030303',
           display: 'standalone',
+          orientation: 'any',
+          start_url: '/',
+          scope: '/',
+          categories: ['news', 'finance', 'business'],
           icons: [
             {
-              src: '/favicon.ico',
-              sizes: '192x192',
-              type: 'image/png'
+              src: '/favicon.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'any'
             },
             {
-              src: '/favicon.ico',
+              src: '/pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: '/pwa-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: '/pwa-maskable-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
             }
           ]
         }

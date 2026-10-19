@@ -2,29 +2,63 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- Primary Metadata -->
+    <title>Hatty's News — Global Wire & Crypto Intelligence</title>
+    <meta name="title" content="Hatty's News — Global Wire & Crypto Intelligence" />
+    <meta name="description" content="Hatty's News: Real-time global wire dispatches, fact-checked non-partisan world reporting, and live tick-by-tick crypto intelligence terminal." />
+    
+    <!-- Bookmarks & Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    
+    <!-- PWA & Mobile App Experience -->
     <meta name="theme-color" content="#030303" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="/favicon.ico">
-    <title>Hatty's News — Crypto Intelligence</title>
-    <script type="module" crossorigin src="/assets/index-DiCvCbni.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-C9QzT9jL.css">
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Hatty's News" />
+    <meta name="application-name" content="Hatty's News" />
+
+    <!-- Open Graph / Social Sharing & Rich Bookmarks -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hattynews.org/" />
+    <meta property="og:title" content="Hatty's News — Global Wire & Crypto Intelligence" />
+    <meta property="og:description" content="Real-time Global Wire Dispatches & Live Crypto Intelligence." />
+    <meta property="og:image" content="/pwa-512x512.png" />
+
+    <!-- Twitter Summary -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Hatty's News — Global Wire & Crypto Intelligence" />
+    <meta name="twitter:description" content="Real-time Global Wire Dispatches & Live Crypto Intelligence." />
+    <meta name="twitter:image" content="/pwa-512x512.png" />
+
+    <!-- High-Performance Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/assets/index-Dr1v6T5z.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DVOeJ6cX.css">
   <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
     <div id="root"></div>
+
+    <!-- PWA Service Worker Registration -->
     <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            registration.unregister();
-          }
+      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
         });
       }
     </script>
+
+    <!-- Main React Bundle -->
+
+    <!-- TinyAdz Monetization Network -->
+    <script src="https://cdn.apitiny.net/scripts/v2.0/main.js" data-site-id="6ad61abfd23e92ca64af1526" data-test-mode="false" async></script>
   </body>
 </html>
-

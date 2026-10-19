@@ -8,7 +8,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, Sun, Moon, RefreshCw, Menu, ExternalLink, Gauge, X, 
   Share2, Check, ArrowRight, Zap, TrendingUp, TrendingDown,
-  Layers, ShieldAlert, Radio, Clock, Globe, ShieldCheck
+  Layers, ShieldAlert, Radio, Clock, Globe, ShieldCheck,
+  Download, Smartphone, Sparkles
 } from 'lucide-react';
 
 export type AppMode = 'crypto' | 'world';
@@ -780,6 +781,57 @@ export default function App() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [splashProgress, setSplashProgress] = useState(0);
 
+  // PWA Standalone App State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+
+  // Detect PWA installation status and beforeinstallprompt event
+  useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    if (isStandalone) {
+      setIsInstalled(true);
+    }
+
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIosDevice = /iphone|ipad|ipod/.test(ua) && !(window as any).MSStream;
+    setIsIOS(isIosDevice);
+
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try {
+        const choice = await deferredPrompt.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          setIsInstalled(true);
+        }
+      } catch {}
+      setDeferredPrompt(null);
+    } else {
+      setShowInstallModal(true);
+    }
+  };
+
   // Apply world-mode class to document.body for CSS theme transformation
   useEffect(() => {
     if (mode === 'world') {
@@ -1255,11 +1307,126 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* PWA / App Installation Modal */}
+      <AnimatePresence>
+        {showInstallModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              onClick={() => setShowInstallModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            >
+              <button 
+                className="absolute top-4 right-4 text-[var(--ink-muted)] hover:text-white transition-colors"
+                onClick={() => setShowInstallModal(false)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="text-center">
+                <div className="relative inline-block mb-3">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-600 to-blue-600 blur-lg opacity-60" />
+                  <img 
+                    src="/favicon.svg" 
+                    alt="Hatty's News Logo" 
+                    className="relative w-16 h-16 rounded-2xl border border-white/20 shadow-xl mx-auto" 
+                  />
+                </div>
+
+                <div className="cs mb-1">STANDALONE WEB APP</div>
+                <h2 className="font-display text-3xl sm:text-4xl text-white mb-2">INSTALL HATTY'S NEWS</h2>
+                <p className="text-xs text-[var(--ink-muted)] mb-5">
+                  Save Hatty's News directly to your Home Screen or Desktop for instant, full-screen offline-ready access.
+                </p>
+
+                {isIOS ? (
+                  /* iOS Safari Instructions */
+                  <div className="text-left space-y-3 bg-[var(--bg)] p-4 rounded-xl border border-[var(--border)] text-xs font-mono">
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center shrink-0">1</span>
+                      <div>
+                        Tap the <strong className="text-white">Share</strong> button <Share2 className="w-3.5 h-3.5 inline text-blue-400 mx-1" /> at the bottom of Safari.
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center shrink-0">2</span>
+                      <div>
+                        Scroll down and tap <strong className="text-white">"Add to Home Screen"</strong> <span className="text-amber-400">📲</span>.
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center shrink-0">3</span>
+                      <div>
+                        Tap <strong className="text-white">"Add"</strong> in the top right. Hatty's News will now open as a standalone app!
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Android / Desktop Chrome & Edge Instructions */
+                  <div className="space-y-4">
+                    <div className="text-left space-y-2.5 bg-[var(--bg)] p-4 rounded-xl border border-[var(--border)] text-xs font-mono text-gray-300">
+                      <div className="flex items-center gap-2 text-white font-bold">
+                        <Smartphone className="w-4 h-4 text-emerald-400" />
+                        <span>FAST 1-CLICK INSTALLATION</span>
+                      </div>
+                      <p className="text-[11px] text-[var(--ink-muted)]">
+                        Click the install button below or select <strong>"Install Hatty's News"</strong> from your browser menu.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        if (deferredPrompt) {
+                          deferredPrompt.prompt();
+                          const choice = await deferredPrompt.userChoice;
+                          if (choice?.outcome === 'accepted') {
+                            setIsInstalled(true);
+                            setShowInstallModal(false);
+                          }
+                          setDeferredPrompt(null);
+                        } else {
+                          setShowInstallModal(false);
+                        }
+                      }}
+                      className="w-full py-3 bg-gradient-to-r from-red-600 via-purple-600 to-blue-600 text-white font-mono font-bold text-xs rounded-xl shadow-[0_0_25px_rgba(220,38,38,0.4)] hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>{deferredPrompt ? 'INSTALL APP NOW' : 'GOT IT'}</span>
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center text-[10px] font-mono text-[var(--ink-muted)] border-t border-[var(--border)] pt-4 mt-5">
+                  <span>FREE // NO APP STORE NEEDED</span>
+                  <span className="text-emerald-400 font-bold">PWA READY ✓</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Top Header */}
       <header id="hdr" className="sticky top-0 z-80 bg-[var(--surface)] backdrop-blur-xl border-b border-[var(--border)] shadow-md">
         <div className="max-w-[1440px] mx-auto p-[0.6rem_1rem] sm:p-[0.75rem_1.5rem] flex items-center gap-3 sm:gap-4 flex-wrap md:flex-nowrap">
           {/* Logo with Mode Badge */}
-          <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => { setFilter('all'); setQuery(''); }}>
+          <div className="flex items-center gap-2.5 cursor-pointer shrink-0" onClick={() => { setFilter('all'); setQuery(''); }}>
+            <div className="relative group shrink-0">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50 group-hover:opacity-100 transition-opacity" />
+              <img 
+                src="/favicon.svg" 
+                alt="Hatty's News Logo" 
+                className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-white/20 shadow-md group-hover:scale-105 transition-transform" 
+              />
+            </div>
             <span className="logo text-2xl sm:text-3xl font-display">HATTY'S NEWS</span>
             <span className={`hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-mono font-bold border transition-colors ${
               mode === 'world' 
@@ -1318,6 +1485,18 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0 order-4 ml-auto">
+            {/* Install App Button */}
+            {!isInstalled && (
+              <button 
+                onClick={handleInstallClick}
+                className="ibtn w-auto px-2.5 sm:px-3 flex items-center gap-1.5 font-mono text-xs text-white bg-gradient-to-r from-red-600/25 via-purple-600/25 to-blue-600/25 hover:from-red-600/40 hover:to-blue-600/40 border border-white/20 hover:border-white/50 shadow-sm shrink-0" 
+                title="Install Hatty's News App"
+              >
+                <Download className="w-3.5 h-3.5 text-white" />
+                <span className="hidden sm:inline font-bold">INSTALL APP</span>
+              </button>
+            )}
+
             {/* Fear & Greed Button (Crypto mode only) */}
             {mode === 'crypto' && (
               <button 
@@ -1371,12 +1550,30 @@ export default function App() {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-60 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-20 overflow-hidden"
+                      className="absolute right-0 mt-2 w-64 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-20 overflow-hidden"
                     >
                       <div className="p-3 text-[10px] font-mono text-[var(--ink-muted)] uppercase border-b border-[var(--border)] bg-[var(--bg)] flex items-center justify-between">
                         <span>Hatty's Network</span>
                         <span className="w-2 h-2 rounded-full bg-emerald-500" />
                       </div>
+
+                      {/* Standalone Install Pill inside dropdown */}
+                      <div className="p-2 border-b border-[var(--border)] bg-white/5">
+                        <button
+                          onClick={() => {
+                            setShowMenu(false);
+                            handleInstallClick();
+                          }}
+                          className="w-full flex items-center justify-between px-3 py-2 text-xs font-mono font-bold text-white bg-gradient-to-r from-red-600 via-purple-600 to-blue-600 rounded-lg shadow-md hover:opacity-95 transition-opacity"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Download className="w-3.5 h-3.5" />
+                            <span>{isInstalled ? 'APP INSTALLED ✓' : 'INSTALL APP'}</span>
+                          </span>
+                          <span className="text-[10px] opacity-80">{isInstalled ? 'READY' : 'FREE'}</span>
+                        </button>
+                      </div>
+
                       <div className="py-1">
                         {OTHER_SITES.map((site) => (
                           <a
@@ -1584,7 +1781,7 @@ export default function App() {
       </main>
 
       {/* Bottom LiveCoinWatch Marquee Ticker */}
-      <div id="tickers" className="fixed bottom-0 left-0 right-0 z-90 bg-[#060608] border-t border-[var(--border)] shadow-2xl">
+      <div id="tickers" className="fixed bottom-0 left-0 right-0 z-90 bg-[#060608] border-t border-[var(--border)] shadow-2xl pb-[env(safe-area-inset-bottom,0px)]">
         <div 
           className="livecoinwatch-widget-5" 
           lcw-base="USD" 
