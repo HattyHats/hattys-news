@@ -11,11 +11,20 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="/favicon.ico">
     <title>Hatty's News — Crypto Intelligence</title>
-    <script type="module" crossorigin src="/assets/index-d0TNR4Ni.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CySM8T1t.css">
+    <script type="module" crossorigin src="/assets/index-DiCvCbni.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-C9QzT9jL.css">
   <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+    </script>
   </body>
 </html>
 

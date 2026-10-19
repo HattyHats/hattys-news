@@ -26,11 +26,27 @@ const parser = new RSSParser({
 });
 
 export const handler: Handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      },
+      body: "",
+    };
+  }
+
   const url = event.queryStringParameters?.url;
 
   if (!url) {
     return {
       statusCode: 400,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
       body: JSON.stringify({ error: "URL is required" }),
     };
   }
@@ -42,14 +58,19 @@ export const handler: Handler = async (event) => {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=120, s-maxage=120",
       },
       body: JSON.stringify(feed),
     };
-  } catch (error) {
-    console.error(`Error fetching feed from ${url}:`, error);
+  } catch (error: any) {
+    console.error(`Error fetching feed from ${url}:`, error?.message || error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Failed to fetch feed" }),
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ error: "Failed to fetch feed", details: error?.message || String(error) }),
     };
   }
 };

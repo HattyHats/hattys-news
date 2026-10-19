@@ -33,8 +33,9 @@ const parser = new RSSParser({
 });
 
 async function startServer() {
+  console.log("Initializing Hatty News Server on port 4000...");
   const app = express();
-  const PORT = 3000;
+  const PORT = 4000;
 
   app.use(cors());
   app.use(express.json());
@@ -48,10 +49,11 @@ async function startServer() {
 
     try {
       const feed = await parser.parseURL(url);
+      res.setHeader("Cache-Control", "public, max-age=120");
       res.json(feed);
-    } catch (error) {
-      console.error(`Error fetching feed from ${url}:`, error);
-      res.status(500).json({ error: "Failed to fetch feed" });
+    } catch (error: any) {
+      console.error(`Error fetching feed from ${url}:`, error?.message || error);
+      res.status(500).json({ error: "Failed to fetch feed", details: error?.message || String(error) });
     }
   });
 
