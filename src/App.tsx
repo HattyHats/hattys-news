@@ -807,6 +807,85 @@ function AadsAdUnit() {
   );
 }
 
+/* --- GLOBAL STOCK MARKET TICKER TAPE (WORLD MODE) --- */
+function StockTickerTape({ isDark }: { isDark: boolean }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const widgetContainer = document.createElement('div');
+    widgetContainer.className = 'tradingview-widget-container';
+    widgetContainer.style.width = '100%';
+    widgetContainer.style.height = '46px';
+
+    const widgetSlot = document.createElement('div');
+    widgetSlot.className = 'tradingview-widget-container__widget';
+    widgetSlot.style.width = '100%';
+    widgetSlot.style.height = '46px';
+    widgetSlot.innerHTML = `
+      <div style="display:flex;align-items:center;height:46px;padding:0 16px;font-family:monospace;font-size:11px;color:${isDark ? '#94a3b8' : '#475569'};gap:18px;overflow:hidden;white-space:nowrap;">
+        <span style="font-weight:bold;color:${isDark ? '#60a5fa' : '#2563eb'};">● GLOBAL MARKETS:</span>
+        <span>S&P 500 <strong style="color:${isDark ? '#fff' : '#0f172a'};">5,864</strong> <span style="color:#22c55e;">+0.42%</span></span>
+        <span>NASDAQ 100 <strong style="color:${isDark ? '#fff' : '#0f172a'};">20,380</strong> <span style="color:#22c55e;">+0.65%</span></span>
+        <span>DOW 30 <strong style="color:${isDark ? '#fff' : '#0f172a'};">43,275</strong> <span style="color:#22c55e;">+0.18%</span></span>
+        <span>GOLD <strong style="color:${isDark ? '#fff' : '#0f172a'};">$2,720</strong> <span style="color:#22c55e;">+0.55%</span></span>
+        <span>CRUDE OIL <strong style="color:${isDark ? '#fff' : '#0f172a'};">$70.80</strong> <span style="color:#ef4444;">-1.10%</span></span>
+        <span>NVDA <strong style="color:${isDark ? '#fff' : '#0f172a'};">$138.25</strong> <span style="color:#22c55e;">+1.45%</span></span>
+        <span>AAPL <strong style="color:${isDark ? '#fff' : '#0f172a'};">$235.10</strong> <span style="color:#22c55e;">+0.80%</span></span>
+      </div>
+    `;
+    widgetContainer.appendChild(widgetSlot);
+
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
+    script.type = 'text/javascript';
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      symbols: [
+        { proName: 'FOREXCOM:SPXUSD', title: 'S&P 500' },
+        { proName: 'FOREXCOM:NSXUSD', title: 'NASDAQ 100' },
+        { proName: 'FOREXCOM:DJI', title: 'Dow Jones' },
+        { proName: 'INDEX:NKY', title: 'Nikkei 225' },
+        { proName: 'TVC:UKX', title: 'FTSE 100' },
+        { proName: 'TVC:DAX', title: 'DAX 40' },
+        { proName: 'OANDA:XAUUSD', title: 'Gold' },
+        { proName: 'TVC:USOIL', title: 'Crude Oil' },
+        { proName: 'NASDAQ:NVDA', title: 'NVIDIA' },
+        { proName: 'NASDAQ:AAPL', title: 'Apple' },
+        { proName: 'NASDAQ:MSFT', title: 'Microsoft' },
+        { proName: 'NASDAQ:AMZN', title: 'Amazon' },
+        { proName: 'NASDAQ:GOOGL', title: 'Alphabet' },
+        { proName: 'NASDAQ:TSLA', title: 'Tesla' },
+        { proName: 'NASDAQ:META', title: 'Meta' }
+      ],
+      showSymbolLogo: true,
+      isTransparent: true,
+      displayMode: 'adaptive',
+      colorTheme: isDark ? 'dark' : 'light',
+      locale: 'en'
+    });
+
+    widgetContainer.appendChild(script);
+    container.appendChild(widgetContainer);
+
+    return () => {
+      container.innerHTML = '';
+    };
+  }, [isDark]);
+
+  return (
+    <div 
+      ref={containerRef} 
+      className="w-full h-[46px] overflow-hidden flex items-center" 
+      style={{ minHeight: '46px' }}
+    />
+  );
+}
+
 export default function App() {
   const [mode, setMode] = useState<AppMode>('crypto');
   const [articles, setArticles] = useState<Article[]>([]);
@@ -1982,16 +2061,29 @@ export default function App() {
         )}
       </main>
 
-      {/* Bottom LiveCoinWatch Marquee Ticker */}
-      <div id="tickers" className="fixed bottom-0 left-0 right-0 z-90 bg-[#060608] border-t border-[var(--border)] shadow-2xl pb-[env(safe-area-inset-bottom,0px)]">
-        <div 
-          className="livecoinwatch-widget-5" 
-          lcw-base="USD" 
-          lcw-color-tx="#abb8c3" 
-          lcw-marquee-1="coins" 
-          lcw-marquee-2="movers" 
-          lcw-marquee-items="15"
-        ></div>
+      {/* Bottom Fixed Ticker Strip: LiveCoinWatch in Crypto Mode, Global Stock Tape in World Mode */}
+      <div 
+        id="tickers" 
+        className={`fixed bottom-0 left-0 right-0 z-90 border-t border-[var(--border)] shadow-2xl pb-[env(safe-area-inset-bottom,0px)] transition-colors duration-300 ${
+          isDark || mode === 'crypto' ? 'bg-[#060608]' : 'bg-[#ffffff]'
+        }`}
+      >
+        {/* Crypto Mode: LiveCoinWatch Crypto Marquee */}
+        <div className={mode === 'crypto' ? 'block' : 'hidden'}>
+          <div 
+            className="livecoinwatch-widget-5" 
+            lcw-base="USD" 
+            lcw-color-tx="#abb8c3" 
+            lcw-marquee-1="coins" 
+            lcw-marquee-2="movers" 
+            lcw-marquee-items="15"
+          ></div>
+        </div>
+
+        {/* World News Mode: Global Stock Market & Indices Ticker */}
+        <div className={mode === 'world' ? 'block' : 'hidden'}>
+          <StockTickerTape isDark={isDark} />
+        </div>
       </div>
     </div>
   );
