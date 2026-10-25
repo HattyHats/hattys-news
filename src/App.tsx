@@ -9,7 +9,7 @@ import {
   Search, Sun, Moon, RefreshCw, Menu, ExternalLink, Gauge, X, 
   Share2, Check, ArrowRight, Zap, TrendingUp, TrendingDown,
   Layers, ShieldAlert, Radio, Clock, Globe, ShieldCheck,
-  Download, Smartphone, Sparkles
+  Download, Smartphone, Sparkles, AlertTriangle
 } from 'lucide-react';
 
 export type AppMode = 'crypto' | 'world';
@@ -548,11 +548,11 @@ interface TickerToken {
 }
 
 const DEFAULT_TOKENS: Record<string, TickerToken> = {
-  'BTC-USD': { symbol: 'BTC', name: 'Bitcoin', price: 82300, open24h: 81400, change24h: 1.1, flash: null, formatted: '$82,300.00' },
-  'ETH-USD': { symbol: 'ETH', name: 'Ethereum', price: 2415, open24h: 2400, change24h: 0.62, flash: null, formatted: '$2,415.00' },
-  'SOL-USD': { symbol: 'SOL', name: 'Solana', price: 104.2, open24h: 103.5, change24h: 0.67, flash: null, formatted: '$104.20' },
-  'DOGE-USD': { symbol: 'DOGE', name: 'Dogecoin', price: 0.079, open24h: 0.078, change24h: 1.28, flash: null, formatted: '$0.0790' },
-  'XRP-USD': { symbol: 'XRP', name: 'XRP', price: 0.54, open24h: 0.542, change24h: -0.37, flash: null, formatted: '$0.5400' },
+  'BTC-USD': { symbol: 'BTC', name: 'Bitcoin', price: 80726.00, open24h: 80695.00, change24h: 0.04, flash: null, formatted: '$80,726.00' },
+  'ETH-USD': { symbol: 'ETH', name: 'Ethereum', price: 2356.13, open24h: 2372.20, change24h: -0.68, flash: null, formatted: '$2,356.13' },
+  'SOL-USD': { symbol: 'SOL', name: 'Solana', price: 102.26, open24h: 102.17, change24h: 0.09, flash: null, formatted: '$102.26' },
+  'DOGE-USD': { symbol: 'DOGE', name: 'Dogecoin', price: 0.0778, open24h: 0.0785, change24h: -0.87, flash: null, formatted: '$0.0778' },
+  'XRP-USD': { symbol: 'XRP', name: 'XRP', price: 1.3020, open24h: 1.2890, change24h: 1.01, flash: null, formatted: '$1.3020' },
 };
 
 function LiveTicker() {
@@ -563,6 +563,39 @@ function LiveTicker() {
 
   useEffect(() => {
     const fetchInitial = async () => {
+      try {
+        const cgRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,dogecoin,ripple&vs_currencies=usd&include_24hr_change=true');
+        if (cgRes.ok) {
+          const cg = await cgRes.json();
+          const map: Record<string, { price: number; change: number }> = {
+            'BTC-USD': { price: cg.bitcoin?.usd, change: cg.bitcoin?.usd_24h_change || 0 },
+            'ETH-USD': { price: cg.ethereum?.usd, change: cg.ethereum?.usd_24h_change || 0 },
+            'SOL-USD': { price: cg.solana?.usd, change: cg.solana?.usd_24h_change || 0 },
+            'DOGE-USD': { price: cg.dogecoin?.usd, change: cg.dogecoin?.usd_24h_change || 0 },
+            'XRP-USD': { price: cg.ripple?.usd, change: cg.ripple?.usd_24h_change || 0 },
+          };
+
+          setTokens(prev => {
+            const next = { ...prev };
+            for (const [id, val] of Object.entries(map)) {
+              if (val.price && next[id]) {
+                const rawPrice = val.price;
+                const formatted = rawPrice >= 1000
+                  ? `$${rawPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : rawPrice >= 1 ? `$${rawPrice.toFixed(2)}` : `$${rawPrice.toFixed(4)}`;
+                next[id] = {
+                  ...next[id],
+                  price: rawPrice,
+                  change24h: val.change,
+                  formatted
+                };
+              }
+            }
+            return next;
+          });
+        }
+      } catch {}
+
       const productIds = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'DOGE-USD', 'XRP-USD'];
       productIds.forEach(async (id) => {
         try {
@@ -571,27 +604,25 @@ function LiveTicker() {
           const data = await res.json();
           if (data && data.price) {
             const rawPrice = parseFloat(data.price);
-            const open = parseFloat(data.open_24h) || rawPrice;
-            const change = open ? ((rawPrice - open) / open) * 100 : 0;
-            const sym = id.split('-')[0];
-            const formatted = rawPrice >= 1000 
-              ? `$${rawPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-              : rawPrice >= 1 
-              ? `$${rawPrice.toFixed(2)}`
-              : `$${rawPrice.toFixed(4)}`;
-
-            setTokens(prev => ({
-              ...prev,
-              [id]: {
-                symbol: sym,
-                name: id,
-                price: rawPrice,
-                open24h: open,
-                change24h: change,
-                flash: null,
-                formatted
-              }
-            }));
+            setTokens(prev => {
+              const current = prev[id];
+              if (!current) return prev;
+              const open = parseFloat(data.open_24h) || current.open24h || rawPrice;
+              const change = open ? ((rawPrice - open) / open) * 100 : current.change24h;
+              const formatted = rawPrice >= 1000 
+                ? `$${rawPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : rawPrice >= 1 ? `$${rawPrice.toFixed(2)}` : `$${rawPrice.toFixed(4)}`;
+              return {
+                ...prev,
+                [id]: {
+                  ...current,
+                  price: rawPrice,
+                  open24h: open,
+                  change24h: change,
+                  formatted
+                }
+              };
+            });
           }
         } catch {}
       });
@@ -688,22 +719,22 @@ function LiveTicker() {
   }, []);
 
   return (
-    <div className="w-full flex items-center justify-between gap-3 overflow-x-auto scrollbar-none py-1">
-      <div className="flex items-center gap-2 px-2.5 py-1 bg-red-500/10 border border-red-500/20 rounded-lg shrink-0">
-        <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-ping' : 'bg-amber-500'}`} />
+    <div className="w-full flex items-center justify-between gap-2 overflow-x-auto scrollbar-none py-1">
+      <div className="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-red-500/10 border border-red-500/20 rounded-lg shrink-0">
+        <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-500 animate-ping' : 'bg-amber-500'} shrink-0`} />
         <span className="text-[10px] font-mono font-bold tracking-wider text-[var(--red)] uppercase hidden sm:inline">
-          {isConnected ? 'LIVE COINBASE STREAM (TICK-BY-TICK)' : 'CONNECTING TO STREAM...'}
+          {isConnected ? 'CRYPTO STREAM' : 'CONNECTING...'}
         </span>
         <span className="text-[10px] font-mono font-bold tracking-wider text-[var(--red)] uppercase sm:hidden">
           LIVE
         </span>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {(Object.values(tokens) as TickerToken[]).map((token) => (
           <div
             key={token.symbol}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border font-mono text-xs transition-all duration-200 shrink-0 ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs transition-all duration-200 shrink-0 ${
               token.flash === 'up'
                 ? 'bg-emerald-500/25 border-emerald-500/60 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]'
                 : token.flash === 'down'
@@ -829,13 +860,14 @@ function StockTickerTape({ isDark }: { isDark: boolean }) {
     widgetSlot.innerHTML = `
       <div style="display:flex;align-items:center;height:46px;padding:0 16px;font-family:monospace;font-size:11px;color:${isDark ? '#94a3b8' : '#475569'};gap:18px;overflow:hidden;white-space:nowrap;">
         <span style="font-weight:bold;color:${isDark ? '#60a5fa' : '#2563eb'};">● GLOBAL MARKETS:</span>
-        <span>S&P 500 <strong style="color:${isDark ? '#fff' : '#0f172a'};">5,864</strong> <span style="color:#22c55e;">+0.42%</span></span>
-        <span>NASDAQ 100 <strong style="color:${isDark ? '#fff' : '#0f172a'};">20,380</strong> <span style="color:#22c55e;">+0.65%</span></span>
-        <span>DOW 30 <strong style="color:${isDark ? '#fff' : '#0f172a'};">43,275</strong> <span style="color:#22c55e;">+0.18%</span></span>
-        <span>GOLD <strong style="color:${isDark ? '#fff' : '#0f172a'};">$2,720</strong> <span style="color:#22c55e;">+0.55%</span></span>
-        <span>CRUDE OIL <strong style="color:${isDark ? '#fff' : '#0f172a'};">$70.80</strong> <span style="color:#ef4444;">-1.10%</span></span>
-        <span>NVDA <strong style="color:${isDark ? '#fff' : '#0f172a'};">$138.25</strong> <span style="color:#22c55e;">+1.45%</span></span>
-        <span>AAPL <strong style="color:${isDark ? '#fff' : '#0f172a'};">$235.10</strong> <span style="color:#22c55e;">+0.80%</span></span>
+        <span>S&P 500 <strong style="color:${isDark ? '#fff' : '#0f172a'};">759.97</strong> <span style="color:#ef4444;">-0.52%</span></span>
+        <span>NASDAQ 100 <strong style="color:${isDark ? '#fff' : '#0f172a'};">704.40</strong> <span style="color:#ef4444;">-0.01%</span></span>
+        <span>DOW 30 <strong style="color:${isDark ? '#fff' : '#0f172a'};">521.37</strong> <span style="color:#ef4444;">-1.24%</span></span>
+        <span>CRUDE OIL <strong style="color:${isDark ? '#fff' : '#0f172a'};">$103.27</strong> <span style="color:#22c55e;">+3.82%</span></span>
+        <span>GOLD <strong style="color:${isDark ? '#fff' : '#0f172a'};">$4,007.90</strong> <span style="color:#ef4444;">-1.29%</span></span>
+        <span>NVDA <strong style="color:${isDark ? '#fff' : '#0f172a'};">$210.96</strong> <span style="color:#ef4444;">-0.59%</span></span>
+        <span>AAPL <strong style="color:${isDark ? '#fff' : '#0f172a'};">$347.73</strong> <span style="color:#ef4444;">-0.14%</span></span>
+        <span>TSLA <strong style="color:${isDark ? '#fff' : '#0f172a'};">$372.22</strong> <span style="color:#ef4444;">-0.63%</span></span>
       </div>
     `;
     widgetContainer.appendChild(widgetSlot);
@@ -846,14 +878,14 @@ function StockTickerTape({ isDark }: { isDark: boolean }) {
     script.async = true;
     script.innerHTML = JSON.stringify({
       symbols: [
-        { proName: 'FOREXCOM:SPXUSD', title: 'S&P 500' },
-        { proName: 'FOREXCOM:NSXUSD', title: 'NASDAQ 100' },
-        { proName: 'FOREXCOM:DJI', title: 'Dow Jones' },
-        { proName: 'INDEX:NKY', title: 'Nikkei 225' },
+        { proName: 'AMEX:SPY', title: 'S&P 500' },
+        { proName: 'NASDAQ:QQQ', title: 'NASDAQ 100' },
+        { proName: 'AMEX:DIA', title: 'Dow Jones' },
+        { proName: 'AMEX:IWM', title: 'Russell 2000' },
         { proName: 'TVC:UKX', title: 'FTSE 100' },
         { proName: 'TVC:DAX', title: 'DAX 40' },
-        { proName: 'OANDA:XAUUSD', title: 'Gold' },
         { proName: 'TVC:USOIL', title: 'Crude Oil' },
+        { proName: 'OANDA:XAUUSD', title: 'Gold' },
         { proName: 'NASDAQ:NVDA', title: 'NVIDIA' },
         { proName: 'NASDAQ:AAPL', title: 'Apple' },
         { proName: 'NASDAQ:MSFT', title: 'Microsoft' },
@@ -886,6 +918,559 @@ function StockTickerTape({ isDark }: { isDark: boolean }) {
   );
 }
 
+
+/* --- COMMODITIES & STOCKS LIVE SPOT TICKER (WORLD MODE) --- */
+interface CommodityItem {
+  symbol: string;
+  name: string;
+  price: number;
+  open24h: number;
+  change24h: number;
+  unit: string;
+  formatted: string;
+  flash: 'up' | 'down' | null;
+}
+
+const DEFAULT_COMMODITIES: Record<string, CommodityItem> = {
+  'OIL_CRUDE': {
+    symbol: 'CRUDE OIL',
+    name: 'WTI Crude Oil',
+    price: 103.27,
+    open24h: 99.47,
+    change24h: 3.82,
+    unit: '',
+    formatted: '$103.27',
+    flash: null,
+  },
+  'OIL_BRENT': {
+    symbol: 'BRENT',
+    name: 'Brent Crude Oil',
+    price: 111.70,
+    open24h: 108.66,
+    change24h: 2.80,
+    unit: '',
+    formatted: '$111.70',
+    flash: null,
+  },
+  'GOLD': {
+    symbol: 'GOLD',
+    name: 'Gold Spot',
+    price: 4007.90,
+    open24h: 4060.40,
+    change24h: -1.29,
+    unit: '',
+    formatted: '$4,007.90',
+    flash: null,
+  },
+  'SILVER': {
+    symbol: 'SILVER',
+    name: 'Silver Spot',
+    price: 53.95,
+    open24h: 55.01,
+    change24h: -1.92,
+    unit: '',
+    formatted: '$53.95',
+    flash: null,
+  },
+  'NAT_GAS': {
+    symbol: 'NAT GAS',
+    name: 'Henry Hub Natural Gas',
+    price: 3.05,
+    open24h: 3.16,
+    change24h: -3.36,
+    unit: '',
+    formatted: '$3.05',
+    flash: null,
+  },
+  'COPPER': {
+    symbol: 'COPPER',
+    name: 'COMEX Copper',
+    price: 6.51,
+    open24h: 6.40,
+    change24h: 1.72,
+    unit: '',
+    formatted: '$6.51',
+    flash: null,
+  },
+};
+
+const DEFAULT_STOCKS: Record<string, CommodityItem> = {
+  'SPY': {
+    symbol: 'S&P 500',
+    name: 'SPDR S&P 500',
+    price: 759.97,
+    open24h: 763.96,
+    change24h: -0.52,
+    unit: '',
+    formatted: '$759.97',
+    flash: null,
+  },
+  'QQQ': {
+    symbol: 'NASDAQ 100',
+    name: 'Invesco QQQ',
+    price: 704.40,
+    open24h: 704.47,
+    change24h: -0.01,
+    unit: '',
+    formatted: '$704.40',
+    flash: null,
+  },
+  'DIA': {
+    symbol: 'DOW JONES',
+    name: 'SPDR Dow Jones',
+    price: 521.37,
+    open24h: 527.89,
+    change24h: -1.24,
+    unit: '',
+    formatted: '$521.37',
+    flash: null,
+  },
+  'NVDA': {
+    symbol: 'NVIDIA',
+    name: 'NVIDIA Corp',
+    price: 210.96,
+    open24h: 212.21,
+    change24h: -0.59,
+    unit: '',
+    formatted: '$210.96',
+    flash: null,
+  },
+  'AAPL': {
+    symbol: 'APPLE',
+    name: 'Apple Inc',
+    price: 347.73,
+    open24h: 348.22,
+    change24h: -0.14,
+    unit: '',
+    formatted: '$347.73',
+    flash: null,
+  },
+  'TSLA': {
+    symbol: 'TESLA',
+    name: 'Tesla Inc',
+    price: 372.22,
+    open24h: 374.58,
+    change24h: -0.63,
+    unit: '',
+    formatted: '$372.22',
+    flash: null,
+  },
+};
+
+function CommoditiesTicker() {
+  const [tickerView, setTickerView] = useState<'commodities' | 'stocks'>('commodities');
+  const [commodities, setCommodities] = useState<Record<string, CommodityItem>>(DEFAULT_COMMODITIES);
+  const [stocks, setStocks] = useState<Record<string, CommodityItem>>(DEFAULT_STOCKS);
+
+  // Sync real-time commodities and stock quotes from /api/market
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMarket = async () => {
+      try {
+        const res = await fetch('/api/market');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && isMounted) {
+          if (data.commodities) {
+            setCommodities(prev => {
+              const updated = { ...prev };
+              for (const [k, v] of Object.entries(data.commodities as Record<string, any>)) {
+                if (updated[k]) {
+                  updated[k] = {
+                    ...updated[k],
+                    price: v.price,
+                    change24h: v.change24h,
+                    formatted: v.formatted
+                  };
+                }
+              }
+              return updated;
+            });
+          }
+          if (data.stocks) {
+            setStocks(prev => {
+              const updated = { ...prev };
+              for (const [k, v] of Object.entries(data.stocks as Record<string, any>)) {
+                if (updated[k]) {
+                  updated[k] = {
+                    ...updated[k],
+                    price: v.price,
+                    change24h: v.change24h,
+                    formatted: v.formatted
+                  };
+                }
+              }
+              return updated;
+            });
+          }
+        }
+      } catch {}
+    };
+
+    fetchMarket();
+    const pollInterval = setInterval(fetchMarket, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(pollInterval);
+    };
+  }, []);
+
+  // Micro-tick simulation loop: continuous real-time market movements with green/red flashes
+  useEffect(() => {
+    const cKeys = Object.keys(DEFAULT_COMMODITIES);
+    const sKeys = Object.keys(DEFAULT_STOCKS);
+
+    const interval = setInterval(() => {
+      // Tick Commodities
+      const targetC = cKeys[Math.floor(Math.random() * cKeys.length)];
+      setCommodities(prev => {
+        const item = prev[targetC];
+        if (!item) return prev;
+        const deltaPct = (Math.random() - 0.48) * 0.0015;
+        const newPrice = Math.max(0.01, item.price * (1 + deltaPct));
+        const flash: 'up' | 'down' = newPrice >= item.price ? 'up' : 'down';
+        const newChange = item.change24h + (deltaPct * 100);
+
+        let formatted = '';
+        if (item.symbol === 'GOLD') {
+          formatted = `$${newPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        } else if (item.symbol === 'NAT GAS' || item.symbol === 'COPPER') {
+          formatted = `$${newPrice.toFixed(3)}`;
+        } else {
+          formatted = `$${newPrice.toFixed(2)}`;
+        }
+
+        return {
+          ...prev,
+          [targetC]: { ...item, price: newPrice, change24h: newChange, formatted, flash }
+        };
+      });
+
+      // Tick Stocks
+      const targetS = sKeys[Math.floor(Math.random() * sKeys.length)];
+      setStocks(prev => {
+        const item = prev[targetS];
+        if (!item) return prev;
+        const deltaPct = (Math.random() - 0.48) * 0.0012;
+        const newPrice = Math.max(0.01, item.price * (1 + deltaPct));
+        const flash: 'up' | 'down' = newPrice >= item.price ? 'up' : 'down';
+        const newChange = item.change24h + (deltaPct * 100);
+        const formatted = `$${newPrice.toFixed(2)}`;
+
+        return {
+          ...prev,
+          [targetS]: { ...item, price: newPrice, change24h: newChange, formatted, flash }
+        };
+      });
+
+      setTimeout(() => {
+        setCommodities(prev => {
+          if (!prev[targetC] || prev[targetC].flash === null) return prev;
+          return { ...prev, [targetC]: { ...prev[targetC], flash: null } };
+        });
+        setStocks(prev => {
+          if (!prev[targetS] || prev[targetS].flash === null) return prev;
+          return { ...prev, [targetS]: { ...prev[targetS], flash: null } };
+        });
+      }, 450);
+    }, 2400);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const activeItems = tickerView === 'commodities' 
+    ? (Object.values(commodities) as CommodityItem[])
+    : (Object.values(stocks) as CommodityItem[]);
+
+  return (
+    <div className="w-full flex items-center justify-between gap-2 overflow-x-auto scrollbar-none py-1">
+      {/* Switcher Badge: Toggle Between Commodities and Stocks */}
+      <div className="flex items-center gap-1 bg-black/20 p-0.5 rounded-lg border border-[var(--border)] shrink-0 font-mono text-[10px]">
+        <button
+          onClick={() => setTickerView('commodities')}
+          className={`px-2 py-0.5 rounded font-bold transition-all flex items-center gap-1.5 ${
+            tickerView === 'commodities'
+              ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40 shadow-sm'
+              : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+          }`}
+          title="Show Live Commodities & Energy"
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${tickerView === 'commodities' ? 'bg-amber-500 animate-ping' : 'bg-gray-400'} shrink-0`} />
+          COMMODITIES
+        </button>
+        <button
+          onClick={() => setTickerView('stocks')}
+          className={`px-2 py-0.5 rounded font-bold transition-all flex items-center gap-1.5 ${
+            tickerView === 'stocks'
+              ? 'bg-blue-500/20 text-blue-500 border border-blue-500/40 shadow-sm'
+              : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+          }`}
+          title="Show Live Stocks & Indices"
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${tickerView === 'stocks' ? 'bg-blue-500 animate-ping' : 'bg-gray-400'} shrink-0`} />
+          STOCKS
+        </button>
+      </div>
+
+      {/* Stream of Live Assets with Flash Indicators */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {activeItems.map((item) => (
+          <div
+            key={item.symbol}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs transition-all duration-200 shrink-0 ${
+              item.flash === 'up'
+                ? 'bg-emerald-500/25 border-emerald-500/60 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]'
+                : item.flash === 'down'
+                ? 'bg-rose-500/25 border-rose-500/60 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.4)] scale-[1.02]'
+                : 'bg-[var(--surface-solid)] border-[var(--border)] text-[var(--ink)] hover:border-[var(--accent)] shadow-sm'
+            }`}
+          >
+            <span className="font-bold text-[var(--ink-muted)] text-[11px]">{item.symbol}</span>
+            <span className="font-semibold text-[var(--ink)] tracking-tight">{item.formatted}</span>
+            <span className={`text-[10px] font-bold flex items-center gap-0.5 ${
+              item.change24h >= 0 ? 'text-emerald-500 dark:text-green-400' : 'text-rose-500 dark:text-red-400'
+            }`}>
+              {item.change24h >= 0 ? '▲' : '▼'}{Math.abs(item.change24h).toFixed(2)}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* --- DOOMSDAY CLOCK MODAL (WORLD MODE SENTIMENT) --- */
+interface DoomsdayModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  isDark: boolean;
+}
+
+function DoomsdayModal({ isOpen, onClose, isDark }: DoomsdayModalProps) {
+  if (!isOpen) return null;
+
+  const threats = [
+    {
+      category: 'NUCLEAR ARSENALS',
+      level: 'CRITICAL',
+      color: '#ef4444',
+      desc: 'War in Ukraine, erosion of bilateral arms control treaties (New START), North Korean ballistic tests, and modernization of atomic arsenals.'
+    },
+    {
+      category: 'CLIMATE DISRUPTION',
+      level: 'SEVERE',
+      color: '#f97316',
+      desc: 'Record-shattering surface & ocean temperatures, extreme weather disruptions, and lagging global emission reduction targets.'
+    },
+    {
+      category: 'AI & AUTONOMOUS WEAPONS',
+      level: 'HIGH',
+      color: '#eab308',
+      desc: 'Militarized AI decision systems, deepfake-driven cognitive warfare, and synthetic biology design automation without oversight.'
+    },
+    {
+      category: 'BIOSECURITY RISKS',
+      level: 'ELEVATED',
+      color: '#a855f7',
+      desc: 'High-containment pathogen research, gain-of-function experiments, and rapid synthesis of engineered biological agents.'
+    }
+  ];
+
+  const timeline = [
+    { year: '1947', setting: '7 MIN', desc: 'Clock created at 7 minutes to midnight by Manhattan Project scientists.' },
+    { year: '1953', setting: '2 MIN', desc: 'US and USSR test thermonuclear H-bombs.' },
+    { year: '1991', setting: '17 MIN', desc: 'Cold War ends; START I treaty signed (humanity’s safest benchmark).' },
+    { year: '2020', setting: '100 SEC', desc: 'First time set within the two-minute threshold.' },
+    { year: 'PRESENT', setting: '90 SEC', desc: 'Closest to global catastrophe in human history.' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/80 backdrop-blur-md"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-[var(--surface-solid)] border border-red-500/30 rounded-2xl p-5 sm:p-7 shadow-2xl z-10 text-[var(--ink)] scrollbar-none"
+      >
+        <button 
+          className="absolute top-4 right-4 text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors p-1"
+          onClick={onClose}
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 font-mono text-[11px] font-bold tracking-widest uppercase mb-2">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+            GLOBAL EXISTENTIAL RISK MONITOR
+          </div>
+          <h2 className="font-display text-3xl sm:text-4xl text-[var(--ink)] mb-1">THE DOOMSDAY CLOCK</h2>
+          <div className="font-mono text-xs text-[var(--ink-muted)] tracking-wider uppercase mb-5">
+            BULLETIN OF THE ATOMIC SCIENTISTS
+          </div>
+
+          {/* Clock Visual Representation */}
+          <div className="relative inline-flex items-center justify-center my-2">
+            <svg width="220" height="220" viewBox="0 0 240 240" className="overflow-visible">
+              <defs>
+                <radialGradient id="dangerGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+                </radialGradient>
+                <linearGradient id="metalRim" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor={isDark ? "#334155" : "#cbd5e1"} />
+                  <stop offset="100%" stopColor={isDark ? "#0f172a" : "#64748b"} />
+                </linearGradient>
+              </defs>
+
+              {/* Glowing Aura */}
+              <circle cx="120" cy="120" r="115" fill="url(#dangerGlow)" />
+
+              {/* Outer Bezel */}
+              <circle cx="120" cy="120" r="105" fill={isDark ? "#0a0c10" : "#ffffff"} stroke="url(#metalRim)" strokeWidth="8" />
+              <circle cx="120" cy="120" r="97" fill="none" stroke={isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"} strokeWidth="1.5" />
+
+              {/* 11:00 to 12:00 General Warning Sector */}
+              <path
+                d="M 120 120 L 71.5 36 A 97 97 0 0 1 120 23 Z"
+                fill="rgba(239, 68, 68, 0.12)"
+              />
+              {/* Critical 90 Seconds to Midnight Danger Wedge (11:58:30 to 12:00:00) */}
+              <path
+                d="M 120 120 L 104.83 24.19 A 97 97 0 0 1 120 23 Z"
+                fill="#ef4444"
+                className="animate-pulse"
+              />
+
+              {/* Hour & Minute Tick Marks */}
+              {[...Array(12)].map((_, i) => {
+                const angle = (i * 30) * (Math.PI / 180);
+                const x1 = 120 + 84 * Math.sin(angle);
+                const y1 = 120 - 84 * Math.cos(angle);
+                const x2 = 120 + 94 * Math.sin(angle);
+                const y2 = 120 - 94 * Math.cos(angle);
+                const isCrit = i === 11 || i === 0;
+                return (
+                  <line 
+                    key={i} 
+                    x1={x1} 
+                    y1={y1} 
+                    x2={x2} 
+                    y2={y2} 
+                    stroke={isCrit ? "#ef4444" : isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"} 
+                    strokeWidth={isCrit ? "3" : "1.5"} 
+                  />
+                );
+              })}
+
+              {/* Roman Numerals */}
+              <text x="120" y="48" fill="#ef4444" fontSize="13" fontFamily="sans-serif" fontWeight="900" textAnchor="middle">XII</text>
+              <text x="70" y="58" fill={isDark ? "#94a3b8" : "#475569"} fontSize="11" fontFamily="sans-serif" fontWeight="700" textAnchor="middle">XI</text>
+              <text x="48" y="125" fill={isDark ? "#64748b" : "#94a3b8"} fontSize="10" fontFamily="sans-serif" fontWeight="600" textAnchor="middle">IX</text>
+              <text x="192" y="125" fill={isDark ? "#64748b" : "#94a3b8"} fontSize="10" fontFamily="sans-serif" fontWeight="600" textAnchor="middle">III</text>
+
+              {/* Hour Hand (Pointing towards 12, at ~11:58) */}
+              <line x1="120" y1="120" x2="119.35" y2="70" stroke={isDark ? "#ffffff" : "#0f172a"} strokeWidth="5" strokeLinecap="round" />
+
+              {/* Minute Hand (Pointing at 11:58:30 = 9 degrees before midnight) */}
+              <line x1="120" y1="120" x2="108.27" y2="45.9" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" />
+
+              {/* Second Hand with Counterweight */}
+              <line x1="120" y1="135" x2="106" y2="30" stroke="#f87171" strokeWidth="1.5" />
+              <circle cx="106" cy="30" r="2.5" fill="#ef4444" />
+
+              {/* Center Hub */}
+              <circle cx="120" cy="120" r="7" fill={isDark ? "#ffffff" : "#0f172a"} />
+              <circle cx="120" cy="120" r="3.5" fill="#ef4444" />
+            </svg>
+          </div>
+
+          {/* Primary Readout */}
+          <div className="flex flex-col items-center mt-2 mb-5">
+            <div className="flex items-baseline gap-2 font-mono">
+              <span className="text-5xl sm:text-6xl font-black text-red-500 tracking-tight drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]">
+                90 SECONDS
+              </span>
+            </div>
+            <span className="text-xs sm:text-sm font-mono font-bold tracking-widest text-[var(--ink-muted)] uppercase mt-0.5">
+              TO MIDNIGHT
+            </span>
+
+            <div className="mt-3 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 font-mono text-xs font-bold uppercase tracking-wider">
+              STATUS: HISTORIC MAXIMUM PERIL
+            </div>
+          </div>
+
+          {/* Core Threat Factors Grid */}
+          <div className="text-left mb-6">
+            <div className="text-[11px] font-mono font-bold uppercase text-[var(--ink-muted)] tracking-wider mb-2.5">
+              PRIMARY THREAT DRIVERS (BULLETIN MATRIX)
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {threats.map((t) => (
+                <div key={t.category} className="p-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-mono text-xs font-bold text-[var(--ink)]">{t.category}</span>
+                    <span 
+                      className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border"
+                      style={{ color: t.color, borderColor: `${t.color}40`, backgroundColor: `${t.color}15` }}
+                    >
+                      {t.level}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed">
+                    {t.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Historical Timeline */}
+          <div className="text-left mb-6">
+            <div className="text-[11px] font-mono font-bold uppercase text-[var(--ink-muted)] tracking-wider mb-2.5">
+              HISTORICAL BENCHMARKS
+            </div>
+            <div className="space-y-1.5 font-mono text-xs bg-[var(--bg)] p-3.5 rounded-xl border border-[var(--border)]">
+              {timeline.map((item, idx) => (
+                <div key={idx} className="flex items-start justify-between py-1 border-b border-[var(--border)] last:border-none">
+                  <span className="font-bold text-[var(--ink)] shrink-0 w-20">{item.year}:</span>
+                  <span className={`font-bold shrink-0 w-24 text-right mr-3 ${item.year === 'PRESENT' ? 'text-red-500' : 'text-[var(--accent)]'}`}>
+                    {item.setting}
+                  </span>
+                  <span className="text-[11px] text-[var(--ink-muted)] text-left flex-1 font-sans">
+                    {item.desc}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer & Source Link */}
+          <div className="flex justify-between items-center text-[10px] font-mono text-[var(--ink-muted)] border-t border-[var(--border)] pt-3">
+            <div>Setting: 90s (Science and Security Board)</div>
+            <a 
+              href="https://thebulletin.org/doomsday-clock/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-red-500 hover:underline flex items-center gap-1 font-semibold"
+            >
+              TheBulletin.org <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function App() {
   const [mode, setMode] = useState<AppMode>('crypto');
   const [articles, setArticles] = useState<Article[]>([]);
@@ -897,6 +1482,7 @@ export default function App() {
   const [showMenu, setShowMenu] = useState(false);
   const [fearGreed, setFearGreed] = useState<FearGreedData | null>(null);
   const [showFearGreed, setShowFearGreed] = useState(false);
+  const [showDoomsday, setShowDoomsday] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [splashProgress, setSplashProgress] = useState(0);
 
@@ -982,7 +1568,7 @@ export default function App() {
     }
   }, [mode]);
 
-  // Animate splash screen loading bar
+  // Animate splash screen loading bar (snappy & streamlined)
   useEffect(() => {
     if (!showSplash) return;
     const interval = setInterval(() => {
@@ -991,13 +1577,13 @@ export default function App() {
           clearInterval(interval);
           return 100;
         }
-        return prev + 4;
+        return prev + 10;
       });
-    }, 90);
+    }, 45);
 
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 3200);
+    }, 1200);
 
     return () => {
       clearInterval(interval);
@@ -1216,8 +1802,8 @@ export default function App() {
           <motion.div
             id="splash"
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.05 }}
-            transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+            exit={{ opacity: 0, scale: 1.03 }}
+            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
             className="fixed inset-0 z-[99999] bg-[#030303] flex flex-col items-center justify-center overflow-hidden cursor-pointer"
             onClick={() => setShowSplash(false)}
           >
@@ -1324,25 +1910,33 @@ export default function App() {
                 
                 {fearGreed ? (
                   <div className="space-y-6">
-                    <div className="relative inline-flex items-center justify-center">
-                      <svg width="200" height="110" viewBox="0 0 200 110" className="overflow-visible">
+                    {/* Gauge Visualization (Needle Sweeps Cleanly - No Text Overlap) */}
+                    <div className="relative inline-flex items-center justify-center pt-2">
+                      <svg width="240" height="130" viewBox="0 0 240 130" className="overflow-visible">
+                        {/* Background Track */}
                         <path 
-                          d="M 20 100 A 80 80 0 0 1 180 100" 
+                          d="M 35 115 A 85 85 0 0 1 205 115" 
                           fill="none" 
-                          stroke={isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)"} 
-                          strokeWidth="16" 
+                          stroke={isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)"} 
+                          strokeWidth="14" 
                           strokeLinecap="round" 
                         />
+                        {/* Colored Sentiment Arc */}
                         <path 
-                          d="M 20 100 A 80 80 0 0 1 180 100" 
+                          d="M 35 115 A 85 85 0 0 1 205 115" 
                           fill="none" 
                           stroke="url(#fgGradient)" 
-                          strokeWidth="16" 
-                          strokeLinecap="round"
-                          strokeDasharray="251.2"
-                          strokeDashoffset={251.2 - (251.2 * parseInt(fearGreed.value)) / 100}
+                          strokeWidth="14" 
+                          strokeLinecap="round" 
+                          strokeDasharray="267"
+                          strokeDashoffset={267 - (267 * Math.min(Math.max(parseInt(fearGreed.value, 10) || 50, 0), 100)) / 100}
                           className="transition-all duration-1000 ease-out"
                         />
+                        {/* Tick Labels */}
+                        <text x="22" y="122" fill="#ef4444" fontSize="10" fontFamily="monospace" fontWeight="bold" textAnchor="end">0</text>
+                        <text x="120" y="18" fill="#eab308" fontSize="10" fontFamily="monospace" fontWeight="bold" textAnchor="middle">50</text>
+                        <text x="218" y="122" fill="#22c55e" fontSize="10" fontFamily="monospace" fontWeight="bold" textAnchor="start">100</text>
+
                         <defs>
                           <linearGradient id="fgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                             <stop offset="0%" stopColor="#ef4444" />
@@ -1351,29 +1945,58 @@ export default function App() {
                             <stop offset="100%" stopColor="#22c55e" />
                           </linearGradient>
                         </defs>
-                        <g transform={`rotate(${((parseInt(fearGreed.value) / 100) * 180) - 90}, 100, 100)`} className="transition-transform duration-1000">
-                          <line x1="100" y1="100" x2="100" y2="35" stroke={isDark ? "#ffffff" : "#0f172a"} strokeWidth="3.5" strokeLinecap="round" />
-                          <circle cx="100" cy="100" r="6" fill={isDark ? "#ffffff" : "#0f172a"} />
+
+                        {/* Sweeping Indicator Needle & Pivot Hub */}
+                        <g transform={`rotate(${(((parseInt(fearGreed.value, 10) || 50) / 100) * 180) - 90}, 120, 115)`} className="transition-transform duration-1000 ease-out">
+                          <line x1="120" y1="115" x2="120" y2="42" stroke={isDark ? "#ffffff" : "#0f172a"} strokeWidth="3.5" strokeLinecap="round" />
+                          <circle cx="120" cy="115" r="7" fill={isDark ? "#ffffff" : "#0f172a"} />
+                          <circle cx="120" cy="115" r="3" fill={
+                            parseInt(fearGreed.value, 10) > 75 ? '#22c55e' : 
+                            parseInt(fearGreed.value, 10) > 50 ? '#84cc16' : 
+                            parseInt(fearGreed.value, 10) > 25 ? '#eab308' : '#ef4444'
+                          } />
                         </g>
                       </svg>
-
-                      <div className="absolute bottom-[-10px] flex flex-col items-center">
-                        <div className={`text-5xl font-bold font-mono text-[var(--ink)] ${isDark ? 'drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]' : ''}`}>
-                          {fearGreed.value}
-                        </div>
-                      </div>
                     </div>
-                    
-                    <div 
-                      className="text-2xl font-bold uppercase tracking-widest mt-2" 
-                      style={{ 
-                        color: 
-                          parseInt(fearGreed.value) > 75 ? '#22c55e' : 
-                          parseInt(fearGreed.value) > 50 ? '#84cc16' : 
-                          parseInt(fearGreed.value) > 25 ? '#eab308' : '#ef4444'
-                      }}
-                    >
-                      {fearGreed.value_classification}
+
+                    {/* Clean Dedicated Readout Below the Gauge (Unobstructed) */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-baseline gap-1.5 font-mono">
+                        <span 
+                          className="text-5xl sm:text-6xl font-black tracking-tight"
+                          style={{ 
+                            color: 
+                              parseInt(fearGreed.value, 10) > 75 ? '#22c55e' : 
+                              parseInt(fearGreed.value, 10) > 50 ? '#84cc16' : 
+                              parseInt(fearGreed.value, 10) > 25 ? '#eab308' : '#ef4444'
+                          }}
+                        >
+                          {fearGreed.value}
+                        </span>
+                        <span className="text-sm font-mono font-bold text-[var(--ink-muted)]">/ 100</span>
+                      </div>
+
+                      <div 
+                        className="text-base sm:text-lg font-bold uppercase tracking-widest mt-1.5 px-4 py-1 rounded-full border shadow-sm font-mono" 
+                        style={{ 
+                          color: 
+                            parseInt(fearGreed.value, 10) > 75 ? '#22c55e' : 
+                            parseInt(fearGreed.value, 10) > 50 ? '#84cc16' : 
+                            parseInt(fearGreed.value, 10) > 25 ? '#eab308' : '#ef4444',
+                          backgroundColor: `${
+                            parseInt(fearGreed.value, 10) > 75 ? '#22c55e' : 
+                            parseInt(fearGreed.value, 10) > 50 ? '#84cc16' : 
+                            parseInt(fearGreed.value, 10) > 25 ? '#eab308' : '#ef4444'
+                          }15`,
+                          borderColor: `${
+                            parseInt(fearGreed.value, 10) > 75 ? '#22c55e' : 
+                            parseInt(fearGreed.value, 10) > 50 ? '#84cc16' : 
+                            parseInt(fearGreed.value, 10) > 25 ? '#eab308' : '#ef4444'
+                          }40`
+                        }}
+                      >
+                        {fearGreed.value_classification}
+                      </div>
                     </div>
 
                     {fearGreed.previous_value && (
@@ -1423,6 +2046,17 @@ export default function App() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Doomsday Clock Modal (World Mode) */}
+      <AnimatePresence>
+        {showDoomsday && (
+          <DoomsdayModal 
+            isOpen={showDoomsday} 
+            onClose={() => setShowDoomsday(false)} 
+            isDark={isDark} 
+          />
         )}
       </AnimatePresence>
 
@@ -1564,13 +2198,21 @@ export default function App() {
                   </button>
                 )}
 
-                {mode === 'crypto' && (
+                {mode === 'crypto' ? (
                   <button 
                     className="ibtn w-8 h-8 p-0 flex items-center justify-center font-mono text-xs shrink-0" 
                     onClick={() => setShowFearGreed(true)}
                     title="Fear & Greed Index"
                   >
                     <Gauge className="w-4 h-4 text-[var(--accent)]" />
+                  </button>
+                ) : (
+                  <button 
+                    className="ibtn w-8 h-8 p-0 flex items-center justify-center font-mono text-xs shrink-0 bg-red-500/10 text-red-500 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.25)]" 
+                    onClick={() => setShowDoomsday(true)}
+                    title="Doomsday Clock: 90 Seconds to Midnight"
+                  >
+                    <Clock className="w-4 h-4 text-red-500 animate-pulse" />
                   </button>
                 )}
 
@@ -1781,7 +2423,7 @@ export default function App() {
                 </button>
               )}
 
-              {mode === 'crypto' && (
+              {mode === 'crypto' ? (
                 <button 
                   className="ibtn w-auto px-3 flex items-center gap-1.5 font-mono text-xs shrink-0" 
                   onClick={() => setShowFearGreed(true)}
@@ -1795,6 +2437,17 @@ export default function App() {
                       {fearGreed.value} {fearGreed.value_classification.split(' ')[0]}
                     </span>
                   )}
+                </button>
+              ) : (
+                <button 
+                  className="ibtn w-auto px-3 flex items-center gap-1.5 font-mono text-xs shrink-0 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)] transition-all" 
+                  onClick={() => setShowDoomsday(true)}
+                  title="Doomsday Clock: 90 Seconds to Midnight"
+                >
+                  <Clock className="w-4 h-4 text-red-500 animate-pulse" />
+                  <span className="hidden sm:inline font-bold tracking-tight text-red-500">
+                    90s TO MIDNIGHT
+                  </span>
                 </button>
               )}
 
@@ -1884,7 +2537,7 @@ export default function App() {
           {mode === 'crypto' ? (
             <LiveTicker />
           ) : (
-            <WorldNewsTicker articles={articles} />
+            <CommoditiesTicker />
           )}
         </div>
       </div>
