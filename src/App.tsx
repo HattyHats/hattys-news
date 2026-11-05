@@ -803,34 +803,34 @@ function WorldNewsTicker({ articles }: { articles: Article[] }) {
 /* --- AADS AD UNIT 2459130 --- */
 function AadsAdUnit() {
   return (
-    <div className="w-full my-5 flex flex-col items-center justify-center">
+    <div className="w-full my-3 flex flex-col items-center justify-center">
       {/* BEGIN AADS AD UNIT 2459130 */}
-      <div id="frame" className="w-full relative" style={{ margin: 'auto', zIndex: 20 }}>
-        <iframe
-          data-aa="2459130"
-          src="//acceptable.a-ads.com/2459130/?size=Adaptive"
-          className="w-full sm:w-[70%] mx-auto block overflow-hidden"
-          style={{ border: 0, padding: 0, height: 'auto', minHeight: '90px' }}
-          title="AADS Adaptive Advertisement"
-        />
-        <div className="w-full sm:w-[70%] mx-auto relative flex justify-center sm:justify-start">
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-block',
-              fontSize: '13px',
-              color: '#263238',
-              padding: '4px 10px',
-              background: '#F8F8F9',
-              textDecoration: 'none',
-              borderRadius: '0 0 4px 4px',
-            }}
-            id="frame-link"
-            href="https://aads.com/campaigns/new/?source_id=2459130&source_type=ad_unit&partner=2459130"
-          >
-            Advertise here
-          </a>
+      <div id="frame" className="w-full max-w-[468px] relative mx-auto" style={{ zIndex: 20 }}>
+        <div className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface-solid)] shadow-sm">
+          <iframe
+            data-aa="2459130"
+            src="//acceptable.a-ads.com/2459130/?size=Adaptive"
+            style={{ border: 0, padding: 0, width: '100%', height: 'auto', minHeight: '60px', overflow: 'hidden', display: 'block', margin: 'auto' }}
+            title="AADS Adaptive Advertisement"
+          />
+          <div className="w-full relative flex justify-end px-2.5 py-1 bg-[var(--surface-solid)] border-t border-[var(--border)]">
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                fontSize: '11px',
+                color: 'var(--ink-muted)',
+                textDecoration: 'none',
+                fontFamily: 'monospace',
+                fontWeight: '600',
+              }}
+              id="frame-link"
+              href="https://aads.com/campaigns/new/?source_id=2459130&source_type=ad_unit&partner=2459130"
+            >
+              Advertise here
+            </a>
+          </div>
         </div>
       </div>
       {/* END AADS AD UNIT 2459130 */}
@@ -882,8 +882,9 @@ function StockTickerTape({ isDark }: { isDark: boolean }) {
         { proName: 'NASDAQ:QQQ', title: 'NASDAQ 100' },
         { proName: 'AMEX:DIA', title: 'Dow Jones' },
         { proName: 'AMEX:IWM', title: 'Russell 2000' },
-        { proName: 'TVC:UKX', title: 'FTSE 100' },
-        { proName: 'TVC:DAX', title: 'DAX 40' },
+        { proName: 'AMEX:EWU', title: 'FTSE 100' },
+        { proName: 'AMEX:EWG', title: 'DAX 40' },
+        { proName: 'AMEX:FEZ', title: 'EURO STOXX 50' },
         { proName: 'TVC:USOIL', title: 'Crude Oil' },
         { proName: 'OANDA:XAUUSD', title: 'Gold' },
         { proName: 'NASDAQ:NVDA', title: 'NVIDIA' },
