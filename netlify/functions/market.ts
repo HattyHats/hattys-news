@@ -16,7 +16,8 @@ export const handler: Handler = async (event) => {
   }
 
   const now = Date.now();
-  if (marketCache.data && now - marketCache.timestamp < 30000) {
+  const isBypass = event.queryStringParameters?.nocache === "1" || event.queryStringParameters?.nocache === "true" || !!event.queryStringParameters?._t;
+  if (!isBypass && marketCache.data && now - marketCache.timestamp < 30000) {
     return {
       statusCode: 200,
       headers: {

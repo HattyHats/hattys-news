@@ -39,6 +39,7 @@ export const handler: Handler = async (event) => {
   }
 
   const url = event.queryStringParameters?.url;
+  const nocache = event.queryStringParameters?.nocache === "1" || event.queryStringParameters?.nocache === "true" || !!event.queryStringParameters?._t;
 
   if (!url) {
     return {
@@ -58,7 +59,10 @@ export const handler: Handler = async (event) => {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, max-age=120, s-maxage=120",
+        "Cache-Control": nocache
+          ? "no-store, no-cache, must-revalidate, proxy-revalidate"
+          : "public, max-age=120, s-maxage=120",
+        ...(nocache ? { "Pragma": "no-cache", "Expires": "0" } : {})
       },
       body: JSON.stringify(feed),
     };

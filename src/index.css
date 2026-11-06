@@ -443,6 +443,19 @@
     background-size: 200% 100%;
   }
 
+  /* Bottom World Stock Ticker Tape Container & Iframe */
+  #tickers .tradingview-widget-container,
+  #tickers .tradingview-widget-container__widget,
+  #tickers .tradingview-widget-container iframe {
+    height: 58px !important;
+    min-height: 58px !important;
+    max-height: 58px !important;
+    width: 100% !important;
+    border: none !important;
+    display: block !important;
+    vertical-align: middle !important;
+  }
+
   @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }

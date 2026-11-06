@@ -77,11 +77,19 @@ const CRYPTO_FEEDS: FeedConfig[] = [
   { n: 'Decrypt', u: 'https://decrypt.co/feed', defaultCat: 'all' },
   { n: 'The Block', u: 'https://www.theblock.co/rss.xml', defaultCat: 'regulation' },
   { n: 'Blockworks', u: 'https://blockworks.co/feed', defaultCat: 'all' },
+  { n: 'Bitcoin Magazine', u: 'https://bitcoinmagazine.com/feed', defaultCat: 'bitcoin' },
+  { n: 'CryptoSlate', u: 'https://cryptoslate.com/feed/', defaultCat: 'all' },
+  { n: 'DailyCoin', u: 'https://dailycoin.com/feed/', defaultCat: 'all' },
+  { n: 'U.Today', u: 'https://u.today/rss', defaultCat: 'all' },
+  { n: 'BeInCrypto', u: 'https://beincrypto.com/feed/', defaultCat: 'all' },
+  { n: 'AMBCrypto', u: 'https://ambcrypto.com/feed/', defaultCat: 'altcoin' },
+  { n: 'Coingape', u: 'https://coingape.com/feed/', defaultCat: 'all' },
+  { n: 'Bankless', u: 'https://www.bankless.com/rss/feed', defaultCat: 'defi' },
   { n: 'Crypto.News', u: 'https://crypto.news/feed/', defaultCat: 'all' },
   { n: 'CryptoPotato', u: 'https://cryptopotato.com/feed/', defaultCat: 'all' },
-  { n: 'CoinTelegraph Bitcoin', u: 'https://cointelegraph.com/rss/tag/bitcoin', defaultCat: 'bitcoin' },
   { n: 'NewsBTC', u: 'https://newsbtc.com/feed/', defaultCat: 'bitcoin' },
   { n: 'Bitcoin.com', u: 'https://news.bitcoin.com/feed/', defaultCat: 'bitcoin' },
+  { n: 'CoinTelegraph Bitcoin', u: 'https://cointelegraph.com/rss/tag/bitcoin', defaultCat: 'bitcoin' },
   { n: 'CoinTelegraph Ethereum', u: 'https://cointelegraph.com/rss/tag/ethereum', defaultCat: 'ethereum' },
   { n: 'CoinTelegraph DeFi', u: 'https://cointelegraph.com/rss/tag/defi', defaultCat: 'defi' },
   { n: 'CoinTelegraph Altcoins', u: 'https://cointelegraph.com/rss/tag/altcoins', defaultCat: 'altcoin' },
@@ -112,7 +120,7 @@ const WORLD_CATEGORY_RULES: Record<string, RegExp> = {
   space: /\b(space|nasa|spacex|astronomy|telescope|moon|mars|asteroid|satellite|orbit|cosmic|galaxy|physics|discovery|science|james webb)\b/i
 };
 
-// Verified Low-Bias, Factual Wire Services & Public Broadcasters
+// Verified Low-Bias, 100% Free Public Broadcasters, Wire Services & Global Outlets
 const WORLD_FEEDS: FeedConfig[] = [
   { n: 'Reuters', u: 'https://news.google.com/rss/search?q=source:Reuters&hl=en-US&gl=US&ceid=US:en', defaultCat: 'all' },
   { n: 'Associated Press', u: 'https://news.google.com/rss/search?q=source:%22Associated+Press%22&hl=en-US&gl=US&ceid=US:en', defaultCat: 'all' },
@@ -122,10 +130,26 @@ const WORLD_FEEDS: FeedConfig[] = [
   { n: 'DW News', u: 'https://rss.dw.com/rdf/rss-en-all', defaultCat: 'all' },
   { n: 'France 24', u: 'https://www.france24.com/en/rss', defaultCat: 'all' },
   { n: 'Al Jazeera', u: 'https://www.aljazeera.com/xml/rss/all.xml', defaultCat: 'geopolitics' },
-  { n: 'PBS NewsHour', u: 'https://www.pbs.org/newshour/feeds/rss/headlines', defaultCat: 'politics' },
+  { n: 'The Guardian World', u: 'https://www.theguardian.com/world/rss', defaultCat: 'all' },
+  { n: 'CBC World', u: 'https://www.cbc.ca/cmlink/rss-world', defaultCat: 'all' },
   { n: 'NPR World', u: 'https://feeds.npr.org/1004/rss.xml', defaultCat: 'all' },
+  { n: 'NPR News', u: 'https://feeds.npr.org/1001/rss.xml', defaultCat: 'all' },
+  { n: 'PBS NewsHour', u: 'https://news.google.com/rss/search?q=source:%22PBS+NewsHour%22&hl=en-US&gl=US&ceid=US:en', defaultCat: 'politics' },
+  { n: 'UPI World', u: 'https://rss.upi.com/news/world_news.rss', defaultCat: 'all' },
+  { n: 'UPI Top Stories', u: 'https://rss.upi.com/news/top_news.rss', defaultCat: 'all' },
+  { n: 'UN News', u: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml', defaultCat: 'geopolitics' },
+  { n: 'ABC News AU', u: 'https://www.abc.net.au/news/feed/51120/rss.xml', defaultCat: 'all' },
+  { n: 'CNA Asia', u: 'https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511', defaultCat: 'all' },
+  { n: 'CNA World', u: 'https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311', defaultCat: 'all' },
+  { n: 'NHK World', u: 'https://news.google.com/rss/search?q=source:%22NHK+WORLD-JAPAN%22&hl=en-US&gl=US&ceid=US:en', defaultCat: 'all' },
+  { n: 'Africanews', u: 'https://www.africanews.com/feed/', defaultCat: 'all' },
+  { n: 'RTE News Ireland', u: 'https://www.rte.ie/rss/news.xml', defaultCat: 'all' },
   { n: 'AP Politics', u: 'https://news.google.com/rss/search?q=source:%22Associated+Press%22+politics&hl=en-US&gl=US&ceid=US:en', defaultCat: 'politics' },
-  { n: 'Reuters Economy', u: 'https://news.google.com/rss/search?q=source:Reuters+economy+OR+markets&hl=en-US&gl=US&ceid=US:en', defaultCat: 'economy' }
+  { n: 'Reuters Economy', u: 'https://news.google.com/rss/search?q=source:Reuters+economy+OR+markets&hl=en-US&gl=US&ceid=US:en', defaultCat: 'economy' },
+  { n: 'NASA Space Wire', u: 'https://www.nasa.gov/news-release/feed/', defaultCat: 'space' },
+  { n: 'Phys.org', u: 'https://phys.org/rss-feed/', defaultCat: 'space' },
+  { n: 'Ars Technica', u: 'https://feeds.arstechnica.com/arstechnica/index', defaultCat: 'tech' },
+  { n: 'The Verge', u: 'https://www.theverge.com/rss/index.xml', defaultCat: 'tech' }
 ];
 
 const CRYPTO_SPLASH_HEADLINES = [
@@ -851,14 +875,14 @@ function StockTickerTape({ isDark }: { isDark: boolean }) {
     const widgetContainer = document.createElement('div');
     widgetContainer.className = 'tradingview-widget-container';
     widgetContainer.style.width = '100%';
-    widgetContainer.style.height = '46px';
+    widgetContainer.style.height = '58px';
 
     const widgetSlot = document.createElement('div');
     widgetSlot.className = 'tradingview-widget-container__widget';
     widgetSlot.style.width = '100%';
-    widgetSlot.style.height = '46px';
+    widgetSlot.style.height = '58px';
     widgetSlot.innerHTML = `
-      <div style="display:flex;align-items:center;height:46px;padding:0 16px;font-family:monospace;font-size:11px;color:${isDark ? '#94a3b8' : '#475569'};gap:18px;overflow:hidden;white-space:nowrap;">
+      <div style="display:flex;align-items:center;height:58px;padding:0 16px;font-family:monospace;font-size:11px;color:${isDark ? '#94a3b8' : '#475569'};gap:18px;overflow:hidden;white-space:nowrap;">
         <span style="font-weight:bold;color:${isDark ? '#60a5fa' : '#2563eb'};">● GLOBAL MARKETS:</span>
         <span>S&P 500 <strong style="color:${isDark ? '#fff' : '#0f172a'};">759.97</strong> <span style="color:#ef4444;">-0.52%</span></span>
         <span>NASDAQ 100 <strong style="color:${isDark ? '#fff' : '#0f172a'};">704.40</strong> <span style="color:#ef4444;">-0.01%</span></span>
@@ -897,7 +921,7 @@ function StockTickerTape({ isDark }: { isDark: boolean }) {
       ],
       showSymbolLogo: true,
       isTransparent: true,
-      displayMode: 'adaptive',
+      displayMode: 'regular',
       colorTheme: isDark ? 'dark' : 'light',
       locale: 'en'
     });
@@ -913,8 +937,8 @@ function StockTickerTape({ isDark }: { isDark: boolean }) {
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-[46px] overflow-hidden flex items-center" 
-      style={{ minHeight: '46px' }}
+      className="w-full h-[58px] overflow-hidden flex items-center justify-start" 
+      style={{ minHeight: '58px', height: '58px' }}
     />
   );
 }
@@ -1066,9 +1090,12 @@ function CommoditiesTicker() {
   // Sync real-time commodities and stock quotes from /api/market
   useEffect(() => {
     let isMounted = true;
-    const fetchMarket = async () => {
+    const fetchMarket = async (force = false) => {
       try {
-        const res = await fetch('/api/market');
+        const bust = force ? `?_t=${Date.now()}&nocache=1` : '';
+        const res = await fetch(`/api/market${bust}`, {
+          cache: force ? 'no-store' : 'default'
+        });
         if (!res.ok) return;
         const data = await res.json();
         if (data && isMounted) {
@@ -1110,9 +1137,13 @@ function CommoditiesTicker() {
 
     fetchMarket();
     const pollInterval = setInterval(fetchMarket, 30000);
+    const handleRefresh = () => fetchMarket(true);
+    window.addEventListener('refresh-market-data', handleRefresh);
+
     return () => {
       isMounted = false;
       clearInterval(pollInterval);
+      window.removeEventListener('refresh-market-data', handleRefresh);
     };
   }, []);
 
@@ -1606,13 +1637,15 @@ export default function App() {
   }, [showSplash]);
 
   // Fetch individual feed
-  const fetchFeed = async (feed: FeedConfig, targetMode: AppMode): Promise<Article[]> => {
+  const fetchFeed = async (feed: FeedConfig, targetMode: AppMode, forceRefresh = false): Promise<Article[]> => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 9000);
 
     try {
-      const response = await fetch(`/api/news?url=${encodeURIComponent(feed.u)}`, {
-        signal: controller.signal
+      const cacheBust = forceRefresh ? `&_t=${Date.now()}&nocache=1` : '';
+      const response = await fetch(`/api/news?url=${encodeURIComponent(feed.u)}${cacheBust}`, {
+        signal: controller.signal,
+        cache: forceRefresh ? 'no-store' : 'default'
       });
       clearTimeout(timeoutId);
 
@@ -1675,14 +1708,19 @@ export default function App() {
     }
   };
 
+  // State for manual refresh notifications
+  const [refreshToast, setRefreshToast] = useState<{ message: string; active: boolean } | null>(null);
+
   // Aggregator with progressive merging and deduplication
-  const loadNews = useCallback(async () => {
+  const loadNews = useCallback(async (force = false) => {
     setLoading(true);
     const activeFeeds = mode === 'world' ? WORLD_FEEDS : CRYPTO_FEEDS;
     
     try {
-      const results = await Promise.all(activeFeeds.map(f => fetchFeed(f, mode)));
-      const rawArticles = results.flat();
+      const results = await Promise.allSettled(activeFeeds.map(f => fetchFeed(f, mode, force)));
+      const rawArticles = results
+        .filter((r): r is PromiseFulfilledResult<Article[]> => r.status === 'fulfilled')
+        .flatMap(r => r.value);
 
       const seen = new Set<string>();
       const deduped: Article[] = [];
@@ -1701,7 +1739,7 @@ export default function App() {
         setArticles(deduped);
         try {
           const cacheKey = mode === 'world' ? 'hattys_news_world_cache_v3' : 'hattys_news_crypto_cache_v3';
-          localStorage.setItem(cacheKey, JSON.stringify(deduped.slice(0, 150)));
+          localStorage.setItem(cacheKey, JSON.stringify(deduped.slice(0, 250)));
         } catch {}
       }
     } catch (err) {
@@ -1724,6 +1762,26 @@ export default function App() {
       }
     } catch (e) {
       console.error('Failed to fetch Fear & Greed Index', e);
+    }
+  };
+
+  // Explicit user-triggered refresh
+  const handleManualRefresh = async () => {
+    if (loading) return;
+    setRefreshToast({ message: `Fetching latest ${mode === 'world' ? 'world wire' : 'crypto'} dispatches...`, active: true });
+    try {
+      if (mode === 'world') {
+        window.dispatchEvent(new CustomEvent('refresh-market-data'));
+      } else {
+        fetchFearGreed();
+      }
+      await loadNews(true);
+      setRefreshToast({ message: `Feed updated with latest ${mode === 'world' ? 'global' : 'crypto'} dispatches`, active: false });
+      setTimeout(() => {
+        setRefreshToast(null);
+      }, 2500);
+    } catch {
+      setRefreshToast(null);
     }
   };
 
@@ -2239,8 +2297,8 @@ export default function App() {
 
                 <button 
                   className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0" 
-                  onClick={loadNews}
-                  title={`Refresh All ${mode === 'world' ? 'World' : 'Crypto'} Feeds`}
+                  onClick={handleManualRefresh}
+                  title={`Refresh All ${mode === 'world' ? 'World' : 'Crypto'} Feeds Now`}
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[var(--accent)]' : ''}`} />
                 </button>
@@ -2474,8 +2532,8 @@ export default function App() {
 
               <button 
                 className="ibtn shrink-0" 
-                onClick={loadNews}
-                title={`Refresh All ${mode === 'world' ? 'World' : 'Crypto'} Feeds`}
+                onClick={handleManualRefresh}
+                title={`Refresh All ${mode === 'world' ? 'World' : 'Crypto'} Feeds Now`}
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[var(--accent)]' : ''}`} />
               </button>
@@ -2555,6 +2613,27 @@ export default function App() {
         </div>
       </div>
 
+      {/* Floating Refresh Status Toast */}
+      <AnimatePresence>
+        {refreshToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="fixed top-20 right-4 z-50 pointer-events-none"
+          >
+            <div className={`px-4 py-2 rounded-xl border shadow-2xl backdrop-blur-md font-mono text-xs flex items-center gap-2.5 ${
+              refreshToast.active
+                ? 'bg-[var(--surface-solid)]/95 border-[var(--accent)] text-[var(--ink)]'
+                : 'bg-[var(--surface-solid)]/95 border-emerald-500 text-emerald-400'
+            }`}>
+              <RefreshCw className={`w-3.5 h-3.5 shrink-0 ${refreshToast.active ? 'animate-spin text-[var(--accent)]' : 'text-emerald-400'}`} />
+              <span>{refreshToast.message}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Terminal Feed */}
       <main className="max-w-[1440px] mx-auto my-6 px-4">
         {/* Navigation Category Filters - Horizontal scroll on mobile, wrap on desktop */}
@@ -2587,6 +2666,16 @@ export default function App() {
         <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-muted)] mb-4 px-1 flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span>SHOWING: <strong className="text-[var(--ink)]">{filtered.length}</strong> {mode === 'world' ? 'GLOBAL DISPATCHES' : 'CRYPTO DISPATCHES'}</span>
+            {refreshToast && (
+              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono border ${
+                refreshToast.active 
+                  ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse' 
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${refreshToast.active ? 'bg-amber-500 animate-ping' : 'bg-emerald-400'}`} />
+                {refreshToast.message}
+              </span>
+            )}
             {filter !== 'all' && (
               <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold border ${
                 mode === 'world' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : 'bg-red-500/10 text-red-500 border-red-500/20'

@@ -45,7 +45,8 @@ async function startServer() {
   // API Route for live commodities and stock prices
   app.get("/api/market", async (req, res) => {
     const now = Date.now();
-    if (marketCache.data && (now - marketCache.timestamp < 30000)) {
+    const isBypass = req.query.nocache === "1" || req.query.nocache === "true" || !!req.query._t;
+    if (!isBypass && marketCache.data && (now - marketCache.timestamp < 30000)) {
       res.setHeader("Cache-Control", "public, max-age=30");
       return res.json(marketCache.data);
     }
@@ -150,7 +151,13 @@ async function startServer() {
       };
 
       marketCache = { data: payload, timestamp: Date.now() };
-      res.setHeader("Cache-Control", "public, max-age=30");
+      if (isBypass) {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=30");
+      }
       res.json(payload);
     } catch (err) {
       console.error("Error in /api/market:", err);
@@ -160,14 +167,21 @@ async function startServer() {
 
   // API Route for fetching RSS feeds
   app.get("/api/news", async (req, res) => {
-    const { url } = req.query;
+    const { url, nocache, _t } = req.query;
     if (!url || typeof url !== "string") {
       return res.status(400).json({ error: "URL is required" });
     }
 
     try {
       const feed = await parser.parseURL(url);
-      res.setHeader("Cache-Control", "public, max-age=120");
+      const isBypass = nocache === "1" || nocache === "true" || !!_t;
+      if (isBypass) {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=120");
+      }
       res.json(feed);
     } catch (error) {
       console.error(`Error fetching feed from ${url}:`, error?.message || error);
