@@ -1498,6 +1498,7 @@ export default function App() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
     if (isStandalone) {
       setIsInstalled(true);
+      document.body.classList.add('pwa-installed');
     }
 
     const ua = window.navigator.userAgent.toLowerCase();
@@ -1512,6 +1513,7 @@ export default function App() {
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
+      document.body.classList.add('pwa-installed');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
@@ -1736,9 +1738,11 @@ export default function App() {
     if (isDark) {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#030303');
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f8fafc');
     }
   }, [isDark]);
 
@@ -2169,7 +2173,15 @@ export default function App() {
       </AnimatePresence>
 
       {/* Top Header */}
-      <header id="hdr" className="sticky top-0 z-80 bg-[var(--surface)] backdrop-blur-xl border-b border-[var(--border)] shadow-md">
+      <header 
+        id="hdr" 
+        className="sticky top-0 z-80 bg-[var(--surface)] backdrop-blur-xl border-b border-[var(--border)] shadow-md transition-all duration-300"
+        style={{
+          paddingTop: isInstalled ? 'max(env(safe-area-inset-top, 0px), 24px)' : 'env(safe-area-inset-top, 0px)',
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
+        }}
+      >
         <div className="max-w-[1440px] mx-auto px-3 py-2 sm:px-6 sm:py-3">
           {/* Mobile Layout (< md) */}
           <div className="flex flex-col gap-2.5 md:hidden">
@@ -2296,10 +2308,10 @@ export default function App() {
             </div>
 
             {/* Mobile Row 2: Mode Switcher (50/50 Thumb Toggle) */}
-            <div className="flex items-center p-1 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl backdrop-blur-md">
+            <div className="flex items-center p-1 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl backdrop-blur-md shadow-sm">
               <button
                 onClick={() => handleModeSwitch('crypto')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-300 ${
+                className={`flex-1 py-2 sm:py-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-300 ${
                   mode === 'crypto'
                     ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]'
                     : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
@@ -2310,7 +2322,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => handleModeSwitch('world')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-300 ${
+                className={`flex-1 py-2 sm:py-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-300 ${
                   mode === 'world'
                     ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]'
                     : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'

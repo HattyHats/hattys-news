@@ -45,11 +45,38 @@
   <body>
     <div id="root"></div>
 
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Service Worker Registration & Instant Auto-Update (No Hard Refresh Needed) -->
     <script>
       if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        let isRefreshing = false;
+
+        // Auto-refresh page seamlessly when a new service worker version activates
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!isRefreshing) {
+            isRefreshing = true;
+            window.location.reload();
+          }
+        });
+
+        window.addEventListener('load', async () => {
+          try {
+            const reg = await navigator.serviceWorker.register('/sw.js');
+
+            // Force check for updates immediately on launch
+            reg.update();
+
+            // Check for updates when user returns to the app / switches back tab
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') {
+                reg.update();
+              }
+            });
+
+            // Periodic background check every 15 minutes
+            setInterval(() => {
+              reg.update();
+            }, 15 * 60 * 1000);
+          } catch (e) {}
         });
       }
     </script>
