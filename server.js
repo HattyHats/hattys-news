@@ -53,7 +53,8 @@ async function startServer() {
 
     const symbols = [
       'CL=F', 'BZ=F', 'GC=F', 'SI=F', 'NG=F', 'HG=F',
-      'SPY', 'QQQ', 'DIA', 'NVDA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'TSLA', 'META'
+      'SPY', 'QQQ', 'DIA', 'IWM', 'EWU', 'EWG', 'FEZ', 'EWJ',
+      'NVDA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'TSLA', 'META'
     ];
 
     try {
@@ -80,72 +81,126 @@ async function startServer() {
       const payload = {
         commodities: {
           OIL_CRUDE: {
-            price: results['CL=F']?.price || 103.27,
-            change24h: results['CL=F']?.change || 3.82,
-            formatted: `$${(results['CL=F']?.price || 103.27).toFixed(2)}`
+            price: results['CL=F']?.price ?? 103.27,
+            change24h: results['CL=F']?.change ?? 3.82,
+            formatted: `$${(results['CL=F']?.price ?? 103.27).toFixed(2)}`
           },
           OIL_BRENT: {
-            price: results['BZ=F']?.price || 111.70,
-            change24h: results['BZ=F']?.change || 2.80,
-            formatted: `$${(results['BZ=F']?.price || 111.70).toFixed(2)}`
+            price: results['BZ=F']?.price ?? 111.70,
+            change24h: results['BZ=F']?.change ?? 2.80,
+            formatted: `$${(results['BZ=F']?.price ?? 111.70).toFixed(2)}`
           },
           GOLD: {
-            price: results['GC=F']?.price || 4007.90,
-            change24h: results['GC=F']?.change || -1.29,
-            formatted: `$${(results['GC=F']?.price || 4007.90).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            price: results['GC=F']?.price ?? 4007.90,
+            change24h: results['GC=F']?.change ?? -1.29,
+            formatted: `$${(results['GC=F']?.price ?? 4007.90).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
           },
           SILVER: {
-            price: results['SI=F']?.price || 53.95,
-            change24h: results['SI=F']?.change || -1.92,
-            formatted: `$${(results['SI=F']?.price || 53.95).toFixed(2)}`
+            price: results['SI=F']?.price ?? 53.95,
+            change24h: results['SI=F']?.change ?? -1.92,
+            formatted: `$${(results['SI=F']?.price ?? 53.95).toFixed(2)}`
           },
           NAT_GAS: {
-            price: results['NG=F']?.price || 3.05,
-            change24h: results['NG=F']?.change || -3.36,
-            formatted: `$${(results['NG=F']?.price || 3.05).toFixed(3)}`
+            price: results['NG=F']?.price ?? 3.05,
+            change24h: results['NG=F']?.change ?? -3.36,
+            formatted: `$${(results['NG=F']?.price ?? 3.05).toFixed(3)}`
           },
           COPPER: {
-            price: results['HG=F']?.price || 6.51,
-            change24h: results['HG=F']?.change || 1.72,
-            formatted: `$${(results['HG=F']?.price || 6.51).toFixed(3)}`
+            price: results['HG=F']?.price ?? 6.51,
+            change24h: results['HG=F']?.change ?? 1.72,
+            formatted: `$${(results['HG=F']?.price ?? 6.51).toFixed(3)}`
           }
         },
         stocks: {
           SPY: {
             symbol: 'S&P 500',
-            price: results['SPY']?.price || 759.97,
-            change24h: results['SPY']?.change || -0.52,
-            formatted: `$${(results['SPY']?.price || 759.97).toFixed(2)}`
+            price: results['SPY']?.price ?? 759.97,
+            change24h: results['SPY']?.change ?? -0.52,
+            formatted: `$${(results['SPY']?.price ?? 759.97).toFixed(2)}`
           },
           QQQ: {
             symbol: 'NASDAQ 100',
-            price: results['QQQ']?.price || 704.40,
-            change24h: results['QQQ']?.change || -0.01,
-            formatted: `$${(results['QQQ']?.price || 704.40).toFixed(2)}`
+            price: results['QQQ']?.price ?? 704.40,
+            change24h: results['QQQ']?.change ?? -0.01,
+            formatted: `$${(results['QQQ']?.price ?? 704.40).toFixed(2)}`
           },
           DIA: {
             symbol: 'DOW JONES',
-            price: results['DIA']?.price || 521.37,
-            change24h: results['DIA']?.change || -1.24,
-            formatted: `$${(results['DIA']?.price || 521.37).toFixed(2)}`
+            price: results['DIA']?.price ?? 521.37,
+            change24h: results['DIA']?.change ?? -1.24,
+            formatted: `$${(results['DIA']?.price ?? 521.37).toFixed(2)}`
+          },
+          IWM: {
+            symbol: 'RUSSELL 2000',
+            price: results['IWM']?.price ?? 241.80,
+            change24h: results['IWM']?.change ?? 0.42,
+            formatted: `$${(results['IWM']?.price ?? 241.80).toFixed(2)}`
+          },
+          EWU: {
+            symbol: 'FTSE 100',
+            price: results['EWU']?.price ?? 38.45,
+            change24h: results['EWU']?.change ?? 0.31,
+            formatted: `$${(results['EWU']?.price ?? 38.45).toFixed(2)}`
+          },
+          EWG: {
+            symbol: 'DAX 40',
+            price: results['EWG']?.price ?? 35.90,
+            change24h: results['EWG']?.change ?? 0.64,
+            formatted: `$${(results['EWG']?.price ?? 35.90).toFixed(2)}`
+          },
+          FEZ: {
+            symbol: 'EURO STOXX 50',
+            price: results['FEZ']?.price ?? 53.20,
+            change24h: results['FEZ']?.change ?? 0.48,
+            formatted: `$${(results['FEZ']?.price ?? 53.20).toFixed(2)}`
+          },
+          EWJ: {
+            symbol: 'NIKKEI 225',
+            price: results['EWJ']?.price ?? 71.15,
+            change24h: results['EWJ']?.change ?? 0.85,
+            formatted: `$${(results['EWJ']?.price ?? 71.15).toFixed(2)}`
           },
           NVDA: {
             symbol: 'NVIDIA',
-            price: results['NVDA']?.price || 210.96,
-            change24h: results['NVDA']?.change || -0.59,
-            formatted: `$${(results['NVDA']?.price || 210.96).toFixed(2)}`
+            price: results['NVDA']?.price ?? 210.96,
+            change24h: results['NVDA']?.change ?? -0.59,
+            formatted: `$${(results['NVDA']?.price ?? 210.96).toFixed(2)}`
           },
           AAPL: {
             symbol: 'APPLE',
-            price: results['AAPL']?.price || 347.73,
-            change24h: results['AAPL']?.change || -0.14,
-            formatted: `$${(results['AAPL']?.price || 347.73).toFixed(2)}`
+            price: results['AAPL']?.price ?? 347.73,
+            change24h: results['AAPL']?.change ?? -0.14,
+            formatted: `$${(results['AAPL']?.price ?? 347.73).toFixed(2)}`
+          },
+          MSFT: {
+            symbol: 'MICROSOFT',
+            price: results['MSFT']?.price ?? 468.50,
+            change24h: results['MSFT']?.change ?? 0.74,
+            formatted: `$${(results['MSFT']?.price ?? 468.50).toFixed(2)}`
+          },
+          AMZN: {
+            symbol: 'AMAZON',
+            price: results['AMZN']?.price ?? 229.40,
+            change24h: results['AMZN']?.change ?? 1.12,
+            formatted: `$${(results['AMZN']?.price ?? 229.40).toFixed(2)}`
+          },
+          GOOGL: {
+            symbol: 'ALPHABET',
+            price: results['GOOGL']?.price ?? 198.60,
+            change24h: results['GOOGL']?.change ?? 0.53,
+            formatted: `$${(results['GOOGL']?.price ?? 198.60).toFixed(2)}`
           },
           TSLA: {
             symbol: 'TESLA',
-            price: results['TSLA']?.price || 372.22,
-            change24h: results['TSLA']?.change || -0.63,
-            formatted: `$${(results['TSLA']?.price || 372.22).toFixed(2)}`
+            price: results['TSLA']?.price ?? 372.22,
+            change24h: results['TSLA']?.change ?? -0.63,
+            formatted: `$${(results['TSLA']?.price ?? 372.22).toFixed(2)}`
+          },
+          META: {
+            symbol: 'META',
+            price: results['META']?.price ?? 618.30,
+            change24h: results['META']?.change ?? 0.91,
+            formatted: `$${(results['META']?.price ?? 618.30).toFixed(2)}`
           }
         }
       };

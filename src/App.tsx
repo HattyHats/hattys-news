@@ -9,7 +9,8 @@ import {
   Search, Sun, Moon, RefreshCw, Menu, ExternalLink, Gauge, X, 
   Share2, Check, ArrowRight, Zap, TrendingUp, TrendingDown,
   Layers, ShieldAlert, Radio, Clock, Globe, ShieldCheck,
-  Download, Smartphone, Sparkles, AlertTriangle
+  Download, Smartphone, Sparkles, AlertTriangle,
+  Bookmark, Calendar, ChevronDown, ChevronUp, Flame
 } from 'lucide-react';
 
 export type AppMode = 'crypto' | 'world';
@@ -83,7 +84,8 @@ const CRYPTO_FEEDS: FeedConfig[] = [
   { n: 'U.Today', u: 'https://u.today/rss', defaultCat: 'all' },
   { n: 'BeInCrypto', u: 'https://beincrypto.com/feed/', defaultCat: 'all' },
   { n: 'AMBCrypto', u: 'https://ambcrypto.com/feed/', defaultCat: 'altcoin' },
-  { n: 'Coingape', u: 'https://coingape.com/feed/', defaultCat: 'all' },
+  { n: 'The Defiant', u: 'https://thedefiant.io/api/feed', defaultCat: 'defi' },
+  { n: 'CryptoBriefing', u: 'https://cryptobriefing.com/feed/', defaultCat: 'all' },
   { n: 'Bankless', u: 'https://www.bankless.com/rss/feed', defaultCat: 'defi' },
   { n: 'Crypto.News', u: 'https://crypto.news/feed/', defaultCat: 'all' },
   { n: 'CryptoPotato', u: 'https://cryptopotato.com/feed/', defaultCat: 'all' },
@@ -863,83 +865,134 @@ function AadsAdUnit() {
 }
 
 /* --- GLOBAL STOCK MARKET TICKER TAPE (WORLD MODE) --- */
+interface TapeQuote {
+  id: string;
+  ticker: string;
+  name: string;
+  badge: string;
+  color: string;
+  price: number;
+  change24h: number;
+  formatted: string;
+  url: string;
+}
+
+const INITIAL_TAPE_QUOTES: TapeQuote[] = [
+  { id: 'SPY', ticker: 'SPY', name: 'S&P 500', badge: '500', color: '#2563eb', price: 759.97, change24h: -0.52, formatted: '$759.97', url: 'https://finance.yahoo.com/quote/SPY' },
+  { id: 'QQQ', ticker: 'QQQ', name: 'NASDAQ 100', badge: '100', color: '#0891b2', price: 704.40, change24h: -0.01, formatted: '$704.40', url: 'https://finance.yahoo.com/quote/QQQ' },
+  { id: 'DIA', ticker: 'DIA', name: 'Dow Jones', badge: '30', color: '#4f46e5', price: 521.37, change24h: -1.24, formatted: '$521.37', url: 'https://finance.yahoo.com/quote/DIA' },
+  { id: 'IWM', ticker: 'IWM', name: 'Russell 2000', badge: '2K', color: '#7c3aed', price: 241.80, change24h: 0.42, formatted: '$241.80', url: 'https://finance.yahoo.com/quote/IWM' },
+  { id: 'EWU', ticker: 'EWU', name: 'FTSE 100', badge: 'UK', color: '#0284c7', price: 38.45, change24h: 0.31, formatted: '$38.45', url: 'https://finance.yahoo.com/quote/EWU' },
+  { id: 'EWG', ticker: 'EWG', name: 'DAX 40', badge: 'DE', color: '#d97706', price: 35.90, change24h: 0.64, formatted: '$35.90', url: 'https://finance.yahoo.com/quote/EWG' },
+  { id: 'FEZ', ticker: 'FEZ', name: 'EURO STOXX 50', badge: 'EU', color: '#1d4ed8', price: 53.20, change24h: 0.48, formatted: '$53.20', url: 'https://finance.yahoo.com/quote/FEZ' },
+  { id: 'EWJ', ticker: 'EWJ', name: 'Nikkei 225', badge: 'JP', color: '#dc2626', price: 71.15, change24h: 0.85, formatted: '$71.15', url: 'https://finance.yahoo.com/quote/EWJ' },
+  { id: 'OIL_CRUDE', ticker: 'WTI', name: 'Crude Oil', badge: 'OIL', color: '#ea580c', price: 103.27, change24h: 3.82, formatted: '$103.27', url: 'https://finance.yahoo.com/quote/CL=F' },
+  { id: 'GOLD', ticker: 'XAU', name: 'Gold Spot', badge: 'AU', color: '#ca8a04', price: 4007.90, change24h: -1.29, formatted: '$4,007.90', url: 'https://finance.yahoo.com/quote/GC=F' },
+  { id: 'NVDA', ticker: 'NVDA', name: 'NVIDIA', badge: 'NV', color: '#16a34a', price: 210.96, change24h: -0.59, formatted: '$210.96', url: 'https://finance.yahoo.com/quote/NVDA' },
+  { id: 'AAPL', ticker: 'AAPL', name: 'Apple', badge: 'AP', color: '#475569', price: 347.73, change24h: -0.14, formatted: '$347.73', url: 'https://finance.yahoo.com/quote/AAPL' },
+  { id: 'MSFT', ticker: 'MSFT', name: 'Microsoft', badge: 'MS', color: '#0284c7', price: 468.50, change24h: 0.74, formatted: '$468.50', url: 'https://finance.yahoo.com/quote/MSFT' },
+  { id: 'AMZN', ticker: 'AMZN', name: 'Amazon', badge: 'AZ', color: '#f59e0b', price: 229.40, change24h: 1.12, formatted: '$229.40', url: 'https://finance.yahoo.com/quote/AMZN' },
+  { id: 'GOOGL', ticker: 'GOOGL', name: 'Alphabet', badge: 'GO', color: '#dc2626', price: 198.60, change24h: 0.53, formatted: '$198.60', url: 'https://finance.yahoo.com/quote/GOOGL' },
+  { id: 'TSLA', ticker: 'TSLA', name: 'Tesla', badge: 'TS', color: '#e11d48', price: 372.22, change24h: -0.63, formatted: '$372.22', url: 'https://finance.yahoo.com/quote/TSLA' },
+  { id: 'META', ticker: 'META', name: 'Meta', badge: 'MT', color: '#2563eb', price: 618.30, change24h: 0.91, formatted: '$618.30', url: 'https://finance.yahoo.com/quote/META' }
+];
+
 function StockTickerTape({ isDark }: { isDark: boolean }) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [quotes, setQuotes] = useState<TapeQuote[]>(INITIAL_TAPE_QUOTES);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    let isMounted = true;
+    const syncQuotes = async (force = false) => {
+      try {
+        const bust = force ? `?_t=${Date.now()}&nocache=1` : '';
+        const res = await fetch(`/api/market${bust}`, {
+          cache: force ? 'no-store' : 'default'
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data || !isMounted) return;
 
-    container.innerHTML = '';
+        setQuotes(prev =>
+          prev.map(item => {
+            const stockMatch = data.stocks?.[item.id];
+            const commMatch = data.commodities?.[item.id];
+            const match = stockMatch || commMatch;
+            if (!match) return item;
+            return {
+              ...item,
+              price: match.price ?? item.price,
+              change24h: match.change24h ?? item.change24h,
+              formatted: match.formatted ?? item.formatted
+            };
+          })
+        );
+      } catch {}
+    };
 
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container';
-    widgetContainer.style.width = '100%';
-    widgetContainer.style.height = '58px';
-
-    const widgetSlot = document.createElement('div');
-    widgetSlot.className = 'tradingview-widget-container__widget';
-    widgetSlot.style.width = '100%';
-    widgetSlot.style.height = '58px';
-    widgetSlot.innerHTML = `
-      <div style="display:flex;align-items:center;height:58px;padding:0 16px;font-family:monospace;font-size:11px;color:${isDark ? '#94a3b8' : '#475569'};gap:18px;overflow:hidden;white-space:nowrap;">
-        <span style="font-weight:bold;color:${isDark ? '#60a5fa' : '#2563eb'};">● GLOBAL MARKETS:</span>
-        <span>S&P 500 <strong style="color:${isDark ? '#fff' : '#0f172a'};">759.97</strong> <span style="color:#ef4444;">-0.52%</span></span>
-        <span>NASDAQ 100 <strong style="color:${isDark ? '#fff' : '#0f172a'};">704.40</strong> <span style="color:#ef4444;">-0.01%</span></span>
-        <span>DOW 30 <strong style="color:${isDark ? '#fff' : '#0f172a'};">521.37</strong> <span style="color:#ef4444;">-1.24%</span></span>
-        <span>CRUDE OIL <strong style="color:${isDark ? '#fff' : '#0f172a'};">$103.27</strong> <span style="color:#22c55e;">+3.82%</span></span>
-        <span>GOLD <strong style="color:${isDark ? '#fff' : '#0f172a'};">$4,007.90</strong> <span style="color:#ef4444;">-1.29%</span></span>
-        <span>NVDA <strong style="color:${isDark ? '#fff' : '#0f172a'};">$210.96</strong> <span style="color:#ef4444;">-0.59%</span></span>
-        <span>AAPL <strong style="color:${isDark ? '#fff' : '#0f172a'};">$347.73</strong> <span style="color:#ef4444;">-0.14%</span></span>
-        <span>TSLA <strong style="color:${isDark ? '#fff' : '#0f172a'};">$372.22</strong> <span style="color:#ef4444;">-0.63%</span></span>
-      </div>
-    `;
-    widgetContainer.appendChild(widgetSlot);
-
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      symbols: [
-        { proName: 'AMEX:SPY', title: 'S&P 500' },
-        { proName: 'NASDAQ:QQQ', title: 'NASDAQ 100' },
-        { proName: 'AMEX:DIA', title: 'Dow Jones' },
-        { proName: 'AMEX:IWM', title: 'Russell 2000' },
-        { proName: 'AMEX:EWU', title: 'FTSE 100' },
-        { proName: 'AMEX:EWG', title: 'DAX 40' },
-        { proName: 'AMEX:FEZ', title: 'EURO STOXX 50' },
-        { proName: 'TVC:USOIL', title: 'Crude Oil' },
-        { proName: 'OANDA:XAUUSD', title: 'Gold' },
-        { proName: 'NASDAQ:NVDA', title: 'NVIDIA' },
-        { proName: 'NASDAQ:AAPL', title: 'Apple' },
-        { proName: 'NASDAQ:MSFT', title: 'Microsoft' },
-        { proName: 'NASDAQ:AMZN', title: 'Amazon' },
-        { proName: 'NASDAQ:GOOGL', title: 'Alphabet' },
-        { proName: 'NASDAQ:TSLA', title: 'Tesla' },
-        { proName: 'NASDAQ:META', title: 'Meta' }
-      ],
-      showSymbolLogo: true,
-      isTransparent: true,
-      displayMode: 'regular',
-      colorTheme: isDark ? 'dark' : 'light',
-      locale: 'en'
-    });
-
-    widgetContainer.appendChild(script);
-    container.appendChild(widgetContainer);
+    syncQuotes();
+    const interval = setInterval(() => syncQuotes(false), 30000);
+    const handleRefresh = () => syncQuotes(true);
+    window.addEventListener('refresh-market-data', handleRefresh);
 
     return () => {
-      container.innerHTML = '';
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('refresh-market-data', handleRefresh);
     };
-  }, [isDark]);
+  }, []);
+
+  const renderStrip = (copyKey: string) => (
+    <div key={copyKey} className="flex items-center shrink-0">
+      {quotes.map((q) => {
+        const isUp = q.change24h >= 0;
+        return (
+          <a
+            key={`${copyKey}-${q.id}`}
+            href={q.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-2.5 px-5 h-[48px] border-r transition-colors whitespace-nowrap select-none ${
+              isDark
+                ? 'border-white/10 hover:bg-white/5 text-slate-100'
+                : 'border-slate-200 hover:bg-slate-100 text-slate-900'
+            }`}
+          >
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-mono font-bold text-white shrink-0 shadow-sm"
+              style={{ backgroundColor: q.color }}
+            >
+              {q.badge}
+            </span>
+            <span className="font-sans font-bold text-xs tracking-tight">
+              {q.name}
+            </span>
+            <span className={`font-mono text-[11px] font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              {q.formatted}
+            </span>
+            <span
+              className={`font-mono text-[11px] font-bold flex items-center gap-0.5 ${
+                isUp ? 'text-emerald-400' : 'text-rose-500'
+              }`}
+            >
+              <span>{isUp ? '▲' : '▼'}</span>
+              <span>{isUp ? '+' : ''}{q.change24h.toFixed(2)}%</span>
+            </span>
+          </a>
+        );
+      })}
+    </div>
+  );
 
   return (
-    <div 
-      ref={containerRef} 
-      className="w-full h-[58px] overflow-hidden flex items-center justify-start" 
-      style={{ minHeight: '58px', height: '58px' }}
-    />
+    <div
+      className="w-full h-[48px] overflow-hidden flex items-center relative"
+      style={{ minHeight: '48px', height: '48px' }}
+    >
+      <div className="stock-marquee-track">
+        {renderStrip('copy-a')}
+        {renderStrip('copy-b')}
+      </div>
+    </div>
   );
 }
 
@@ -1503,20 +1556,472 @@ function DoomsdayModal({ isOpen, onClose, isDark }: DoomsdayModalProps) {
   );
 }
 
+/* --- MULTI-SOURCE CLUSTERING & TIME HELPERS --- */
+const STOP_WORDS = new Set([
+  'that', 'with', 'from', 'this', 'have', 'will', 'after', 'over', 'more', 'into',
+  'says', 'amid', 'what', 'when', 'where', 'news', 'report', 'update', 'live', 'today',
+  'year', 'week', 'month', 'time', 'first', 'new', 'could', 'would', 'should', 'about',
+  'their', 'there', 'they', 'been', 'were', 'which', 'while', 'under', 'between', 'before',
+  'market', 'markets', 'world', 'global', 'crypto', 'price', 'prices', 'watch', 'breaking',
+  'analysis', 'heres', 'why', 'how', 'most', 'some', 'other', 'than', 'then', 'only', 'also'
+]);
+
+function getPublisherRoot(src: string): string {
+  const s = (src || '').toLowerCase();
+  if (s.startsWith('cointelegraph')) return 'cointelegraph';
+  if (s.startsWith('bbc')) return 'bbc';
+  if (s.startsWith('npr')) return 'npr';
+  if (s.startsWith('upi')) return 'upi';
+  if (s.startsWith('cna')) return 'cna';
+  if (s.startsWith('reuters')) return 'reuters';
+  if (s.includes('associated press') || s.startsWith('ap ')) return 'ap';
+  return s;
+}
+
+function cleanWireTitle(rawTitle: string): string {
+  return rawTitle
+    .replace(/\s+-\s+(Reuters|Associated Press|AP News|PBS|PBS NewsHour|NHK WORLD-JAPAN|NHK World|BBC News|Al Jazeera|The Guardian|DW|France 24|NPR|UPI\.com|CBC\.ca|ABC News)$/i, '')
+    .replace(/^NEWSLETTER:\s*/i, '')
+    .trim();
+}
+
+function cleanWireSnippet(rawSnippet: string, cleanedTitle: string): string {
+  const decoded = rawSnippet
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!decoded) return '';
+  const normSnippet = decoded.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normTitle = cleanedTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (normTitle && normSnippet.startsWith(normTitle.slice(0, Math.min(35, normTitle.length)))) {
+    return '';
+  }
+  return decoded.slice(0, 150).trim();
+}
+
+function extractHeadlineKeywords(title: string): string[] {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 4 && !STOP_WORDS.has(w));
+}
+
+function computeArticleClusters(articles: Article[]): Map<string, Article[]> {
+  const map = new Map<string, Article[]>();
+  const tokenized = articles.map(a => ({
+    article: a,
+    pubRoot: getPublisherRoot(a.src),
+    tokens: new Set(extractHeadlineKeywords(a.title)),
+    time: a.date.getTime()
+  }));
+
+  for (let i = 0; i < tokenized.length; i++) {
+    const itemA = tokenized[i];
+    if (itemA.tokens.size < 2) continue;
+    const related: Article[] = [];
+    const seenPublishers = new Set<string>([itemA.pubRoot]);
+
+    for (let j = 0; j < tokenized.length; j++) {
+      if (i === j) continue;
+      const itemB = tokenized[j];
+      if (seenPublishers.has(itemB.pubRoot)) continue;
+      if (Math.abs(itemA.time - itemB.time) > 48 * 3600 * 1000) continue;
+
+      let shared = 0;
+      for (const tok of itemA.tokens) {
+        if (itemB.tokens.has(tok)) shared++;
+      }
+
+      if (shared >= 2) {
+        seenPublishers.add(itemB.pubRoot);
+        related.push(itemB.article);
+        if (related.length >= 4) break;
+      }
+    }
+
+    if (related.length > 0) {
+      map.set(itemA.article.id, related);
+    }
+  }
+
+  return map;
+}
+
+function formatTimeAgo(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 0 || isNaN(diffMs)) return 'Just now';
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/* --- LIVE ECONOMIC & CRYPTO CATALYST CALENDAR MODAL --- */
+interface CatalystEvent {
+  id: string;
+  title: string;
+  category: 'macro' | 'crypto' | 'earnings' | 'geopolitics';
+  categoryLabel: string;
+  date: Date;
+  impact: 'HIGH' | 'MEDIUM';
+  impactNote: string;
+  consensus?: string;
+}
+
+function getUpcomingCatalysts(): CatalystEvent[] {
+  const now = new Date();
+  const d = (daysAhead: number, hourUtc = 13, minUtc = 30) => {
+    const target = new Date(now.getTime() + daysAhead * 86400 * 1000);
+    target.setUTCHours(hourUtc, minUtc, 0, 0);
+    return target;
+  };
+
+  return [
+    {
+      id: 'cat-cpi',
+      title: 'U.S. CPI Inflation Report (YoY & Core MoM)',
+      category: 'macro',
+      categoryLabel: 'MACRO / FED',
+      date: d(2, 13, 30),
+      impact: 'HIGH',
+      impactNote: 'Primary inflation gauge driving Federal Reserve rate cut expectations, USD strength, and risk-asset volatility across stocks & Bitcoin.',
+      consensus: 'Core CPI Est: 0.2% MoM'
+    },
+    {
+      id: 'cat-etf-flows',
+      title: 'SEC Digital Asset ETF Options & Institutional Flow Settlement',
+      category: 'crypto',
+      categoryLabel: 'CRYPTO & ETF',
+      date: d(3, 20, 0),
+      impact: 'HIGH',
+      impactNote: 'Weekly institutional Spot BTC & ETH ETF net flow rebalancing and SEC regulatory filing review window.',
+      consensus: 'Institutional Desk Rebalance'
+    },
+    {
+      id: 'cat-jobless',
+      title: 'U.S. Initial Jobless Claims & Labor Market Pulse',
+      category: 'macro',
+      categoryLabel: 'MACRO / FED',
+      date: d(4, 13, 30),
+      impact: 'MEDIUM',
+      impactNote: 'High-frequency indicator of U.S. labor market cooling or resilience ahead of the next FOMC decision.',
+      consensus: 'Est: 218K Claims'
+    },
+    {
+      id: 'cat-unlocks',
+      title: 'Major Layer-1 & DeFi Ecosystem Token Unlocks ($340M+)',
+      category: 'crypto',
+      categoryLabel: 'CRYPTO & ETF',
+      date: d(5, 12, 0),
+      impact: 'MEDIUM',
+      impactNote: 'Scheduled cliff and linear vesting unlocks across major altcoin protocols; closely watched for spot liquidity absorption.',
+      consensus: '$340M+ Combined Cliff'
+    },
+    {
+      id: 'cat-fomc',
+      title: 'Federal Reserve FOMC Minutes & Chair Powell Policy Remarks',
+      category: 'macro',
+      categoryLabel: 'MACRO / FED',
+      date: d(7, 19, 0),
+      impact: 'HIGH',
+      impactNote: 'Detailed breakdown of Federal Open Market Committee rate trajectory, balance sheet QT pace, and liquidity outlook.',
+      consensus: 'Hawkish / Neutral Watch'
+    },
+    {
+      id: 'cat-nvda-ai',
+      title: 'Big Tech & AI Semiconductor Earnings / Guidance Window',
+      category: 'earnings',
+      categoryLabel: 'TECH & EARNINGS',
+      date: d(9, 21, 0),
+      impact: 'HIGH',
+      impactNote: 'Hyperscaler AI capex and data-center GPU demand guidance — key driver for NASDAQ 100, S&P 500, and AI-crypto tokens.',
+      consensus: 'Post-Market Bell (4:00 PM EST)'
+    },
+    {
+      id: 'cat-eth-upgrade',
+      title: 'Ethereum Core Dev Call & Pectra / L2 Scaling Milestone',
+      category: 'crypto',
+      categoryLabel: 'CRYPTO & ETF',
+      date: d(11, 14, 0),
+      impact: 'MEDIUM',
+      impactNote: 'Execution & consensus layer client specification freeze for blob throughput expansion and L2 fee reduction.',
+      consensus: 'AllCoreDevs Execution'
+    },
+    {
+      id: 'cat-g7-energy',
+      title: 'G7 & OPEC+ Global Energy, Trade & Geopolitical Ministerial',
+      category: 'geopolitics',
+      categoryLabel: 'GEOPOLITICS',
+      date: d(14, 10, 0),
+      impact: 'HIGH',
+      impactNote: 'Crude oil production quotas, global shipping corridor security, and strategic mineral supply chain policy.',
+      consensus: 'Vienna / Brussels Wire'
+    }
+  ];
+}
+
+function formatCountdown(targetDate: Date, nowMs = Date.now()): string {
+  const diff = targetDate.getTime() - nowMs;
+  if (diff <= 0) return 'LIVE NOW';
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  if (days === 0) return `IN ${hours}h ${mins}m`;
+  return `IN ${days}d ${hours}h`;
+}
+
+function CatalystCalendarModal({ isOpen, onClose, activeMode }: { isOpen: boolean; onClose: () => void; activeMode: AppMode }) {
+  const [catFilter, setCatFilter] = useState<'all' | 'macro' | 'crypto' | 'earnings' | 'geopolitics'>('all');
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const events = useMemo(() => getUpcomingCatalysts(), []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setNowMs(Date.now());
+    const timer = setInterval(() => setNowMs(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const filteredEvents = events.filter(e => catFilter === 'all' || e.category === catFilter);
+
+  return (
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 20 }}
+        className="relative w-full max-w-2xl bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto text-[var(--ink)]"
+      >
+        <button
+          className="absolute top-4 right-4 text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors p-1"
+          onClick={onClose}
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-2 mb-1">
+          <Calendar className={`w-4 h-4 ${activeMode === 'world' ? 'text-blue-400' : 'text-[var(--accent)]'}`} />
+          <span className="font-mono text-[11px] font-bold tracking-widest uppercase text-[var(--ink-muted)]">
+            MARKET VOLATILITY RADAR // UPCOMING CATALYSTS
+          </span>
+        </div>
+        <h2 className="font-display text-3xl sm:text-4xl text-[var(--ink)] tracking-wide mb-4">
+          ECONOMIC & CRYPTO CATALYST CALENDAR
+        </h2>
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-4 border-b border-[var(--border)]">
+          {[
+            { id: 'all', label: 'ALL CATALYSTS' },
+            { id: 'macro', label: '🏛️ MACRO & FED' },
+            { id: 'crypto', label: '⚡ CRYPTO & ETFs' },
+            { id: 'earnings', label: '🔬 TECH & AI' },
+            { id: 'geopolitics', label: '🌐 GEOPOLITICS' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setCatFilter(tab.id as any)}
+              className={`px-3 py-1.5 rounded-lg font-mono text-[11px] font-bold shrink-0 border transition-all ${
+                catFilter === tab.id
+                  ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-sm'
+                  : 'bg-[var(--bg)] text-[var(--ink-muted)] border-[var(--border)] hover:text-[var(--ink)]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Events List */}
+        <div className="space-y-3">
+          {filteredEvents.map(ev => (
+            <div
+              key={ev.id}
+              className="p-3.5 sm:p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--accent)]/50 transition-all"
+            >
+              <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                    ev.impact === 'HIGH'
+                      ? 'bg-red-500/15 text-red-500 dark:text-red-400 border-red-500/30'
+                      : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                  }`}>
+                    {ev.impact === 'HIGH' ? '🔴 HIGH IMPACT' : '🟡 MED IMPACT'}
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/5 dark:bg-white/5 border border-[var(--border)] text-[var(--ink-muted)]">
+                    {ev.categoryLabel}
+                  </span>
+                  {ev.consensus && (
+                    <span className="text-[10px] font-mono text-[var(--ink-muted)]">
+                      • {ev.consensus}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 font-mono text-[11px]">
+                  <span className="text-[var(--ink-muted)]">
+                    {ev.date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} • {ev.date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">
+                    {formatCountdown(ev.date, nowMs)}
+                  </span>
+                </div>
+              </div>
+
+              <h3 className="font-sans font-bold text-sm sm:text-base text-[var(--ink)] mb-1">
+                {ev.title}
+              </h3>
+              <p className="text-xs text-[var(--ink-muted)] leading-relaxed">
+                {ev.impactNote}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] font-mono text-[var(--ink-muted)] border-t border-[var(--border)] pt-3 mt-5">
+          <span>SCHEDULED MACRO & ON-CHAIN DESK</span>
+          <span className="text-emerald-500 dark:text-emerald-400 font-bold">● REAL-TIME COUNTDOWN SYNC</span>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
+  try {
+    const cacheKey = targetMode === 'world' ? 'hattys_news_world_cache_v3' : 'hattys_news_crypto_cache_v3';
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((a: any, idx: number) => {
+          const title = cleanWireTitle(a.title || '');
+          const snippet = cleanWireSnippet(a.snippet || '', title);
+          const normId = title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 36) || String(idx);
+          return {
+            ...a,
+            title,
+            snippet,
+            id: `${targetMode}-${a.src || 'wire'}-${normId}`,
+            img: (a.img && !a.img.startsWith('data:image/svg+xml;utf8')) ? a.img : getEditorialPhoto(a.primaryCat, title, targetMode),
+            date: new Date(a.date)
+          };
+        });
+      }
+    }
+  } catch {}
+  return [];
+}
+
 export default function App() {
   const [mode, setMode] = useState<AppMode>('crypto');
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<Article[]>(() => loadCachedArticlesForMode('crypto'));
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => loadCachedArticlesForMode('crypto').length === 0);
   const [isDark, setIsDark] = useState(true);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    try {
+      if (sessionStorage.getItem('hattys_splash_seen') === '1') {
+        return false;
+      }
+      sessionStorage.setItem('hattys_splash_seen', '1');
+      return true;
+    } catch {
+      return true;
+    }
+  });
   const [showMenu, setShowMenu] = useState(false);
   const [fearGreed, setFearGreed] = useState<FearGreedData | null>(null);
   const [showFearGreed, setShowFearGreed] = useState(false);
   const [showDoomsday, setShowDoomsday] = useState(false);
+  const [showCatalysts, setShowCatalysts] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [splashProgress, setSplashProgress] = useState(0);
+  const fetchSeqRef = useRef(0);
+
+  // 60-Second Morning Brief state (expanded by default, persisted)
+  const [showBrief, setShowBrief] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('hattys_brief_collapsed') !== '1';
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleBrief = () => {
+    setShowBrief(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('hattys_brief_collapsed', next ? '0' : '1');
+      } catch {}
+      return next;
+    });
+  };
+
+  // Saved / Read-Later Queue (persisted in localStorage)
+  const [savedArticles, setSavedArticles] = useState<Article[]>(() => {
+    try {
+      const raw = localStorage.getItem('hattys_saved_articles_v1');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed.map((a: any) => ({ ...a, date: new Date(a.date) }));
+        }
+      }
+    } catch {}
+    return [];
+  });
+
+  const savedIds = useMemo(() => new Set(savedArticles.map(a => a.id)), [savedArticles]);
+
+  const toggleSaveArticle = useCallback((article: Article) => {
+    setSavedArticles(prev => {
+      const exists = prev.some(item => item.id === article.id);
+      const updated = exists ? prev.filter(item => item.id !== article.id) : [article, ...prev];
+      try {
+        localStorage.setItem('hattys_saved_articles_v1', JSON.stringify(updated.slice(0, 100)));
+      } catch {}
+      return updated;
+    });
+  }, []);
+
+  // Track Last Visit Timestamp per Mode for "NEW" Story Badges
+  const [lastVisitTime, setLastVisitTime] = useState<number>(() => Date.now() - 3 * 3600 * 1000);
+
+  useEffect(() => {
+    try {
+      const visitKey = `hattys_last_visit_${mode}`;
+      const prev = localStorage.getItem(visitKey);
+      const now = Date.now();
+      if (prev) {
+        const parsed = parseInt(prev, 10);
+        // If last visit was < 5 mins ago (same session), use 2 hours ago so NEW badges remain meaningful
+        const threshold = now - parsed < 5 * 60 * 1000 ? now - 2 * 3600 * 1000 : parsed;
+        setLastVisitTime(threshold);
+      } else {
+        setLastVisitTime(now - 3 * 3600 * 1000);
+      }
+      localStorage.setItem(visitKey, String(now));
+    } catch {}
+  }, [mode]);
 
   // PWA Standalone App State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -1580,25 +2085,12 @@ export default function App() {
     }
   }, [mode]);
 
-  // Load cached articles on mount for instant zero-lag rendering
+  // Load cached articles on mode switch for instant zero-lag rendering
   useEffect(() => {
-    try {
-      const cacheKey = mode === 'world' ? 'hattys_news_world_cache_v3' : 'hattys_news_crypto_cache_v3';
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const restored = parsed.map((a: any) => ({
-            ...a,
-            img: (a.img && !a.img.startsWith('data:image/svg+xml;utf8')) ? a.img : getEditorialPhoto(a.primaryCat, a.title, mode),
-            date: new Date(a.date)
-          }));
-          setArticles(restored);
-          setLoading(false);
-        }
-      }
-    } catch {
-      // Ignore cache parse error
+    const restored = loadCachedArticlesForMode(mode);
+    if (restored.length > 0) {
+      setArticles(restored);
+      setLoading(false);
     }
   }, [mode]);
 
@@ -1617,7 +2109,7 @@ export default function App() {
 
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1200);
+    }, 1050);
 
     return () => {
       clearInterval(interval);
@@ -1678,11 +2170,9 @@ export default function App() {
           img = img.replace(/^http:\/\//i, 'https://');
         }
 
-        const title = i.title ? i.title.trim() : (targetMode === 'world' ? 'World Wire Update' : 'Crypto Market Update');
-        const snippet = (i.contentSnippet || i.description || '')
-          .replace(/<[^>]*>/g, '')
-          .slice(0, 140)
-          .trim();
+        const rawTitle = i.title ? i.title.trim() : (targetMode === 'world' ? 'World Wire Update' : 'Crypto Market Update');
+        const title = cleanWireTitle(rawTitle);
+        const snippet = cleanWireSnippet(i.contentSnippet || i.description || '', title);
 
         const { primary, matched } = classifyArticle(title, snippet, feed.defaultCat, targetMode);
 
@@ -1690,8 +2180,10 @@ export default function App() {
           img = getEditorialPhoto(primary, title, targetMode);
         }
 
+        const normId = title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 36) || String(idx);
+
         return {
-          id: `${targetMode}-${feed.n}-${idx}-${encodeURIComponent(title.slice(0, 20))}`,
+          id: `${targetMode}-${feed.n}-${normId}`,
           title,
           link: i.link || '#',
           img,
@@ -1711,13 +2203,17 @@ export default function App() {
   // State for manual refresh notifications
   const [refreshToast, setRefreshToast] = useState<{ message: string; active: boolean } | null>(null);
 
-  // Aggregator with progressive merging and deduplication
+  // Aggregator with progressive merging, race-condition guard, and deduplication
   const loadNews = useCallback(async (force = false) => {
+    const reqId = ++fetchSeqRef.current;
+    const targetMode = mode;
     setLoading(true);
-    const activeFeeds = mode === 'world' ? WORLD_FEEDS : CRYPTO_FEEDS;
+    const activeFeeds = targetMode === 'world' ? WORLD_FEEDS : CRYPTO_FEEDS;
     
     try {
-      const results = await Promise.allSettled(activeFeeds.map(f => fetchFeed(f, mode, force)));
+      const results = await Promise.allSettled(activeFeeds.map(f => fetchFeed(f, targetMode, force)));
+      if (reqId !== fetchSeqRef.current) return;
+
       const rawArticles = results
         .filter((r): r is PromiseFulfilledResult<Article[]> => r.status === 'fulfilled')
         .flatMap(r => r.value);
@@ -1735,17 +2231,19 @@ export default function App() {
 
       deduped.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-      if (deduped.length > 0) {
+      if (deduped.length > 0 && reqId === fetchSeqRef.current) {
         setArticles(deduped);
         try {
-          const cacheKey = mode === 'world' ? 'hattys_news_world_cache_v3' : 'hattys_news_crypto_cache_v3';
+          const cacheKey = targetMode === 'world' ? 'hattys_news_world_cache_v3' : 'hattys_news_crypto_cache_v3';
           localStorage.setItem(cacheKey, JSON.stringify(deduped.slice(0, 250)));
         } catch {}
       }
     } catch (err) {
       console.error('Failed to aggregate feeds', err);
     } finally {
-      setLoading(false);
+      if (reqId === fetchSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, [mode]);
 
@@ -1815,6 +2313,48 @@ export default function App() {
   // Active categories list based on current mode
   const activeCategories = mode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
 
+  // Multi-Source Story Clustering Map (id -> related Articles from other outlets)
+  const articleClusters = useMemo(() => computeArticleClusters(articles), [articles]);
+
+  // Count of new stories since last visit
+  const newArticlesCount = useMemo(() => {
+    return articles.filter(a => a.date.getTime() > lastVisitTime).length;
+  }, [articles, lastVisitTime]);
+
+  // 60-Second Morning Brief: Top 5 distinct stories ranked by Multi-Source Coverage + Recency
+  const morningBriefStories = useMemo(() => {
+    if (articles.length === 0) return [];
+    const now = Date.now();
+    const scored = articles.slice(0, 80).map(a => {
+      const relatedCount = articleClusters.get(a.id)?.length || 0;
+      const hoursOld = Math.max(0, (now - a.date.getTime()) / (3600 * 1000));
+      const recencyScore = Math.max(0, 24 - hoursOld);
+      const score = relatedCount * 10 + recencyScore;
+      return { article: a, related: articleClusters.get(a.id) || [], score };
+    });
+    scored.sort((x, y) => y.score - x.score);
+
+    const picked: { article: Article; related: Article[] }[] = [];
+    const usedIds = new Set<string>();
+    const usedPubRoots = new Set<string>();
+
+    for (const item of scored) {
+      if (usedIds.has(item.article.id)) continue;
+      const clusterOverlap = item.related.some(r => usedIds.has(r.id));
+      if (clusterOverlap) continue;
+      const pubRoot = getPublisherRoot(item.article.src);
+      if (usedPubRoots.has(pubRoot) && picked.length < 4 && scored.length > 10) continue;
+
+      usedIds.add(item.article.id);
+      item.related.forEach(r => usedIds.add(r.id));
+      usedPubRoots.add(pubRoot);
+      picked.push({ article: item.article, related: item.related });
+      if (picked.length >= 5) break;
+    }
+
+    return picked;
+  }, [articles, articleClusters]);
+
   // Real-time category article counters
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: articles.length };
@@ -1827,19 +2367,34 @@ export default function App() {
     return counts;
   }, [articles, activeCategories]);
 
-  // Filtered articles list
+  // Filtered articles list (supports 'saved' and 'new' filters in addition to categories)
   const filtered = useMemo(() => {
-    return articles.filter(a => {
-      const matchCat = filter === 'all' || a.matchedCategories.includes(filter) || a.primaryCat === filter;
+    const baseList = filter === 'saved' ? savedArticles : articles;
+    return baseList.filter(a => {
+      const matchCat =
+        filter === 'all' ||
+        filter === 'saved' ||
+        (filter === 'new' ? a.date.getTime() > lastVisitTime : (a.matchedCategories.includes(filter) || a.primaryCat === filter));
       const q = query.toLowerCase();
       const matchQuery = !q || a.title.toLowerCase().includes(q) || a.src.toLowerCase().includes(q) || (a.snippet && a.snippet.toLowerCase().includes(q));
       return matchCat && matchQuery;
     });
-  }, [articles, filter, query]);
+  }, [articles, savedArticles, filter, query, lastVisitTime]);
 
-  // Copy share link helper
+  // Copy share link helper with safe fallback
   const handleCopyLink = (id: string, link: string) => {
-    navigator.clipboard.writeText(link);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).catch(() => {});
+      } else {
+        const el = document.createElement('textarea');
+        el.value = link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+    } catch {}
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -2123,6 +2678,17 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Economic & Crypto Catalyst Calendar Modal */}
+      <AnimatePresence>
+        {showCatalysts && (
+          <CatalystCalendarModal
+            isOpen={showCatalysts}
+            onClose={() => setShowCatalysts(false)}
+            activeMode={mode}
+          />
+        )}
+      </AnimatePresence>
+
       {/* PWA / App Installation Modal */}
       <AnimatePresence>
         {showInstallModal && (
@@ -2286,6 +2852,14 @@ export default function App() {
                     <Clock className="w-4 h-4 text-red-500 animate-pulse" />
                   </button>
                 )}
+
+                <button
+                  className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0"
+                  onClick={() => setShowCatalysts(true)}
+                  title="Economic & Crypto Catalyst Calendar"
+                >
+                  <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                </button>
 
                 <button 
                   className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0" 
@@ -2522,6 +3096,15 @@ export default function App() {
                 </button>
               )}
 
+              <button
+                className="ibtn w-auto px-2.5 sm:px-3 flex items-center gap-1.5 font-mono text-xs shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all"
+                onClick={() => setShowCatalysts(true)}
+                title="Economic & Crypto Catalyst Calendar"
+              >
+                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden lg:inline font-bold tracking-tight">CATALYSTS</span>
+              </button>
+
               <button 
                 className="ibtn shrink-0" 
                 onClick={() => setIsDark(!isDark)}
@@ -2637,7 +3220,7 @@ export default function App() {
       {/* Main Terminal Feed */}
       <main className="max-w-[1440px] mx-auto my-6 px-4">
         {/* Navigation Category Filters - Horizontal scroll on mobile, wrap on desktop */}
-        <div className="mb-6">
+        <div className="mb-5">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 md:flex-wrap w-full">
             {activeCategories.map(cat => {
               const count = categoryCounts[cat.id] ?? 0;
@@ -2659,13 +3242,196 @@ export default function App() {
                 </button>
               );
             })}
+
+            {/* NEW Since Last Visit Filter Pill */}
+            {newArticlesCount > 0 && (
+              <button
+                className={`fp shrink-0 ${filter === 'new' ? 'on' : 'border-emerald-500/40 text-emerald-400 hover:border-emerald-400'}`}
+                onClick={() => setFilter(filter === 'new' ? 'all' : 'new')}
+                title="Show stories published since your last visit"
+              >
+                <Flame className="w-3.5 h-3.5 text-emerald-400" />
+                <span>NEW</span>
+                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                  filter === 'new' ? 'bg-white/20 text-white' : 'bg-emerald-500/20 text-emerald-300'
+                }`}>
+                  {newArticlesCount}
+                </span>
+              </button>
+            )}
+
+            {/* SAVED / Read-Later Queue Filter Pill */}
+            <button
+              className={`fp shrink-0 ${filter === 'saved' ? 'on' : savedArticles.length > 0 ? 'border-amber-500/40 text-amber-400' : ''}`}
+              onClick={() => setFilter(filter === 'saved' ? 'all' : 'saved')}
+              title="View your saved Read-Later queue"
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${savedArticles.length > 0 ? 'fill-amber-400 text-amber-400' : ''}`} />
+              <span>SAVED</span>
+              <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                filter === 'saved' ? 'bg-white/20 text-white' : 'bg-black/5 dark:bg-white/5 text-[var(--ink-muted)]'
+              }`}>
+                {savedArticles.length}
+              </span>
+            </button>
+
+            {/* 60-Second Morning Brief Toggle Pill */}
+            <button
+              onClick={toggleBrief}
+              className={`fp shrink-0 ml-auto ${
+                showBrief
+                  ? mode === 'world'
+                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-400'
+                    : 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+                  : ''
+              }`}
+              title="Toggle 60-Second Executive Brief"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>60S BRIEF</span>
+              {showBrief ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
           </div>
         </div>
+
+        {/* Feature 1: 60-Second Morning Brief (Top 5 Must-Know Stories) */}
+        <AnimatePresence initial={false}>
+          {showBrief && morningBriefStories.length > 0 && filter !== 'saved' && !query && (
+            <motion.section
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className={`rounded-2xl border p-4 sm:p-5 relative overflow-hidden ${
+                mode === 'world'
+                  ? isDark
+                    ? 'bg-gradient-to-br from-blue-950/35 via-[var(--surface-solid)] to-[var(--surface-solid)] border-blue-500/30'
+                    : 'bg-gradient-to-br from-blue-50 via-white to-white border-blue-300/70 shadow-sm'
+                  : isDark
+                    ? 'bg-gradient-to-br from-amber-950/25 via-[var(--surface-solid)] to-[var(--surface-solid)] border-amber-500/30'
+                    : 'bg-gradient-to-br from-amber-50 via-white to-white border-amber-300/70 shadow-sm'
+              }`}>
+                <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-[var(--border)] flex-wrap">
+                  <div className="flex items-center gap-2.5">
+                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg border ${
+                      mode === 'world'
+                        ? 'bg-blue-500/15 border-blue-500/40 text-blue-500 dark:text-blue-400'
+                        : 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400'
+                    }`}>
+                      <Zap className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="font-display text-lg sm:text-xl tracking-wide text-[var(--ink)] leading-none">
+                          60-SECOND {mode === 'world' ? 'GLOBAL' : 'CRYPTO'} BRIEF
+                        </h2>
+                        <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border ${
+                          mode === 'world'
+                            ? 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30'
+                            : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                        }`}>
+                          TOP 5 MUST-KNOW
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-mono text-[var(--ink-muted)] mt-0.5">
+                        Ranked by multi-source wire consensus & breaking velocity
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowCatalysts(true)}
+                      className="text-[11px] font-mono px-2.5 py-1 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors flex items-center gap-1.5 font-bold"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>UPCOMING CATALYSTS</span>
+                    </button>
+                    <button
+                      onClick={toggleBrief}
+                      className="text-[11px] font-mono px-2.5 py-1 rounded-lg border border-[var(--border)] text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
+                    >
+                      HIDE
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  {morningBriefStories.map((item, i) => {
+                    const isSaved = savedIds.has(item.article.id);
+                    return (
+                      <div
+                        key={item.article.id}
+                        className={`group relative rounded-xl border border-[var(--border)] p-3 flex flex-col justify-between transition-all hover:border-[var(--accent)]/50 ${
+                          isDark ? 'bg-black/25 hover:bg-black/40' : 'bg-white/90 hover:bg-white shadow-sm'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className={`text-[10px] font-mono font-black px-1.5 py-0.5 rounded ${
+                                mode === 'world'
+                                  ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300'
+                                  : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                              }`}>
+                                0{i + 1}
+                              </span>
+                              <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] truncate">
+                                {item.article.src}
+                              </span>
+                            </div>
+                            {item.related.length > 0 && (
+                              <span className="shrink-0 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30" title={`Covered by ${item.related.length + 1} outlets`}>
+                                +{item.related.length} wires
+                              </span>
+                            )}
+                          </div>
+                          <a
+                            href={item.article.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-bold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors line-clamp-3 leading-snug block"
+                          >
+                            {item.article.title}
+                          </a>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[var(--border)] text-[10px] font-mono text-[var(--ink-muted)]">
+                          <span>{formatTimeAgo(item.article.date)}</span>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => toggleSaveArticle(item.article)}
+                              className={`p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors ${
+                                isSaved ? 'text-amber-500 dark:text-amber-400' : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+                              }`}
+                              title={isSaved ? 'Remove from Saved' : 'Save for Later'}
+                            >
+                              <Bookmark className={`w-3 h-3 ${isSaved ? 'fill-amber-400' : ''}`} />
+                            </button>
+                            <a
+                              href={item.article.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[var(--accent)] hover:underline inline-flex items-center gap-0.5 font-bold"
+                            >
+                              READ <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
 
         {/* Status subheader */}
         <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-muted)] mb-4 px-1 flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span>SHOWING: <strong className="text-[var(--ink)]">{filtered.length}</strong> {mode === 'world' ? 'GLOBAL DISPATCHES' : 'CRYPTO DISPATCHES'}</span>
+            <span>SHOWING: <strong className="text-[var(--ink)]">{filtered.length}</strong> {filter === 'saved' ? 'SAVED DISPATCHES' : mode === 'world' ? 'GLOBAL DISPATCHES' : 'CRYPTO DISPATCHES'}</span>
             {refreshToast && (
               <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono border ${
                 refreshToast.active 
@@ -2716,9 +3482,13 @@ export default function App() {
         ) : filtered.length === 0 ? (
           <div className="text-center p-16 border border-dashed border-[var(--border)] rounded-2xl bg-[var(--surface)] my-8">
             <ShieldAlert className="w-12 h-12 text-[var(--accent)] mx-auto mb-3 opacity-80" />
-            <h2 className="font-display text-[var(--accent)] text-3xl">NO MATCHING DISPATCHES</h2>
+            <h2 className="font-display text-[var(--accent)] text-3xl">
+              {filter === 'saved' ? 'NO SAVED STORIES YET' : 'NO MATCHING DISPATCHES'}
+            </h2>
             <p className="text-[var(--ink-muted)] max-w-md mx-auto my-3 text-sm">
-              No reports match your current category or search criteria. Try choosing another filter or resetting your search.
+              {filter === 'saved'
+                ? 'Tap the bookmark icon on any dispatch to save it to your personal Read-Later queue.'
+                : 'No reports match your current category or search criteria. Try choosing another filter or resetting your search.'}
             </p>
             <div className="flex gap-3 justify-center mt-5">
               <button 
@@ -2728,7 +3498,7 @@ export default function App() {
                 RESET FILTER
               </button>
               <button 
-                onClick={loadNews} 
+                onClick={() => handleManualRefresh()} 
                 className="fp"
               >
                 RE-SYNC FEEDS
@@ -2739,8 +3509,13 @@ export default function App() {
           /* Article Grid */
           <div id="grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filtered.map((a, idx) => {
-              const categoryConfig = activeCategories.find(c => c.id === a.primaryCat) || activeCategories[0];
-              const badgeClass = categoryConfig.badgeClass || (mode === 'world' ? 'badge-world-top' : 'badge-all');
+              const cardMode = a.mode || mode;
+              const cardCategories = cardMode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
+              const categoryConfig = cardCategories.find(c => c.id === a.primaryCat) || cardCategories[0];
+              const badgeClass = categoryConfig.badgeClass || (cardMode === 'world' ? 'badge-world-top' : 'badge-all');
+              const isNew = a.date.getTime() > lastVisitTime;
+              const isSaved = savedIds.has(a.id);
+              const relatedSources = articleClusters.get(a.id) || [];
 
               return (
                 <motion.article
@@ -2751,20 +3526,37 @@ export default function App() {
                   className="card group"
                 >
                   <div className="relative overflow-hidden w-full h-[180px] bg-[#0c0c10]">
-                    <CardImage article={a} mode={mode} />
+                    <CardImage article={a} mode={cardMode} />
                     
-                    {/* Category Overlay Badge */}
-                    <div className="absolute top-2.5 left-2.5">
+                    {/* Category + NEW Overlay Badges */}
+                    <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase backdrop-blur-md ${badgeClass}`}>
                         {categoryConfig.label}
                       </span>
+                      {isNew && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 flex items-center gap-0.5">
+                          <Zap className="w-2.5 h-2.5 fill-black" />
+                          NEW
+                        </span>
+                      )}
                     </div>
 
-                    {/* Mode tag indicator on top right */}
+                    {/* Top-right Action Buttons (Bookmark & Copy Link) */}
                     <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                      <button
+                        onClick={() => toggleSaveArticle(a)}
+                        className={`w-7 h-7 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${
+                          isSaved
+                            ? 'bg-amber-500 text-black opacity-100 shadow-lg shadow-amber-500/30'
+                            : 'bg-black/60 hover:bg-black/90 text-gray-300 hover:text-white opacity-90 sm:opacity-0 sm:group-hover:opacity-100'
+                        }`}
+                        title={isSaved ? 'Remove from Read-Later Queue' : 'Save to Read-Later Queue'}
+                      >
+                        <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-black' : ''}`} />
+                      </button>
                       <button 
                         onClick={() => handleCopyLink(a.id, a.link)}
-                        className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-gray-300 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                        className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-gray-300 hover:text-white flex items-center justify-center transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
                         title="Copy Article Link"
                       >
                         {copiedId === a.id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Share2 className="w-3.5 h-3.5" />}
@@ -2774,12 +3566,12 @@ export default function App() {
 
                   <div className="cb">
                     <div className="flex items-center justify-between text-[11px] font-mono text-[var(--ink-muted)] mb-1.5">
-                      <span className={`font-bold tracking-wide ${mode === 'world' ? 'text-blue-400' : 'text-[var(--accent)]'}`}>
+                      <span className={`font-bold tracking-wide ${cardMode === 'world' ? 'text-blue-500 dark:text-blue-400' : 'text-[var(--accent)]'}`}>
                         {a.src}
                       </span>
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1" title={a.date.toLocaleString()}>
                         <Clock className="w-3 h-3 opacity-60" />
-                        {a.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        {formatTimeAgo(a.date)}
                       </span>
                     </div>
 
@@ -2795,9 +3587,40 @@ export default function App() {
                       </p>
                     )}
 
+                    {/* Feature 3: Multi-Source Story Clustering ("Also Covered By...") */}
+                    {relatedSources.length > 0 && (
+                      <div className={`mb-3 p-2 rounded-lg border border-[var(--border)] ${
+                        isDark ? 'bg-white/[0.03]' : 'bg-slate-50'
+                      }`}>
+                        <div className="text-[9px] font-mono font-bold uppercase tracking-wider text-[var(--ink-muted)] mb-1 flex items-center gap-1">
+                          <Layers className="w-2.5 h-2.5 text-[var(--accent)]" />
+                          <span>ALSO COVERED BY ({relatedSources.length}):</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {relatedSources.map(rel => (
+                            <a
+                              key={rel.id}
+                              href={rel.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border transition-colors inline-flex items-center gap-1 ${
+                                cardMode === 'world'
+                                  ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/25 hover:bg-blue-500/20'
+                                  : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25 hover:bg-amber-500/20'
+                              }`}
+                              title={rel.title}
+                            >
+                              <span>{rel.src}</span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex-1 min-h-[0.5rem]"></div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-[var(--border)] mt-auto">
+                    <div className="flex items-center gap-2 pt-2 border-t border-[var(--border)] mt-auto">
                       <a 
                         href={a.link} 
                         target="_blank" 
@@ -2807,6 +3630,17 @@ export default function App() {
                         <span>READ FULL REPORT</span>
                         <ExternalLink className="w-3 h-3" />
                       </a>
+                      <button
+                        onClick={() => toggleSaveArticle(a)}
+                        className={`px-2.5 py-2 rounded-lg border transition-colors flex items-center justify-center ${
+                          isSaved
+                            ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 dark:text-amber-400'
+                            : 'border-[var(--border)] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--accent)]/40'
+                        }`}
+                        title={isSaved ? 'Saved in Read-Later Queue' : 'Save for Later'}
+                      >
+                        <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-amber-400' : ''}`} />
+                      </button>
                     </div>
                   </div>
                 </motion.article>

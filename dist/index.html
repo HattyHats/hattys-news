@@ -41,44 +41,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-C9MuvfO4.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BMfecFKz.css">
+    <script type="module" crossorigin src="/assets/index-Bx0WyzM3.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-cs-o2fPh.css">
   <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
     <div id="root"></div>
 
-    <!-- PWA Service Worker Registration & Instant Auto-Update (No Hard Refresh Needed) -->
+    <!-- Silent Background SW Update Check (No Forced Page Reloads / No Double Load) -->
     <script>
       if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-        let isRefreshing = false;
-
-        // Auto-refresh page seamlessly when a new service worker version activates
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!isRefreshing) {
-            isRefreshing = true;
-            window.location.reload();
+        document.addEventListener('visibilitychange', async () => {
+          if (document.visibilityState === 'visible') {
+            try {
+              const reg = await navigator.serviceWorker.getRegistration();
+              if (reg) reg.update();
+            } catch (e) {}
           }
-        });
-
-        window.addEventListener('load', async () => {
-          try {
-            const reg = await navigator.serviceWorker.register('/sw.js');
-
-            // Force check for updates immediately on launch
-            reg.update();
-
-            // Check for updates when user returns to the app / switches back tab
-            document.addEventListener('visibilitychange', () => {
-              if (document.visibilityState === 'visible') {
-                reg.update();
-              }
-            });
-
-            // Periodic background check every 15 minutes
-            setInterval(() => {
-              reg.update();
-            }, 15 * 60 * 1000);
-          } catch (e) {}
         });
       }
     </script>

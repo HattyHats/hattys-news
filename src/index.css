@@ -443,17 +443,27 @@
     background-size: 200% 100%;
   }
 
-  /* Bottom World Stock Ticker Tape Container & Iframe */
-  #tickers .tradingview-widget-container,
-  #tickers .tradingview-widget-container__widget,
-  #tickers .tradingview-widget-container iframe {
-    height: 58px !important;
-    min-height: 58px !important;
-    max-height: 58px !important;
-    width: 100% !important;
-    border: none !important;
-    display: block !important;
-    vertical-align: middle !important;
+  /* Bottom World Stock Ticker Tape Marquee */
+  .stock-marquee-track {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    animation: stockMarquee 42s linear infinite;
+    will-change: transform;
+  }
+
+  .stock-marquee-track:hover,
+  .stock-marquee-track:active {
+    animation-play-state: paused;
+  }
+
+  @keyframes stockMarquee {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
   }
 
   @keyframes shimmer {
