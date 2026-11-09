@@ -45,18 +45,44 @@
   <body>
     <div id="root"></div>
 
-    <!-- Silent Background SW Update Check (No Forced Page Reloads / No Double Load) -->
+    <!-- Automatic Seamless Code Update Script (Zero Double-Load, Instant Refresh on New Deploy) -->
     <script>
-      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-        document.addEventListener('visibilitychange', async () => {
-          if (document.visibilityState === 'visible') {
-            try {
-              const reg = await navigator.serviceWorker.getRegistration();
-              if (reg) reg.update();
-            } catch (e) {}
-          }
-        });
-      }
+      (function() {
+        if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+          var refreshing = false;
+          // hadController is true only if the page was ALREADY controlled by an older service worker.
+          // For first-time visitors, hadController is false, completely preventing any double-load loop.
+          var hadController = Boolean(navigator.serviceWorker.controller);
+
+          navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (refreshing) return;
+            if (hadController) {
+              refreshing = true;
+              window.location.reload();
+            }
+          });
+
+          // Check for service worker updates immediately on page load
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.ready.then(function(reg) {
+              reg.update().catch(function() {});
+              // Periodically check every 10 minutes in the background
+              setInterval(function() {
+                reg.update().catch(function() {});
+              }, 10 * 60 * 1000);
+            }).catch(function() {});
+          });
+
+          // Whenever the user switches back to the tab/PWA window, check for deployed updates
+          document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+              navigator.serviceWorker.ready.then(function(reg) {
+                reg.update().catch(function() {});
+              }).catch(function() {});
+            }
+          });
+        }
+      })();
     </script>
 
     <!-- Main React Bundle -->

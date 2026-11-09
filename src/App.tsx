@@ -3783,11 +3783,11 @@ export default function App() {
           className="relative z-30 border-b border-[var(--border)]/60 bg-[var(--surface-solid)]"
         >
         <div className="max-w-[1440px] mx-auto px-2.5 py-2 sm:px-4 sm:py-2.5">
-          {/* Mobile Layout (< md) */}
-          <div className="flex flex-col gap-2 md:hidden">
+          {/* Mobile & Tablet Layout (< lg) */}
+          <div className="flex flex-col gap-2 lg:hidden">
             {/* Mobile Row 1: Brand & Actions */}
-            <div className="relative z-30 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => { setFilter('all'); setQuery(''); }}>
+            <div className="relative z-30 flex items-center justify-between gap-1 w-full">
+              <div className="flex items-center gap-1.5 cursor-pointer shrink-0" onClick={() => { setFilter('all'); setQuery(''); }}>
                 <div className="relative group shrink-0">
                   <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50" />
                   <img 
@@ -3796,11 +3796,11 @@ export default function App() {
                     className="relative w-6 h-6 sm:w-7 sm:h-7 rounded-lg border border-white/20 shadow-md" 
                   />
                 </div>
-                <span className="logo text-lg sm:text-xl font-display tracking-tight">HATTY'S NEWS</span>
+                <span className="logo text-lg sm:text-xl font-display tracking-tight whitespace-nowrap">HATTY'S NEWS</span>
               </div>
 
               {/* Mobile Action Buttons */}
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                 {!isInstalled && (
                   <button 
                     onClick={handleInstallClick}
@@ -3953,66 +3953,69 @@ export default function App() {
               </div>
             </div>
 
-            {/* Mobile Row 2: Mode Switcher (50/50 Thumb Toggle) */}
-            <div className="flex items-center p-1 bg-[var(--bg2)] border border-[var(--border)] rounded-xl shadow-sm">
-              <button
-                onClick={() => handleModeSwitch('crypto')}
-                className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
-                  mode === 'crypto'
-                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]'
-                    : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
-                }`}
-              >
-                <span>⚡</span>
-                <span>CRYPTO</span>
-              </button>
-              <button
-                onClick={() => handleModeSwitch('world')}
-                className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
-                  mode === 'world'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]'
-                    : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
-                }`}
-              >
-                <span>🌐</span>
-                <span>WORLD NEWS</span>
-              </button>
-            </div>
-
-            {/* Mobile Row 3: Search Bar */}
-            <div className="w-full relative">
-              <input
-                type="text"
-                placeholder={mode === 'world' ? "Search Reuters, AP, BBC, DW wire..." : "Search Blockchain, Assets, Feeds..."}
-                className="w-full bg-[var(--surface-solid)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--ink)] text-xs rounded-xl py-1.5 pl-8 pr-7 outline-none font-sans placeholder:text-[var(--ink-muted)] transition-all"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ink-muted)]" />
-              {query && (
-                <button 
-                  onClick={() => setQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)]"
+            {/* Row 2: Mode Switcher & Search Bar (Stacked on Phone, Side-by-Side on Tablet) */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+              {/* Mode Switcher */}
+              <div className="flex items-center p-1 bg-[var(--bg2)] border border-[var(--border)] rounded-xl shadow-sm sm:w-auto shrink-0">
+                <button
+                  onClick={() => handleModeSwitch('crypto')}
+                  className={`flex-1 sm:flex-initial sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
+                    mode === 'crypto'
+                      ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]'
+                      : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+                  }`}
                 >
-                  <X className="w-3 h-3" />
+                  <span>⚡</span>
+                  <span>CRYPTO</span>
                 </button>
-              )}
+                <button
+                  onClick={() => handleModeSwitch('world')}
+                  className={`flex-1 sm:flex-initial sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
+                    mode === 'world'
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]'
+                      : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+                  }`}
+                >
+                  <span>🌐</span>
+                  <span>WORLD NEWS</span>
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="flex-1 w-full relative">
+                <input
+                  type="text"
+                  placeholder={mode === 'world' ? "Search Reuters, AP, BBC, DW wire..." : "Search Blockchain, Assets, Feeds..."}
+                  className="w-full bg-[var(--surface-solid)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--ink)] text-xs rounded-xl py-1.5 pl-8 pr-7 outline-none font-sans placeholder:text-[var(--ink-muted)] transition-all"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ink-muted)]" />
+                {query && (
+                  <button 
+                    onClick={() => setQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Desktop Layout (>= md) */}
-          <div className="hidden md:flex items-center gap-2 lg:gap-3 xl:gap-4 w-full">
+          {/* Desktop Layout (>= lg) */}
+          <div className="hidden lg:flex items-center gap-1.5 lg:gap-2 xl:gap-3 w-full">
             {/* Logo with Mode Badge */}
-            <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => { setFilter('all'); setQuery(''); }}>
+            <div className="flex items-center gap-1.5 lg:gap-2 cursor-pointer shrink-0" onClick={() => { setFilter('all'); setQuery(''); }}>
               <div className="relative group shrink-0">
                 <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50 group-hover:opacity-100 transition-opacity" />
                 <img 
                   src="/favicon.svg" 
                   alt="Hatty's News Logo" 
-                  className="relative w-7 h-7 lg:w-8 lg:h-8 rounded-lg border border-white/20 shadow-md group-hover:scale-105 transition-transform" 
+                  className="relative w-7 h-7 rounded-lg border border-white/20 shadow-md group-hover:scale-105 transition-transform" 
                 />
               </div>
-              <span className="logo text-xl lg:text-2xl font-display tracking-tight shrink-0">HATTY'S NEWS</span>
+              <span className="logo text-lg lg:text-xl font-display tracking-tight shrink-0 whitespace-nowrap">HATTY'S NEWS</span>
               <span className={`hidden 2xl:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border transition-colors ${
                 mode === 'world' 
                   ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' 
@@ -4024,7 +4027,7 @@ export default function App() {
             </div>
 
             {/* Mode Switcher Buttons */}
-            <div className="flex items-center p-0.5 sm:p-1 bg-[var(--bg2)] border border-[var(--border)] rounded-full shrink-0">
+            <div className="flex items-center p-0.5 bg-[var(--bg2)] border border-[var(--border)] rounded-full shrink-0">
               <button
                 onClick={() => handleModeSwitch('crypto')}
                 className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1 transition-all duration-200 ${
@@ -4045,15 +4048,15 @@ export default function App() {
                 }`}
               >
                 <span>🌐</span>
-                <span>WORLD<span className="hidden xl:inline"> NEWS</span></span>
+                <span>WORLD<span className="hidden 2xl:inline"> NEWS</span></span>
               </button>
             </div>
 
             {/* Search Box */}
-            <div className="flex-1 min-w-[100px] max-w-[180px] lg:max-w-[200px] xl:max-w-[220px] 2xl:max-w-[280px] relative">
+            <div className="flex-1 min-w-[90px] max-w-[150px] xl:max-w-[190px] 2xl:max-w-[260px] relative">
               <input
                 type="text"
-                placeholder={mode === 'world' ? "Search world wire..." : "Search crypto wire..."}
+                placeholder={mode === 'world' ? "Search world..." : "Search crypto..."}
                 className="w-full bg-[var(--surface-solid)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--ink)] text-xs rounded-xl py-1.5 pl-8 pr-7 outline-none font-sans placeholder:text-[var(--ink-muted)] transition-all"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -4074,11 +4077,11 @@ export default function App() {
               {!isInstalled && (
                 <button 
                   onClick={handleInstallClick}
-                  className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] text-[var(--ink)] bg-gradient-to-r from-red-600/15 via-purple-600/15 to-blue-600/15 hover:from-red-600/30 hover:to-blue-600/30 border border-[var(--border)] shadow-sm shrink-0" 
+                  className="ibtn w-8 h-8 p-0 2xl:w-auto 2xl:px-2.5 2xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] text-[var(--ink)] bg-gradient-to-r from-red-600/15 via-purple-600/15 to-blue-600/15 hover:from-red-600/30 hover:to-blue-600/30 border border-[var(--border)] shadow-sm shrink-0" 
                   title="Install Hatty's News App"
                 >
                   <Download className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
-                  <span className="hidden xl:inline font-bold">INSTALL</span>
+                  <span className="hidden 2xl:inline font-bold">INSTALL</span>
                 </button>
               )}
 
@@ -4094,7 +4097,7 @@ export default function App() {
                       color: parseInt(fearGreed.value) > 50 ? '#22c55e' : '#ef4444' 
                     }}>
                       {fearGreed.value}
-                      <span className="hidden xl:inline ml-1 font-normal text-[10px] opacity-80">
+                      <span className="hidden 2xl:inline ml-1 font-normal text-[10px] opacity-80">
                         {fearGreed.value_classification.split(' ')[0]}
                       </span>
                     </span>
@@ -4114,25 +4117,25 @@ export default function App() {
               )}
 
               <button
-                className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all"
+                className="ibtn w-8 h-8 p-0 2xl:w-auto 2xl:px-2.5 2xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all"
                 onClick={() => setShowCatalysts(true)}
                 title="Economic & Crypto Catalyst Calendar"
               >
                 <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span className="hidden xl:inline font-bold tracking-tight">CATALYSTS</span>
+                <span className="hidden 2xl:inline font-bold tracking-tight">CATALYSTS</span>
               </button>
 
               <button
-                className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-[var(--surface-solid)] hover:border-[var(--accent)] transition-all"
+                className="ibtn w-8 h-8 p-0 2xl:w-auto 2xl:px-2.5 2xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-[var(--surface-solid)] hover:border-[var(--accent)] transition-all"
                 onClick={() => setShowDashboardModal(true)}
                 title="Personalized Feed Dashboard & Settings"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
-                <span className="hidden xl:inline font-bold tracking-tight">CUSTOMIZE</span>
+                <span className="hidden 2xl:inline font-bold tracking-tight">CUSTOMIZE</span>
               </button>
 
               <button
-                className={`ibtn w-8 h-8 p-0 xl:w-auto xl:px-2 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 transition-all ${
+                className={`ibtn w-8 h-8 p-0 2xl:w-auto 2xl:px-2.5 2xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 transition-all ${
                   notificationsEnabled
                     ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-500 dark:text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
                     : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
@@ -4145,7 +4148,7 @@ export default function App() {
                 ) : (
                   <Bell className="w-3.5 h-3.5 shrink-0" />
                 )}
-                <span className="hidden xl:inline font-bold tracking-tight">
+                <span className="hidden 2xl:inline font-bold tracking-tight">
                   {notificationsEnabled ? 'ALERTS ON' : 'ALERTS'}
                 </span>
               </button>

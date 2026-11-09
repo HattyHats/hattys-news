@@ -73,6 +73,29 @@ export default defineConfig(({mode}) => {
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
+          navigateFallback: 'index.html',
+          navigateFallbackDenylist: [/^\/api\//],
+          runtimeCaching: [
+            {
+              // Navigation requests (opening the web app, Chrome app, or website)
+              // NetworkFirst ensures online users always load the newest index.html immediately!
+              urlPattern: ({ request }) => request.mode === 'navigate',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'hatty-html-cache',
+                networkTimeoutSeconds: 2.5,
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 24 * 60 * 60,
+                },
+              },
+            },
+            {
+              // Live APIs: Always fetch from network
+              urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+              handler: 'NetworkOnly',
+            },
+          ],
           importScripts: ['sw-notifications.js']
         },
         manifest: {
