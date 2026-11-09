@@ -942,31 +942,93 @@ function WorldNewsTicker({ articles }: { articles: Article[] }) {
   );
 }
 
+/* --- AFFIZY AD UNIT (ZONE 1007) --- */
+function AffizyAdUnit() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [adLoaded, setAdLoaded] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    // Create target div matching Affizy specification:
+    // <div class="affizy-ad" data-zone="1007"></div>
+    const adDiv = document.createElement('div');
+    adDiv.className = 'affizy-ad';
+    adDiv.setAttribute('data-zone', '1007');
+    container.appendChild(adDiv);
+
+    // Watch if Affizy successfully renders an ad inside adDiv
+    const observer = new MutationObserver(() => {
+      const isVisible = adDiv.style.display !== 'none' && adDiv.children.length > 0;
+      setAdLoaded(isVisible);
+    });
+    observer.observe(adDiv, { attributes: true, attributeFilter: ['style'], childList: true });
+
+    // Inject the delivery script dynamically so it discovers the adDiv on mount
+    const script = document.createElement('script');
+    script.src = 'https://affizy.network/delivery.js';
+    script.async = true;
+    container.appendChild(script);
+
+    return () => {
+      observer.disconnect();
+      if (container) {
+        container.innerHTML = '';
+      }
+    };
+  }, []);
+
+  return (
+    <div className="w-full my-3 flex flex-col items-center justify-center">
+      <div className="w-full max-w-[540px] relative mx-auto" style={{ zIndex: 20 }}>
+        <div className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface-solid)] shadow-sm p-1.5 sm:p-2 flex flex-col items-center justify-center">
+          <div ref={containerRef} className="w-full flex items-center justify-center overflow-hidden min-h-[50px]" />
+          
+          {!adLoaded && (
+            <div className="w-full py-2 px-3 flex items-center justify-between text-[11px] font-mono text-[var(--ink-muted)]">
+              <span className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <span>AFFIZY NETWORK • ZONE 1007 (480x320)</span>
+              </span>
+              <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                PENDING REVIEW
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* --- AADS AD UNIT 2459130 --- */
 function AadsAdUnit() {
   return (
-    <div className="w-full my-3 flex flex-col items-center justify-center">
+    <div className="w-full my-4 flex flex-col items-center justify-center">
       {/* BEGIN AADS AD UNIT 2459130 */}
-      <div id="frame" className="w-full max-w-[468px] relative mx-auto" style={{ zIndex: 20 }}>
-        <div className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface-solid)] shadow-sm">
-          <iframe
-            data-aa="2459130"
-            src="//acceptable.a-ads.com/2459130/?size=Adaptive"
-            style={{ border: 0, padding: 0, width: '100%', height: 'auto', minHeight: '60px', overflow: 'hidden', display: 'block', margin: 'auto' }}
-            title="AADS Adaptive Advertisement"
-          />
-          <div className="w-full relative flex justify-end px-2.5 py-1 bg-[var(--surface-solid)] border-t border-[var(--border)]">
+      <div id="frame" className="w-full max-w-[728px] relative mx-auto" style={{ zIndex: 20 }}>
+        <div className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface-solid)] shadow-md transition-all">
+          <div className="w-full overflow-hidden flex items-center justify-center bg-black/5 dark:bg-black/30 p-1">
+            <iframe
+              data-aa="2459130"
+              src="https://acceptable.a-ads.com/2459130/?size=Adaptive"
+              className="w-full max-w-[728px] h-[60px] sm:h-[90px] block mx-auto rounded-lg"
+              style={{ border: 0, padding: 0, overflow: 'hidden' }}
+              title="AADS Crypto Advertisement"
+            />
+          </div>
+          <div className="w-full relative flex justify-between items-center px-3 py-1.5 bg-[var(--surface-solid)] border-t border-[var(--border)] text-[10px] font-mono text-[var(--ink-muted)]">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span>A-ADS NETWORK • UNIT 2459130</span>
+            </span>
             <a
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                display: 'inline-block',
-                fontSize: '11px',
-                color: 'var(--ink-muted)',
-                textDecoration: 'none',
-                fontFamily: 'monospace',
-                fontWeight: '600',
-              }}
+              className="text-[var(--accent)] hover:underline font-bold"
               id="frame-link"
               href="https://aads.com/campaigns/new/?source_id=2459130&source_type=ad_unit&partner=2459130"
             >
@@ -4534,8 +4596,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* AADS Adaptive Ad Banner */}
-        <AadsAdUnit />
+        {/* Affizy Ad Unit (Top Banner - Zone 1007) */}
+        <AffizyAdUnit />
 
         {/* Loading Skeleton state */}
         {loading && articles.length === 0 ? (
@@ -4580,7 +4642,8 @@ export default function App() {
           </div>
         ) : (
           /* Article Grid */
-          <div id="grid" className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${dashboardSettings.cardDensity === 'compact' ? 'gap-3.5' : 'gap-5'}`}>
+          <>
+            <div id="grid" className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${dashboardSettings.cardDensity === 'compact' ? 'gap-3.5' : 'gap-5'}`}>
             {filtered.map((a, idx) => {
               const cardMode = a.mode || mode;
               const cardCategories = cardMode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
@@ -4591,9 +4654,9 @@ export default function App() {
               const relatedSources = articleClusters.get(a.id) || [];
 
               return (
-                <motion.article
-                  key={a.id || idx}
-                  initial={{ opacity: 0, y: 15 }}
+                <React.Fragment key={a.id || idx}>
+                  <motion.article
+                    initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.6), ease: "easeOut" }}
                   className="card group"
@@ -4761,9 +4824,33 @@ export default function App() {
                     </div>
                   </div>
                 </motion.article>
-              );
-            })}
+
+                {/* In-Feed Sponsored Unit: Displayed after 2 full rows (8 articles) so grid stays perfectly balanced */}
+                {idx === 7 && (
+                  <div className="col-span-full my-6 flex flex-col items-center justify-center w-full">
+                    <div className="text-[10px] font-mono text-[var(--ink-muted)] mb-1 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      <span>SPONSORED WIRE</span>
+                    </div>
+                    <AadsAdUnit />
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+
+        {/* Fallback In-Feed Sponsored Unit: If fewer than 8 articles match current filter/search */}
+        {filtered.length > 0 && filtered.length < 8 && (
+          <div className="my-6 flex flex-col items-center justify-center w-full">
+            <div className="text-[10px] font-mono text-[var(--ink-muted)] mb-1 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span>SPONSORED WIRE</span>
+            </div>
+            <AadsAdUnit />
           </div>
+        )}
+          </>
         )}
       </main>
 
