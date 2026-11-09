@@ -10,8 +10,8 @@
   :root {
     --bg: #030303;
     --bg2: #080808;
-    --surface: rgba(15, 15, 15, 0.75);
-    --surface-solid: #0f0f0f;
+    --surface: #0c0c0f;
+    --surface-solid: #0f0f12;
     --border: rgba(255, 255, 255, 0.08);
     --border-hover: rgba(220, 38, 38, 0.5);
     --ink: #f0f0f0;
@@ -29,7 +29,7 @@
   html.light {
     --bg: #f8fafc;
     --bg2: #f1f5f9;
-    --surface: rgba(255, 255, 255, 0.95);
+    --surface: #ffffff;
     --surface-solid: #ffffff;
     --border: rgba(0, 0, 0, 0.12);
     --border-hover: rgba(220, 38, 38, 0.6);
@@ -46,31 +46,17 @@
     background-image: 
       radial-gradient(circle at 50% 0%, rgba(220, 38, 38, 0.06) 0%, transparent 60%),
       radial-gradient(circle at 100% 50%, rgba(220, 38, 38, 0.02) 0%, transparent 40%);
-    background-attachment: fixed;
     overflow-x: hidden;
-    transition: background-image 0.5s ease;
   }
 
-  /* Mobile Safe Area Insets & GPU Acceleration for Sticky Header & Tickers */
-  #sticky-top-bar, #hdr {
-    padding-top: env(safe-area-inset-top, 0px);
+  /* Solid, flicker-free sticky top bar for mobile, tablet & desktop */
+  #sticky-top-bar {
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
     -webkit-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    will-change: transform;
-  }
-
-  @media all and (display-mode: standalone) {
-    #sticky-top-bar {
-      padding-top: max(env(safe-area-inset-top, 0px), 24px);
-    }
-  }
-
-  body.pwa-installed #sticky-top-bar {
-    padding-top: max(env(safe-area-inset-top, 0px), 24px);
   }
 
   html.light body {
@@ -108,14 +94,12 @@
 
   .card {
     background: var(--surface);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--border);
     border-radius: var(--r);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: all var(--t);
+    transition: border-color var(--t), box-shadow var(--t), transform var(--t), background-color var(--t);
     animation: fadeIn 0.4s ease both;
     position: relative;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -234,8 +218,6 @@
     white-space: nowrap;
     font-family: var(--font-mono);
     transition: all var(--t);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;

@@ -45,7 +45,7 @@ interface FeedConfig {
 
 const OTHER_SITES = [
   { name: 'Learn With Hatty', url: 'https://earnwithhatty.com/' },
-  { name: 'Token-Tokens', url: 'https://hattyhats.github.io/token-tokens/' },
+  { name: 'Token-Tokens', url: 'https://token-tokens.org/' },
   { name: 'Open-Focus', url: 'https://hattyhats.github.io/Open-Focus/' },
   { name: "Hatty's Universe", url: 'https://hatty-universe.netlify.app/' },
   { name: 'QuickPad', url: 'https://www.quickpad.org/' },
@@ -876,11 +876,11 @@ function LiveTicker({ onPriceTick }: { onPriceTick?: (sym: string, price: number
         {(Object.values(tokens) as TickerToken[]).map((token) => (
           <div
             key={token.symbol}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs transition-all duration-200 shrink-0 ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs transition-colors duration-200 shrink-0 ${
               token.flash === 'up'
-                ? 'bg-emerald-500/25 border-emerald-500/60 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]'
+                ? 'bg-emerald-500/25 border-emerald-500/60 text-emerald-400'
                 : token.flash === 'down'
-                ? 'bg-rose-500/25 border-rose-500/60 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.4)] scale-[1.02]'
+                ? 'bg-rose-500/25 border-rose-500/60 text-rose-400'
                 : 'bg-[var(--surface-solid)] border-[var(--border)] text-[var(--ink)] hover:border-[var(--accent)] shadow-sm'
             }`}
           >
@@ -1418,11 +1418,11 @@ function CommoditiesTicker() {
         {activeItems.map((item) => (
           <div
             key={item.symbol}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs transition-all duration-200 shrink-0 ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs transition-colors duration-200 shrink-0 ${
               item.flash === 'up'
-                ? 'bg-emerald-500/25 border-emerald-500/60 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)] scale-[1.02]'
+                ? 'bg-emerald-500/25 border-emerald-500/60 text-emerald-400'
                 : item.flash === 'down'
-                ? 'bg-rose-500/25 border-rose-500/60 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.4)] scale-[1.02]'
+                ? 'bg-rose-500/25 border-rose-500/60 text-rose-400'
                 : 'bg-[var(--surface-solid)] border-[var(--border)] text-[var(--ink)] hover:border-[var(--accent)] shadow-sm'
             }`}
           >
@@ -3773,25 +3773,20 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Unified Sticky Header & Live Ticker Bar (Hardware-accelerated pinning on mobile & desktop) */}
+      {/* Unified Sticky Header & Live Ticker Bar (100% solid opaque surface for zero mobile blur flicker) */}
       <div 
         id="sticky-top-bar" 
-        className="sticky top-0 z-80 bg-[var(--surface)]/95 backdrop-blur-xl border-b border-[var(--border)] shadow-md will-change-transform transform-gpu"
-        style={{
-          paddingTop: isInstalled ? 'max(env(safe-area-inset-top, 0px), 24px)' : 'env(safe-area-inset-top, 0px)',
-          paddingLeft: 'env(safe-area-inset-left, 0px)',
-          paddingRight: 'env(safe-area-inset-right, 0px)',
-        }}
+        className="sticky top-0 z-80 bg-[var(--surface-solid)] border-b border-[var(--border)] shadow-md"
       >
         <header 
           id="hdr" 
-          className="border-b border-[var(--border)]/40"
+          className="relative z-30 border-b border-[var(--border)]/60 bg-[var(--surface-solid)]"
         >
         <div className="max-w-[1440px] mx-auto px-2.5 py-2 sm:px-4 sm:py-2.5">
           {/* Mobile Layout (< md) */}
           <div className="flex flex-col gap-2 md:hidden">
             {/* Mobile Row 1: Brand & Actions */}
-            <div className="flex items-center justify-between">
+            <div className="relative z-30 flex items-center justify-between">
               <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => { setFilter('all'); setQuery(''); }}>
                 <div className="relative group shrink-0">
                   <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50" />
@@ -3893,12 +3888,12 @@ export default function App() {
                   <AnimatePresence>
                     {showMenu && (
                       <>
-                        <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                        <div className="fixed inset-0 z-[90]" onClick={() => setShowMenu(false)} />
                         <motion.div
                           initial={{ opacity: 0, y: 8, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                          className="absolute right-0 mt-2 w-64 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-50 overflow-hidden text-[var(--ink)]"
+                          className="absolute right-0 mt-2 w-64 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-[100] overflow-hidden text-[var(--ink)]"
                         >
                           <div className="p-3 text-[10px] font-mono text-[var(--ink-muted)] uppercase border-b border-[var(--border)] bg-[var(--bg)] flex items-center justify-between">
                             <span>Hatty's Network</span>
@@ -3959,7 +3954,7 @@ export default function App() {
             </div>
 
             {/* Mobile Row 2: Mode Switcher (50/50 Thumb Toggle) */}
-            <div className="flex items-center p-1 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl backdrop-blur-md shadow-sm">
+            <div className="flex items-center p-1 bg-[var(--bg2)] border border-[var(--border)] rounded-xl shadow-sm">
               <button
                 onClick={() => handleModeSwitch('crypto')}
                 className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
@@ -4029,7 +4024,7 @@ export default function App() {
             </div>
 
             {/* Mode Switcher Buttons */}
-            <div className="flex items-center p-0.5 sm:p-1 bg-[var(--surface-solid)] border border-[var(--border)] rounded-full backdrop-blur-md shrink-0">
+            <div className="flex items-center p-0.5 sm:p-1 bg-[var(--bg2)] border border-[var(--border)] rounded-full shrink-0">
               <button
                 onClick={() => handleModeSwitch('crypto')}
                 className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1 transition-all duration-200 ${
@@ -4182,12 +4177,12 @@ export default function App() {
                 <AnimatePresence>
                   {showMenu && (
                     <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                      <div className="fixed inset-0 z-[90]" onClick={() => setShowMenu(false)} />
                       <motion.div
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 mt-2 w-64 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-50 overflow-hidden text-[var(--ink)]"
+                        className="absolute right-0 mt-2 w-64 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-[100] overflow-hidden text-[var(--ink)]"
                       >
                         <div className="p-3 text-[10px] font-mono text-[var(--ink-muted)] uppercase border-b border-[var(--border)] bg-[var(--bg)] flex items-center justify-between">
                           <span>Hatty's Network</span>
@@ -4250,7 +4245,7 @@ export default function App() {
       </header>
 
       {/* Dedicated Top Ticker Strip (Stays Stuck with Header on Scroll) */}
-      <div id="top-sub-bar" className="py-1 px-3 sm:px-4 bg-[var(--surface-solid)]/75 backdrop-blur-md">
+      <div id="top-sub-bar" className="relative z-10 py-1 px-3 sm:px-4 bg-[var(--bg2)]">
         <div className="max-w-[1440px] mx-auto">
           {mode === 'crypto' ? (
             <LiveTicker onPriceTick={handlePriceTick} />
