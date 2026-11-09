@@ -52,6 +52,8 @@ async function startServer() {
     }
 
     const symbols = [
+      'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'DOGE-USD',
+      'BNB-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD',
       'CL=F', 'BZ=F', 'GC=F', 'SI=F', 'NG=F', 'HG=F',
       'SPY', 'QQQ', 'DIA', 'IWM', 'EWU', 'EWG', 'FEZ', 'EWJ',
       'NVDA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'TSLA', 'META'
@@ -79,6 +81,71 @@ async function startServer() {
       }));
 
       const payload = {
+        crypto: {
+          BTC: {
+            symbol: 'BTC',
+            name: 'Bitcoin',
+            price: results['BTC-USD']?.price ?? 91420.50,
+            change24h: results['BTC-USD']?.change ?? 2.15,
+            formatted: `$${(results['BTC-USD']?.price ?? 91420.50).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          },
+          ETH: {
+            symbol: 'ETH',
+            name: 'Ethereum',
+            price: results['ETH-USD']?.price ?? 3340.20,
+            change24h: results['ETH-USD']?.change ?? 1.84,
+            formatted: `$${(results['ETH-USD']?.price ?? 3340.20).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          },
+          SOL: {
+            symbol: 'SOL',
+            name: 'Solana',
+            price: results['SOL-USD']?.price ?? 102.26,
+            change24h: results['SOL-USD']?.change ?? 0.09,
+            formatted: `$${(results['SOL-USD']?.price ?? 102.26).toFixed(2)}`
+          },
+          XRP: {
+            symbol: 'XRP',
+            name: 'XRP',
+            price: results['XRP-USD']?.price ?? 1.3020,
+            change24h: results['XRP-USD']?.change ?? 1.01,
+            formatted: `$${(results['XRP-USD']?.price ?? 1.3020).toFixed(4)}`
+          },
+          DOGE: {
+            symbol: 'DOGE',
+            name: 'Dogecoin',
+            price: results['DOGE-USD']?.price ?? 0.0778,
+            change24h: results['DOGE-USD']?.change ?? -0.87,
+            formatted: `$${(results['DOGE-USD']?.price ?? 0.0778).toFixed(4)}`
+          },
+          BNB: {
+            symbol: 'BNB',
+            name: 'BNB',
+            price: results['BNB-USD']?.price ?? 684.20,
+            change24h: results['BNB-USD']?.change ?? -1.58,
+            formatted: `$${(results['BNB-USD']?.price ?? 684.20).toFixed(2)}`
+          },
+          ADA: {
+            symbol: 'ADA',
+            name: 'Cardano',
+            price: results['ADA-USD']?.price ?? 0.4210,
+            change24h: results['ADA-USD']?.change ?? 0.85,
+            formatted: `$${(results['ADA-USD']?.price ?? 0.4210).toFixed(4)}`
+          },
+          AVAX: {
+            symbol: 'AVAX',
+            name: 'Avalanche',
+            price: results['AVAX-USD']?.price ?? 24.80,
+            change24h: results['AVAX-USD']?.change ?? 1.42,
+            formatted: `$${(results['AVAX-USD']?.price ?? 24.80).toFixed(2)}`
+          },
+          LINK: {
+            symbol: 'LINK',
+            name: 'Chainlink',
+            price: results['LINK-USD']?.price ?? 14.65,
+            change24h: results['LINK-USD']?.change ?? 2.10,
+            formatted: `$${(results['LINK-USD']?.price ?? 14.65).toFixed(2)}`
+          }
+        },
         commodities: {
           OIL_CRUDE: {
             price: results['CL=F']?.price ?? 103.27,
@@ -250,7 +317,7 @@ async function startServer() {
     console.log(`Serving pre-built terminal from: ${distPath}`);
     app.use(express.static(distPath, {
       setHeaders: (res, filePath) => {
-        if (filePath.endsWith("index.html") || filePath.endsWith("sw.js") || filePath.endsWith("registerSW.js") || filePath.endsWith("webmanifest")) {
+        if (filePath.endsWith("index.html") || filePath.endsWith("sw.js") || filePath.endsWith("registerSW.js") || filePath.endsWith("webmanifest") || filePath.endsWith("sw-notifications.js")) {
           res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
           res.setHeader("Pragma", "no-cache");
           res.setHeader("Expires", "0");

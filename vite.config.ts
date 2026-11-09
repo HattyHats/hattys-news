@@ -68,11 +68,12 @@ export default defineConfig(({mode}) => {
       apiNewsPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+        includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'sw-notifications.js'],
         workbox: {
           cleanupOutdatedCaches: true,
           clientsClaim: true,
-          skipWaiting: true
+          skipWaiting: true,
+          importScripts: ['sw-notifications.js']
         },
         manifest: {
           name: "Hatty's News — Global & Crypto Terminal",

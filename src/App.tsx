@@ -10,7 +10,9 @@ import {
   Share2, Check, ArrowRight, Zap, TrendingUp, TrendingDown,
   Layers, ShieldAlert, Radio, Clock, Globe, ShieldCheck,
   Download, Smartphone, Sparkles, AlertTriangle,
-  Bookmark, Calendar, ChevronDown, ChevronUp, Flame
+  Bookmark, Calendar, ChevronDown, ChevronUp, Flame,
+  Bell, BellRing, BellOff,
+  SlidersHorizontal, ArrowUp, ArrowDown, Eye, EyeOff, RotateCcw
 } from 'lucide-react';
 
 export type AppMode = 'crypto' | 'world';
@@ -173,6 +175,118 @@ const WORLD_SPLASH_HEADLINES = [
   { tag: 'GLOBAL TECH', cat: 'TECH & AI', text: 'International Standards Body Establishes Open Ethics Framework for AI' },
   { tag: 'WORLD REPORT', cat: 'CLIMATE', text: 'Renewable Power Generation Surpasses Global Coal Capacity in Milestone' }
 ];
+
+/* --- LIVE ASSET MENTION DEFINITIONS & TAGGING ENGINE --- */
+export interface DetectedAsset {
+  id: string;
+  symbol: string;
+  name: string;
+  type: 'crypto' | 'commodity' | 'stock' | 'index';
+  color: string;
+  price?: number;
+  change24h?: number;
+  formatted?: string;
+}
+
+export interface AssetDefinition {
+  id: string;
+  symbol: string;
+  name: string;
+  type: 'crypto' | 'commodity' | 'stock' | 'index';
+  regex: RegExp;
+  color: string;
+  marketKey?: string;
+}
+
+export const ASSET_DEFINITIONS: AssetDefinition[] = [
+  // Top Cryptocurrencies
+  { id: 'BTC', symbol: 'BTC', name: 'Bitcoin', type: 'crypto', regex: /\b(\$?BTC|Bitcoin|Satoshi)\b/i, color: '#f59e0b', marketKey: 'BTC' },
+  { id: 'ETH', symbol: 'ETH', name: 'Ethereum', type: 'crypto', regex: /\b(\$?ETH|Ethereum|Ether)\b/i, color: '#6366f1', marketKey: 'ETH' },
+  { id: 'SOL', symbol: 'SOL', name: 'Solana', type: 'crypto', regex: /\b(\$?SOL|Solana)\b/i, color: '#a855f7', marketKey: 'SOL' },
+  { id: 'XRP', symbol: 'XRP', name: 'XRP', type: 'crypto', regex: /\b(\$?XRP|Ripple)\b/i, color: '#06b6d4', marketKey: 'XRP' },
+  { id: 'DOGE', symbol: 'DOGE', name: 'Dogecoin', type: 'crypto', regex: /\b(\$?DOGE|Dogecoin)\b/i, color: '#eab308', marketKey: 'DOGE' },
+  { id: 'ADA', symbol: 'ADA', name: 'Cardano', type: 'crypto', regex: /\b(\$?ADA|Cardano)\b/i, color: '#3b82f6', marketKey: 'ADA' },
+  { id: 'BNB', symbol: 'BNB', name: 'BNB', type: 'crypto', regex: /\b(\$?BNB|Binance Coin)\b/i, color: '#facc15', marketKey: 'BNB' },
+  { id: 'AVAX', symbol: 'AVAX', name: 'Avalanche', type: 'crypto', regex: /\b(\$?AVAX|Avalanche)\b/i, color: '#ef4444', marketKey: 'AVAX' },
+  { id: 'LINK', symbol: 'LINK', name: 'Chainlink', type: 'crypto', regex: /(?:\$LINK\b|\bChainlink\b|\bLINK\s+(?:token|price|crypto|etf|oracle)\b)/i, color: '#2563eb', marketKey: 'LINK' },
+  { id: 'SUI', symbol: 'SUI', name: 'Sui', type: 'crypto', regex: /\b(\$?SUI|Sui Network)\b/i, color: '#0284c7', marketKey: 'SUI' },
+  { id: 'PEPE', symbol: 'PEPE', name: 'Pepe', type: 'crypto', regex: /\b(\$?PEPE|Pepe Coin)\b/i, color: '#22c55e', marketKey: 'PEPE' },
+  { id: 'SHIB', symbol: 'SHIB', name: 'Shiba Inu', type: 'crypto', regex: /\b(\$?SHIB|Shiba Inu)\b/i, color: '#f97316', marketKey: 'SHIB' },
+
+  // Key Commodities
+  { id: 'GOLD', symbol: 'GOLD', name: 'Gold Spot', type: 'commodity', regex: /\b(Gold|Bullion|XAU)\b/i, color: '#ca8a04', marketKey: 'GOLD' },
+  { id: 'SILVER', symbol: 'SILVER', name: 'Silver Spot', type: 'commodity', regex: /\b(Silver|XAG)\b/i, color: '#94a3b8', marketKey: 'SILVER' },
+  { id: 'OIL_CRUDE', symbol: 'OIL', name: 'Crude Oil', type: 'commodity', regex: /\b(Crude Oil|Brent|WTI|Petroleum|OPEC)\b/i, color: '#ea580c', marketKey: 'OIL_CRUDE' },
+  { id: 'NAT_GAS', symbol: 'NATGAS', name: 'Natural Gas', type: 'commodity', regex: /\b(Natural Gas|NatGas|LNG)\b/i, color: '#0284c7', marketKey: 'NAT_GAS' },
+  { id: 'COPPER', symbol: 'COPPER', name: 'Copper', type: 'commodity', regex: /\b(Copper)\b/i, color: '#d97706', marketKey: 'COPPER' },
+  { id: 'URANIUM', symbol: 'URANIUM', name: 'Uranium', type: 'commodity', regex: /\b(Uranium)\b/i, color: '#10b981', marketKey: 'URANIUM' },
+
+  // Top Equities & Tech
+  { id: 'NVDA', symbol: 'NVDA', name: 'Nvidia', type: 'stock', regex: /\b(\$?NVDA|Nvidia)\b/i, color: '#16a34a', marketKey: 'NVDA' },
+  { id: 'AAPL', symbol: 'AAPL', name: 'Apple', type: 'stock', regex: /\b(\$?AAPL|Apple Inc)\b/i, color: '#64748b', marketKey: 'AAPL' },
+  { id: 'TSLA', symbol: 'TSLA', name: 'Tesla', type: 'stock', regex: /\b(\$?TSLA|Tesla)\b/i, color: '#e11d48', marketKey: 'TSLA' },
+  { id: 'MSFT', symbol: 'MSFT', name: 'Microsoft', type: 'stock', regex: /\b(\$?MSFT|Microsoft)\b/i, color: '#0284c7', marketKey: 'MSFT' },
+  { id: 'AMZN', symbol: 'AMZN', name: 'Amazon', type: 'stock', regex: /\b(\$?AMZN|Amazon)\b/i, color: '#f59e0b', marketKey: 'AMZN' },
+  { id: 'GOOGL', symbol: 'GOOGL', name: 'Alphabet', type: 'stock', regex: /\b(\$?GOOGL?|Alphabet|Google)\b/i, color: '#dc2626', marketKey: 'GOOGL' },
+  { id: 'META', symbol: 'META', name: 'Meta', type: 'stock', regex: /\b(\$?META|Facebook)\b/i, color: '#2563eb', marketKey: 'META' },
+
+  // Major Indices
+  { id: 'SPY', symbol: 'S&P 500', name: 'S&P 500', type: 'index', regex: /\b(S&P ?500|SPX|Wall Street)\b/i, color: '#3b82f6', marketKey: 'SPY' },
+  { id: 'QQQ', symbol: 'NASDAQ', name: 'Nasdaq 100', type: 'index', regex: /\b(Nasdaq|QQQ)\b/i, color: '#8b5cf6', marketKey: 'QQQ' },
+  { id: 'DIA', symbol: 'DOW', name: 'Dow Jones', type: 'index', regex: /\b(Dow Jones|DJIA)\b/i, color: '#059669', marketKey: 'DIA' },
+];
+
+export function detectAssetsInArticle(
+  title: string,
+  snippet: string | undefined,
+  quotes: Record<string, { price?: number; change24h?: number; formatted?: string }>
+): DetectedAsset[] {
+  const matches: DetectedAsset[] = [];
+  const textToScan = `${title} ${snippet || ''}`;
+  const seenSymbols = new Set<string>();
+
+  for (const def of ASSET_DEFINITIONS) {
+    if (def.regex.test(textToScan)) {
+      if (seenSymbols.has(def.symbol)) continue;
+      seenSymbols.add(def.symbol);
+
+      const q = def.marketKey ? quotes[def.marketKey] : quotes[def.id];
+      matches.push({
+        id: def.id,
+        symbol: def.symbol,
+        name: def.name,
+        type: def.type,
+        color: def.color,
+        price: q?.price,
+        change24h: q?.change24h,
+        formatted: q?.formatted,
+      });
+
+      if (matches.length >= 3) break;
+    }
+  }
+
+  return matches;
+}
+
+/* --- CUSTOMIZABLE FEED SETTINGS (PERSONALIZED DASHBOARD) --- */
+export interface DashboardSettings {
+  cryptoCategories: string[];
+  cryptoHidden: string[];
+  worldCategories: string[];
+  worldHidden: string[];
+  showAssetTags: boolean;
+  cardDensity: 'comfortable' | 'compact';
+}
+
+export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
+  cryptoCategories: CRYPTO_CATEGORIES.map(c => c.id),
+  cryptoHidden: [],
+  worldCategories: WORLD_CATEGORIES.map(c => c.id),
+  worldHidden: [],
+  showAssetTags: true,
+  cardDensity: 'comfortable',
+};
 
 // Curated, High-Resolution Editorial Photography Pools (Fast, Verified Unsplash CDN)
 const WORLD_EDITORIAL_PHOTOS: Record<string, string[]> = {
@@ -581,7 +695,7 @@ const DEFAULT_TOKENS: Record<string, TickerToken> = {
   'XRP-USD': { symbol: 'XRP', name: 'XRP', price: 1.3020, open24h: 1.2890, change24h: 1.01, flash: null, formatted: '$1.3020' },
 };
 
-function LiveTicker() {
+function LiveTicker({ onPriceTick }: { onPriceTick?: (sym: string, price: number, change: number, formatted: string) => void }) {
   const [tokens, setTokens] = useState<Record<string, TickerToken>>(DEFAULT_TOKENS);
   const [isConnected, setIsConnected] = useState(false);
   const tokensRef = useRef(tokens);
@@ -704,6 +818,8 @@ function LiveTicker() {
                   formatted
                 }
               }));
+
+              onPriceTick?.(sym, rawPrice, change, formatted);
 
               if (flash) {
                 setTimeout(() => {
@@ -1904,6 +2020,496 @@ function CatalystCalendarModal({ isOpen, onClose, activeMode }: { isOpen: boolea
   );
 }
 
+function NotificationModal({
+  isOpen,
+  onClose,
+  isEnabled,
+  permission,
+  onToggle,
+  onTest
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  isEnabled: boolean;
+  permission: NotificationPermission | 'unsupported';
+  onToggle: () => void;
+  onTest: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 20 }}
+        className="relative w-full max-w-lg bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-2xl z-10 max-h-[90vh] overflow-y-auto text-[var(--ink)]"
+      >
+        <button
+          className="absolute top-4 right-4 text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors p-1"
+          onClick={onClose}
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 mb-3 shadow-[0_0_20px_rgba(16,185,129,0.25)]">
+            {isEnabled ? <BellRing className="w-6 h-6 animate-bounce" /> : <Bell className="w-6 h-6" />}
+          </div>
+
+          <div className="cs mb-1">REAL-TIME DISPATCH ALERTS</div>
+          <h2 className="font-display text-3xl sm:text-4xl text-[var(--ink)] mb-2">
+            BREAKING NEWS NOTIFICATIONS
+          </h2>
+          <p className="text-xs text-[var(--ink-muted)] max-w-md mx-auto mb-4 leading-relaxed">
+            Get instant native notifications whenever high-impact breaking global stories or crypto catalyst dispatches drop.
+          </p>
+
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-2 mb-5 text-xs font-mono font-bold tracking-wider">
+            {isEnabled ? (
+              <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                ACTIVE // YOU WILL RECEIVE BREAKING ALERTS
+              </span>
+            ) : permission === 'denied' ? (
+              <span className="text-rose-500 flex items-center gap-1.5 border border-rose-500/40 bg-rose-500/10 px-3 py-1 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                BLOCKED BY BROWSER // PERMISSION REQUIRED
+              </span>
+            ) : permission === 'unsupported' ? (
+              <span className="text-amber-500 flex items-center gap-1.5 border border-amber-500/40 bg-amber-500/10 px-3 py-1 rounded-full">
+                NOT SUPPORTED IN CURRENT BROWSER
+              </span>
+            ) : (
+              <span className="text-[var(--ink-muted)] flex items-center gap-1.5 border border-[var(--border)] bg-black/5 dark:bg-white/5 px-3 py-1 rounded-full">
+                OFF // TAP BELOW TO ACTIVATE
+              </span>
+            )}
+          </div>
+
+          {/* Value Props Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left mb-6 font-mono text-xs">
+            <div className="p-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl">
+              <div className="flex items-center gap-1.5 font-bold text-[var(--ink)] mb-1">
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                <span>ZERO SPAM PROTOCOL</span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed font-sans">
+                Only top-tier wire consensus reports and major market catalysts trigger alerts.
+              </p>
+            </div>
+
+            <div className="p-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl">
+              <div className="flex items-center gap-1.5 font-bold text-[var(--ink)] mb-1">
+                <Smartphone className="w-3.5 h-3.5 text-blue-500" />
+                <span>CHROME APP & WEB PWA</span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed font-sans">
+                Delivered straight to your mobile lock screen or desktop notification center.
+              </p>
+            </div>
+
+            <div className="p-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl">
+              <div className="flex items-center gap-1.5 font-bold text-[var(--ink)] mb-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span>100% FREE & PRIVATE</span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed font-sans">
+                No tracking, no sign-ups, and no emails. Pure browser-native delivery.
+              </p>
+            </div>
+
+            <div className="p-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl">
+              <div className="flex items-center gap-1.5 font-bold text-[var(--ink)] mb-1">
+                <ExternalLink className="w-3.5 h-3.5 text-purple-500" />
+                <span>1-CLICK DIRECT READ</span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed font-sans">
+                Tap any notification to immediately open the full verified wire report.
+              </p>
+            </div>
+          </div>
+
+          {permission === 'denied' && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 dark:text-rose-400 text-xs font-mono text-left">
+              <strong>Notice:</strong> Notifications were previously blocked for this site. Click the lock or settings icon in your browser's address bar, set <em>Notifications</em> to <strong>Allow</strong>, and reload.
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            <button
+              onClick={onToggle}
+              className={`w-full py-3 rounded-xl font-mono text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 ${
+                isEnabled
+                  ? 'bg-rose-500/15 text-rose-500 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/25'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.35)]'
+              }`}
+            >
+              {isEnabled ? (
+                <>
+                  <BellOff className="w-4 h-4" />
+                  <span>DISABLE BREAKING ALERTS</span>
+                </>
+              ) : (
+                <>
+                  <BellRing className="w-4 h-4" />
+                  <span>ACTIVATE BREAKING ALERTS NOW</span>
+                </>
+              )}
+            </button>
+
+            {isEnabled && (
+              <button
+                onClick={onTest}
+                className="w-full py-2.5 rounded-xl font-mono text-xs font-bold text-[var(--ink-muted)] hover:text-[var(--ink)] bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--accent)]/50 transition-all flex items-center justify-center gap-2"
+              >
+                <span>SEND TEST ALERT TO MY DEVICE</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex justify-between items-center text-[10px] font-mono text-[var(--ink-muted)] border-t border-[var(--border)] pt-3 mt-5">
+            <span>TERMINAL NOTIFICATION DISPATCH</span>
+            <span className="text-emerald-500 dark:text-emerald-400 font-bold">W3C WEB NOTIFICATIONS ✓</span>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* --- PERSONALIZED FEED DASHBOARD SETTINGS MODAL --- */
+interface DashboardSettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  mode: AppMode;
+  settings: DashboardSettings;
+  onUpdateSettings: (newSettings: DashboardSettings) => void;
+  categoryCounts: Record<string, number>;
+}
+
+function DashboardSettingsModal({
+  isOpen,
+  onClose,
+  mode,
+  settings,
+  onUpdateSettings,
+  categoryCounts
+}: DashboardSettingsModalProps) {
+  const [activeTab, setActiveTab] = useState<AppMode>(mode);
+
+  // Sync tab with mode if user opens it
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(mode);
+    }
+  }, [isOpen, mode]);
+
+  if (!isOpen) return null;
+
+  const isCrypto = activeTab === 'crypto';
+  const baseCategories = isCrypto ? CRYPTO_CATEGORIES : WORLD_CATEGORIES;
+  const orderedIds = isCrypto ? settings.cryptoCategories : settings.worldCategories;
+  const hiddenSet = new Set(isCrypto ? settings.cryptoHidden : settings.worldHidden);
+
+  // Sort categories by current preference order
+  const categoriesInOrder = [...baseCategories].sort((a, b) => {
+    if (a.id === 'all') return -1;
+    if (b.id === 'all') return 1;
+    const idxA = orderedIds.indexOf(a.id);
+    const idxB = orderedIds.indexOf(b.id);
+    if (idxA === -1 && idxB === -1) return 0;
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
+
+  const handleMove = (id: string, direction: 'up' | 'down') => {
+    const currentList = [...orderedIds];
+    const idx = currentList.indexOf(id);
+    if (idx === -1) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= currentList.length) return;
+    if (currentList[targetIdx] === 'all' && direction === 'up') return;
+
+    const [moved] = currentList.splice(idx, 1);
+    currentList.splice(targetIdx, 0, moved);
+
+    if (isCrypto) {
+      onUpdateSettings({ ...settings, cryptoCategories: currentList });
+    } else {
+      onUpdateSettings({ ...settings, worldCategories: currentList });
+    }
+  };
+
+  const handleToggleVisibility = (id: string) => {
+    if (id === 'all') return;
+    const currentHidden = isCrypto ? [...settings.cryptoHidden] : [...settings.worldHidden];
+    const exists = currentHidden.includes(id);
+    const updatedHidden = exists
+      ? currentHidden.filter(x => x !== id)
+      : [...currentHidden, id];
+
+    if (isCrypto) {
+      onUpdateSettings({ ...settings, cryptoHidden: updatedHidden });
+    } else {
+      onUpdateSettings({ ...settings, worldHidden: updatedHidden });
+    }
+  };
+
+  const handleResetDefaults = () => {
+    onUpdateSettings({
+      ...settings,
+      cryptoCategories: CRYPTO_CATEGORIES.map(c => c.id),
+      cryptoHidden: [],
+      worldCategories: WORLD_CATEGORIES.map(c => c.id),
+      worldHidden: [],
+      showAssetTags: true,
+      cardDensity: 'comfortable',
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+      <div className="fixed inset-0" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 15 }}
+        className="relative w-full max-w-lg bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]"
+      >
+        {/* Header */}
+        <div className="p-4 sm:p-5 border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[var(--accent)]">
+              <SlidersHorizontal className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-display tracking-wide text-[var(--ink)]">
+                PERSONALIZED DASHBOARD
+              </h2>
+              <p className="text-[11px] font-mono text-[var(--ink-muted)]">
+                CUSTOMIZE FEED CATEGORIES, LIVE TAGGING & DISPLAY
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--border)]/40 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-5 flex-1">
+          {/* Mode Tabs */}
+          <div className="flex items-center p-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl">
+            <button
+              onClick={() => setActiveTab('crypto')}
+              className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'crypto'
+                  ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md'
+                  : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+              }`}
+            >
+              <span>⚡</span>
+              <span>CRYPTO CATEGORIES</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('world')}
+              className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'world'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
+                  : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+              }`}
+            >
+              <span>🌐</span>
+              <span>WORLD WIRE CATEGORIES</span>
+            </button>
+          </div>
+
+          {/* Section: Category Visibility & Order */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-mono font-bold text-[var(--ink)] uppercase flex items-center gap-1.5">
+                <span>FEED CATEGORY PILLS & REORDER</span>
+              </label>
+              <span className="text-[10px] font-mono text-[var(--ink-muted)]">
+                USE ARROWS TO REORDER
+              </span>
+            </div>
+
+            <div className="space-y-1.5 bg-[var(--bg)] p-2 rounded-xl border border-[var(--border)] max-h-56 overflow-y-auto">
+              {categoriesInOrder.map((cat, idx) => {
+                const isHidden = hiddenSet.has(cat.id);
+                const isAll = cat.id === 'all';
+                const count = categoryCounts[cat.id] ?? 0;
+
+                return (
+                  <div
+                    key={cat.id}
+                    className={`flex items-center justify-between p-2 rounded-lg border text-xs font-mono transition-all ${
+                      isHidden
+                        ? 'opacity-50 bg-black/5 dark:bg-white/5 border-transparent'
+                        : 'bg-[var(--surface-solid)] border-[var(--border)] shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">{cat.icon}</span>
+                      <span className="font-bold text-[var(--ink)]">{cat.label}</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 text-[var(--ink-muted)]">
+                        {count}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {/* Reorder Arrows (not for 'all') */}
+                      {!isAll && (
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            onClick={() => handleMove(cat.id, 'up')}
+                            disabled={idx <= 1}
+                            className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--ink-muted)] disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move Up"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleMove(cat.id, 'down')}
+                            disabled={idx === categoriesInOrder.length - 1}
+                            className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--ink-muted)] disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move Down"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Visibility Toggle */}
+                      {isAll ? (
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                          LOCKED
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleToggleVisibility(cat.id)}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors flex items-center gap-1 ${
+                            isHidden
+                              ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 hover:bg-rose-500/20'
+                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                          }`}
+                        >
+                          {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                          <span>{isHidden ? 'HIDDEN' : 'SHOWN'}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section: Live Asset Mention Tagging Toggle */}
+          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">🏷️</span>
+                <span className="text-xs font-mono font-bold text-[var(--ink)]">
+                  LIVE ASSET MENTION TAGGING
+                </span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  LIVE
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-muted)] mt-1 leading-snug">
+                Detects $BTC, $ETH, $NVDA, Gold, and Oil mentions in headlines with real-time price & 24h change chips. 1-click filters all matching articles.
+              </p>
+            </div>
+            <button
+              onClick={() => onUpdateSettings({ ...settings, showAssetTags: !settings.showAssetTags })}
+              className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold border shrink-0 transition-all ${
+                settings.showAssetTags
+                  ? 'bg-emerald-500 text-black border-emerald-400 shadow-md shadow-emerald-500/20'
+                  : 'bg-black/10 dark:bg-white/10 text-[var(--ink-muted)] border-[var(--border)]'
+              }`}
+            >
+              {settings.showAssetTags ? 'ENABLED' : 'DISABLED'}
+            </button>
+          </div>
+
+          {/* Section: Card Density */}
+          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">📐</span>
+                <span className="text-xs font-mono font-bold text-[var(--ink)]">
+                  CARD STREAM DENSITY
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-muted)] mt-1">
+                Standard gives full editorial presentation; Compact provides high-density market terminal layout.
+              </p>
+            </div>
+            <div className="flex items-center gap-1 bg-[var(--surface-solid)] p-1 rounded-lg border border-[var(--border)] shrink-0 font-mono text-[10px]">
+              <button
+                onClick={() => onUpdateSettings({ ...settings, cardDensity: 'comfortable' })}
+                className={`px-2 py-1 rounded font-bold transition-all ${
+                  settings.cardDensity === 'comfortable'
+                    ? 'bg-[var(--accent)] text-white shadow-sm'
+                    : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+                }`}
+              >
+                STANDARD
+              </button>
+              <button
+                onClick={() => onUpdateSettings({ ...settings, cardDensity: 'compact' })}
+                className={`px-2 py-1 rounded font-bold transition-all ${
+                  settings.cardDensity === 'compact'
+                    ? 'bg-[var(--accent)] text-white shadow-sm'
+                    : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+                }`}
+              >
+                COMPACT
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-[var(--border)] bg-[var(--surface)] flex items-center justify-between gap-3">
+          <button
+            onClick={handleResetDefaults}
+            className="px-3 py-2 rounded-xl text-xs font-mono text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center gap-1.5"
+            title="Restore all default categories and order"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>RESET DEFAULTS</span>
+          </button>
+
+          <button
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl text-xs font-mono font-bold text-white bg-gradient-to-r from-red-600 to-blue-600 hover:opacity-95 shadow-lg flex items-center gap-2 transition-transform active:scale-95"
+          >
+            <Check className="w-4 h-4" />
+            <span>APPLY & CLOSE</span>
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
   try {
     const cacheKey = targetMode === 'world' ? 'hattys_news_world_cache_v3' : 'hattys_news_crypto_cache_v3';
@@ -1953,9 +2559,31 @@ export default function App() {
   const [showFearGreed, setShowFearGreed] = useState(false);
   const [showDoomsday, setShowDoomsday] = useState(false);
   const [showCatalysts, setShowCatalysts] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('hattys_notifications_enabled') === '1' && typeof Notification !== 'undefined' && Notification.permission === 'granted';
+    } catch {
+      return false;
+    }
+  });
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() => {
+    return typeof Notification !== 'undefined' ? Notification.permission : 'unsupported';
+  });
+  const [notificationSuccessToast, setNotificationSuccessToast] = useState<string | null>(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [splashProgress, setSplashProgress] = useState(0);
   const fetchSeqRef = useRef(0);
+
+  // Monitor scroll for Back-to-Top Floating Button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 350);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // 60-Second Morning Brief state (expanded by default, persisted)
   const [showBrief, setShowBrief] = useState<boolean>(() => {
@@ -2023,11 +2651,143 @@ export default function App() {
     } catch {}
   }, [mode]);
 
-  // PWA Standalone App State
+  // PWA Standalone App State (Synchronously initialized to eliminate initial render shift / glitching)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled, setIsInstalled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+      if (standalone && typeof document !== 'undefined') {
+        document.body.classList.add('pwa-installed');
+      }
+      return standalone;
+    }
+    return false;
+  });
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+
+  // Personalized Dashboard & Feed Settings State
+  const [dashboardSettings, setDashboardSettings] = useState<DashboardSettings>(() => {
+    try {
+      const raw = localStorage.getItem('hattys_dashboard_settings');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          ...DEFAULT_DASHBOARD_SETTINGS,
+          ...parsed,
+          cryptoCategories: Array.isArray(parsed.cryptoCategories) ? parsed.cryptoCategories : DEFAULT_DASHBOARD_SETTINGS.cryptoCategories,
+          cryptoHidden: Array.isArray(parsed.cryptoHidden) ? parsed.cryptoHidden : [],
+          worldCategories: Array.isArray(parsed.worldCategories) ? parsed.worldCategories : DEFAULT_DASHBOARD_SETTINGS.worldCategories,
+          worldHidden: Array.isArray(parsed.worldHidden) ? parsed.worldHidden : [],
+        };
+      }
+    } catch {}
+    return DEFAULT_DASHBOARD_SETTINGS;
+  });
+
+  const updateDashboardSettings = useCallback((newSettings: DashboardSettings) => {
+    setDashboardSettings(newSettings);
+    try {
+      localStorage.setItem('hattys_dashboard_settings', JSON.stringify(newSettings));
+    } catch {}
+  }, []);
+
+  const [showDashboardModal, setShowDashboardModal] = useState(false);
+
+  // Unified Real-Time Market Quotes for Live Asset Mention Tagging & Tickers
+  const [marketQuotes, setMarketQuotes] = useState<Record<string, { price: number; change24h: number; formatted: string }>>({
+    BTC: { price: 91420.50, change24h: 2.15, formatted: '$91,420.50' },
+    ETH: { price: 3340.20, change24h: 1.84, formatted: '$3,340.20' },
+    SOL: { price: 102.26, change24h: 0.09, formatted: '$102.26' },
+    XRP: { price: 1.3020, change24h: 1.01, formatted: '$1.3020' },
+    DOGE: { price: 0.0778, change24h: -0.87, formatted: '$0.0778' },
+    BNB: { price: 684.20, change24h: -1.58, formatted: '$684.20' },
+    ADA: { price: 0.4210, change24h: 0.85, formatted: '$0.4210' },
+    AVAX: { price: 24.80, change24h: 1.42, formatted: '$24.80' },
+    LINK: { price: 14.65, change24h: 2.10, formatted: '$14.65' },
+    SUI: { price: 2.18, change24h: 3.40, formatted: '$2.18' },
+    OIL_CRUDE: { price: 103.27, change24h: 3.82, formatted: '$103.27' },
+    OIL_BRENT: { price: 111.70, change24h: 2.80, formatted: '$111.70' },
+    GOLD: { price: 4007.90, change24h: -1.29, formatted: '$4,007.90' },
+    SILVER: { price: 53.95, change24h: -1.92, formatted: '$53.95' },
+    NAT_GAS: { price: 3.05, change24h: -3.36, formatted: '$3.05' },
+    COPPER: { price: 6.51, change24h: 1.72, formatted: '$6.51' },
+    URANIUM: { price: 82.50, change24h: 1.23, formatted: '$82.50' },
+    NVDA: { price: 210.96, change24h: -0.59, formatted: '$210.96' },
+    AAPL: { price: 347.73, change24h: -0.14, formatted: '$347.73' },
+    MSFT: { price: 468.50, change24h: 0.74, formatted: '$468.50' },
+    AMZN: { price: 229.40, change24h: 1.12, formatted: '$229.40' },
+    GOOGL: { price: 198.60, change24h: 0.53, formatted: '$198.60' },
+    TSLA: { price: 372.22, change24h: -0.63, formatted: '$372.22' },
+    META: { price: 618.30, change24h: 0.91, formatted: '$618.30' },
+    SPY: { price: 759.97, change24h: -0.52, formatted: '$759.97' },
+    QQQ: { price: 704.40, change24h: -0.01, formatted: '$704.40' },
+    DIA: { price: 521.37, change24h: -1.24, formatted: '$521.37' },
+  });
+
+  const handlePriceTick = useCallback((sym: string, price: number, change: number, formatted: string) => {
+    setMarketQuotes(prev => {
+      const cur = prev[sym];
+      if (cur && cur.price === price && cur.change24h === change) return prev;
+      return {
+        ...prev,
+        [sym]: { price, change24h: change, formatted }
+      };
+    });
+  }, []);
+
+  // Sync real-time cross-market quotes from server
+  useEffect(() => {
+    let isMounted = true;
+    const syncQuotes = async (force = false) => {
+      try {
+        const bust = force ? `?_t=${Date.now()}&nocache=1` : '';
+        const res = await fetch(`/api/market${bust}`, {
+          cache: force ? 'no-store' : 'default'
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data || !isMounted) return;
+
+        setMarketQuotes(prev => {
+          const next = { ...prev };
+          if (data.crypto) {
+            for (const [k, v] of Object.entries(data.crypto as Record<string, any>)) {
+              if (v && v.price) {
+                next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted || `$${v.price}` };
+              }
+            }
+          }
+          if (data.commodities) {
+            for (const [k, v] of Object.entries(data.commodities as Record<string, any>)) {
+              if (v && v.price) {
+                next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted || `$${v.price}` };
+              }
+            }
+          }
+          if (data.stocks) {
+            for (const [k, v] of Object.entries(data.stocks as Record<string, any>)) {
+              if (v && v.price) {
+                next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted || `$${v.price}` };
+              }
+            }
+          }
+          return next;
+        });
+      } catch {}
+    };
+
+    syncQuotes();
+    const interval = setInterval(() => syncQuotes(false), 30000);
+    const handleRefresh = () => syncQuotes(true);
+    window.addEventListener('refresh-market-data', handleRefresh);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('refresh-market-data', handleRefresh);
+    };
+  }, []);
 
   // Detect PWA installation status and beforeinstallprompt event
   useEffect(() => {
@@ -2082,15 +2842,6 @@ export default function App() {
       document.body.classList.add('world-mode');
     } else {
       document.body.classList.remove('world-mode');
-    }
-  }, [mode]);
-
-  // Load cached articles on mode switch for instant zero-lag rendering
-  useEffect(() => {
-    const restored = loadCachedArticlesForMode(mode);
-    if (restored.length > 0) {
-      setArticles(restored);
-      setLoading(false);
     }
   }, [mode]);
 
@@ -2283,12 +3034,153 @@ export default function App() {
     }
   };
 
+  // Native Notification triggers
+  const triggerNativeNotification = useCallback(async (title: string, body: string, url: string, tag: string) => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.showNotification) {
+          await reg.showNotification(title, {
+            body,
+            icon: '/favicon.svg',
+            badge: '/favicon-32x32.png',
+            tag: tag || 'hattys-breaking-alert',
+            data: { url: url || '/' },
+            vibrate: [200, 100, 200]
+          } as any);
+          return true;
+        }
+      }
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        const notif = new Notification(title, {
+          body,
+          icon: '/favicon.svg',
+          tag: tag || 'hattys-breaking-alert',
+          data: { url: url || '/' }
+        });
+        notif.onclick = () => {
+          window.focus();
+          if (url && url !== '#') window.open(url, '_blank');
+        };
+        return true;
+      }
+    } catch (e) {
+      console.error('Notification dispatch failed', e);
+    }
+    return false;
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (typeof Notification === 'undefined') {
+      alert('Web Notifications are not supported in this browser.');
+      return;
+    }
+
+    try {
+      const perm = await Notification.requestPermission();
+      setNotificationPermission(perm);
+      if (perm === 'granted') {
+        setNotificationsEnabled(true);
+        localStorage.setItem('hattys_notifications_enabled', '1');
+        setNotificationSuccessToast('🔔 Breaking news alerts activated! You will receive notifications for major stories.');
+        triggerNativeNotification(
+          "🚨 HATTY'S NEWS // ALERTS ACTIVE",
+          "You will now receive instant notifications when top breaking news dispatches drop.",
+          window.location.href,
+          'hattys-activated'
+        );
+        setTimeout(() => setNotificationSuccessToast(null), 4000);
+      } else if (perm === 'denied') {
+        setNotificationsEnabled(false);
+        localStorage.setItem('hattys_notifications_enabled', '0');
+      }
+    } catch (e) {
+      console.error('Permission request failed', e);
+    }
+  };
+
+  const toggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      await requestNotificationPermission();
+    } else {
+      setNotificationsEnabled(false);
+      localStorage.setItem('hattys_notifications_enabled', '0');
+      setNotificationSuccessToast('🔕 Breaking news alerts turned off.');
+      setTimeout(() => setNotificationSuccessToast(null), 3000);
+    }
+  };
+
+  const handleTestNotification = async () => {
+    if (notificationPermission !== 'granted') {
+      await requestNotificationPermission();
+      return;
+    }
+    const sample = articles[0];
+    const testTitle = sample ? `🚨 BREAKING [${sample.src}]` : "🚨 HATTY'S NEWS // TEST ALERT";
+    const testBody = sample ? sample.title : "This is a test breaking notification from Hatty's News Terminal.";
+    const testUrl = sample ? sample.link : window.location.href;
+
+    await triggerNativeNotification(testTitle, testBody, testUrl, 'test-alert-' + Date.now());
+    setNotificationSuccessToast('Test alert dispatched to your device!');
+    setTimeout(() => setNotificationSuccessToast(null), 3000);
+  };
+
+  // Monitor newly arrived breaking articles and notify user if enabled
   useEffect(() => {
-    loadNews();
+    if (!notificationsEnabled || articles.length === 0) return;
+    try {
+      const topStory = articles[0];
+      if (!topStory) return;
+      const lastNotified = localStorage.getItem('hattys_last_notified_story_id');
+      if (!lastNotified) {
+        localStorage.setItem('hattys_last_notified_story_id', topStory.id);
+        return;
+      }
+      if (lastNotified !== topStory.id && (Date.now() - topStory.date.getTime() < 4 * 3600 * 1000)) {
+        localStorage.setItem('hattys_last_notified_story_id', topStory.id);
+        triggerNativeNotification(
+          `🚨 BREAKING [${topStory.src}]: ${topStory.primaryCat.toUpperCase()}`,
+          topStory.title,
+          topStory.link,
+          `breaking-${topStory.id}`
+        );
+      }
+    } catch {}
+  }, [articles, notificationsEnabled, triggerNativeNotification]);
+
+  // Periodic background check for latest breaking news when alerts are active
+  useEffect(() => {
+    if (!notificationsEnabled) return;
+    const interval = setInterval(() => {
+      loadNews(true);
+    }, 90000);
+    return () => clearInterval(interval);
+  }, [notificationsEnabled, loadNews]);
+
+  // Unified Mode Switch & Refresh Effect:
+  // When switching between Crypto & World News:
+  // 1. Instantly display cached articles (0ms flash)
+  // 2. Scroll window and document back to top (0, 0)
+  // 3. Immediately refresh latest live articles from wire
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+
+    const restored = loadCachedArticlesForMode(mode);
+    if (restored.length > 0) {
+      setArticles(restored);
+      setLoading(false);
+    }
+    // Auto-fetch freshest news immediately on mode switch
+    loadNews(true);
+
     if (mode === 'crypto') {
       fetchFearGreed();
+    } else {
+      window.dispatchEvent(new CustomEvent('refresh-market-data'));
     }
-  }, [loadNews, mode]);
+  }, [mode, loadNews]);
 
   useEffect(() => {
     if (isDark) {
@@ -2302,16 +3194,53 @@ export default function App() {
     }
   }, [isDark]);
 
-  // Switch between Crypto and World News modes
+  // Switch between Crypto and World News modes: resets scroll to top & switches mode
   const handleModeSwitch = (newMode: AppMode) => {
-    if (newMode === mode) return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+
+    if (newMode === mode) {
+      handleManualRefresh();
+      return;
+    }
+
     setMode(newMode);
     setFilter('all');
     setQuery('');
+
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    });
   };
 
-  // Active categories list based on current mode
-  const activeCategories = mode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
+  // Active categories list based on current mode & personalized dashboard preferences
+  const activeCategories = useMemo(() => {
+    const base = mode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
+    const order = mode === 'world' ? dashboardSettings.worldCategories : dashboardSettings.cryptoCategories;
+    const hidden = new Set(mode === 'world' ? dashboardSettings.worldHidden : dashboardSettings.cryptoHidden);
+
+    const sorted = [...base].sort((a, b) => {
+      if (a.id === 'all') return -1;
+      if (b.id === 'all') return 1;
+      const idxA = order.indexOf(a.id);
+      const idxB = order.indexOf(b.id);
+      if (idxA === -1 && idxB === -1) return 0;
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+
+    return sorted.filter(c => c.id === 'all' || !hidden.has(c.id));
+  }, [mode, dashboardSettings]);
+
+  // If active filter was hidden by user in dashboard settings, fallback to 'all'
+  useEffect(() => {
+    const hidden = new Set(mode === 'world' ? dashboardSettings.worldHidden : dashboardSettings.cryptoHidden);
+    if (filter !== 'all' && filter !== 'saved' && filter !== 'new' && hidden.has(filter)) {
+      setFilter('all');
+    }
+  }, [mode, dashboardSettings, filter]);
 
   // Multi-Source Story Clustering Map (id -> related Articles from other outlets)
   const articleClusters = useMemo(() => computeArticleClusters(articles), [articles]);
@@ -2355,29 +3284,49 @@ export default function App() {
     return picked;
   }, [articles, articleClusters]);
 
-  // Real-time category article counters
+  // Real-time category article counters (counts for all categories in active mode)
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: articles.length };
-    activeCategories.forEach(cat => {
+    const base = mode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
+    base.forEach(cat => {
       if (cat.id === 'all') return;
       counts[cat.id] = articles.filter(a => 
         a.matchedCategories.includes(cat.id) || a.primaryCat === cat.id
       ).length;
     });
     return counts;
-  }, [articles, activeCategories]);
+  }, [articles, mode]);
 
-  // Filtered articles list (supports 'saved' and 'new' filters in addition to categories)
+  // Filtered articles list (supports 'saved' and 'new' filters in addition to categories, plus smart asset regex matching)
   const filtered = useMemo(() => {
     const baseList = filter === 'saved' ? savedArticles : articles;
+    const q = query.trim().toLowerCase();
+    const cleanQ = q.replace(/^\$/, '').trim();
+    const matchedAssetDef = cleanQ
+      ? ASSET_DEFINITIONS.find(
+          d =>
+            d.symbol.toLowerCase() === cleanQ ||
+            d.id.toLowerCase() === cleanQ ||
+            d.name.toLowerCase() === cleanQ
+        )
+      : undefined;
+
     return baseList.filter(a => {
       const matchCat =
         filter === 'all' ||
         filter === 'saved' ||
         (filter === 'new' ? a.date.getTime() > lastVisitTime : (a.matchedCategories.includes(filter) || a.primaryCat === filter));
-      const q = query.toLowerCase();
-      const matchQuery = !q || a.title.toLowerCase().includes(q) || a.src.toLowerCase().includes(q) || (a.snippet && a.snippet.toLowerCase().includes(q));
-      return matchCat && matchQuery;
+      if (!matchCat) return false;
+      if (!q) return true;
+
+      const textMatch =
+        a.title.toLowerCase().includes(q) ||
+        a.src.toLowerCase().includes(q) ||
+        Boolean(a.snippet && a.snippet.toLowerCase().includes(q));
+      const assetMatch = matchedAssetDef
+        ? matchedAssetDef.regex.test(`${a.title} ${a.snippet || ''}`)
+        : false;
+      return textMatch || assetMatch;
     });
   }, [articles, savedArticles, filter, query, lastVisitTime]);
 
@@ -2689,6 +3638,34 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Breaking News Notification Modal */}
+      <AnimatePresence>
+        {showNotificationModal && (
+          <NotificationModal
+            isOpen={showNotificationModal}
+            onClose={() => setShowNotificationModal(false)}
+            isEnabled={notificationsEnabled}
+            permission={notificationPermission}
+            onToggle={toggleNotifications}
+            onTest={handleTestNotification}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Personalized Feed Dashboard Settings Modal */}
+      <AnimatePresence>
+        {showDashboardModal && (
+          <DashboardSettingsModal
+            isOpen={showDashboardModal}
+            onClose={() => setShowDashboardModal(false)}
+            mode={mode}
+            settings={dashboardSettings}
+            onUpdateSettings={updateDashboardSettings}
+            categoryCounts={categoryCounts}
+          />
+        )}
+      </AnimatePresence>
+
       {/* PWA / App Installation Modal */}
       <AnimatePresence>
         {showInstallModal && (
@@ -2796,94 +3773,122 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Top Header */}
-      <header 
-        id="hdr" 
-        className="sticky top-0 z-80 bg-[var(--surface)] backdrop-blur-xl border-b border-[var(--border)] shadow-md transition-all duration-300"
+      {/* Unified Sticky Header & Live Ticker Bar (Hardware-accelerated pinning on mobile & desktop) */}
+      <div 
+        id="sticky-top-bar" 
+        className="sticky top-0 z-80 bg-[var(--surface)]/95 backdrop-blur-xl border-b border-[var(--border)] shadow-md will-change-transform transform-gpu"
         style={{
           paddingTop: isInstalled ? 'max(env(safe-area-inset-top, 0px), 24px)' : 'env(safe-area-inset-top, 0px)',
           paddingLeft: 'env(safe-area-inset-left, 0px)',
           paddingRight: 'env(safe-area-inset-right, 0px)',
         }}
       >
-        <div className="max-w-[1440px] mx-auto px-3 py-2 sm:px-6 sm:py-3">
+        <header 
+          id="hdr" 
+          className="border-b border-[var(--border)]/40"
+        >
+        <div className="max-w-[1440px] mx-auto px-2.5 py-2 sm:px-4 sm:py-2.5">
           {/* Mobile Layout (< md) */}
-          <div className="flex flex-col gap-2.5 md:hidden">
+          <div className="flex flex-col gap-2 md:hidden">
             {/* Mobile Row 1: Brand & Actions */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setFilter('all'); setQuery(''); }}>
+              <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => { setFilter('all'); setQuery(''); }}>
                 <div className="relative group shrink-0">
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50" />
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50" />
                   <img 
                     src="/favicon.svg" 
                     alt="Hatty's News Logo" 
-                    className="relative w-8 h-8 rounded-xl border border-white/20 shadow-md" 
+                    className="relative w-6 h-6 sm:w-7 sm:h-7 rounded-lg border border-white/20 shadow-md" 
                   />
                 </div>
-                <span className="logo text-2xl font-display tracking-wide">HATTY'S NEWS</span>
+                <span className="logo text-lg sm:text-xl font-display tracking-tight">HATTY'S NEWS</span>
               </div>
 
               {/* Mobile Action Buttons */}
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1 shrink-0">
                 {!isInstalled && (
                   <button 
                     onClick={handleInstallClick}
-                    className="ibtn w-8 h-8 p-0 flex items-center justify-center font-mono text-xs text-[var(--accent)] bg-[var(--surface-solid)] border border-[var(--border)]" 
+                    className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center font-mono text-xs text-[var(--accent)] bg-[var(--surface-solid)] border border-[var(--border)]" 
                     title="Install App"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
                 )}
 
                 {mode === 'crypto' ? (
                   <button 
-                    className="ibtn w-8 h-8 p-0 flex items-center justify-center font-mono text-xs shrink-0" 
+                    className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center font-mono text-xs shrink-0" 
                     onClick={() => setShowFearGreed(true)}
                     title="Fear & Greed Index"
                   >
-                    <Gauge className="w-4 h-4 text-[var(--accent)]" />
+                    <Gauge className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[var(--accent)]" />
                   </button>
                 ) : (
                   <button 
-                    className="ibtn w-8 h-8 p-0 flex items-center justify-center font-mono text-xs shrink-0 bg-red-500/10 text-red-500 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.25)]" 
+                    className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center font-mono text-xs shrink-0 bg-red-500/10 text-red-500 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.25)]" 
                     onClick={() => setShowDoomsday(true)}
                     title="Doomsday Clock: 90 Seconds to Midnight"
                   >
-                    <Clock className="w-4 h-4 text-red-500 animate-pulse" />
+                    <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 animate-pulse" />
                   </button>
                 )}
 
                 <button
-                  className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0"
+                  className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0"
                   onClick={() => setShowCatalysts(true)}
                   title="Economic & Crypto Catalyst Calendar"
                 >
-                  <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                  <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
+                </button>
+
+                <button
+                  className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0"
+                  onClick={() => setShowDashboardModal(true)}
+                  title="Personalized Feed Dashboard & Settings"
+                >
+                  <SlidersHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[var(--accent)]" />
+                </button>
+
+                <button
+                  className={`ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0 transition-all ${
+                    notificationsEnabled
+                      ? 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                      : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+                  }`}
+                  onClick={() => setShowNotificationModal(true)}
+                  title={notificationsEnabled ? "Breaking News Alerts: Active" : "Enable Breaking News Notifications"}
+                >
+                  {notificationsEnabled ? (
+                    <BellRing className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500 dark:text-emerald-400 animate-bounce" />
+                  ) : (
+                    <Bell className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  )}
                 </button>
 
                 <button 
-                  className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0" 
+                  className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0" 
                   onClick={() => setIsDark(!isDark)}
                   title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
                 >
-                  {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                  {isDark ? <Sun className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <Moon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
                 </button>
 
                 <button 
-                  className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0" 
+                  className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0" 
                   onClick={handleManualRefresh}
                   title={`Refresh All ${mode === 'world' ? 'World' : 'Crypto'} Feeds Now`}
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[var(--accent)]' : ''}`} />
+                  <RefreshCw className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${loading ? 'animate-spin text-[var(--accent)]' : ''}`} />
                 </button>
                 
                 <div className="relative">
                   <button 
-                    className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0" 
+                    className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0" 
                     onClick={() => setShowMenu(!showMenu)}
                     title="Hatty's Ecosystem"
                   >
-                    <Menu className="w-3.5 h-3.5" />
+                    <Menu className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
                   <AnimatePresence>
                     {showMenu && (
@@ -2900,7 +3905,21 @@ export default function App() {
                             <span className="w-2 h-2 rounded-full bg-emerald-500" />
                           </div>
 
-                          <div className="p-2 border-b border-[var(--border)] bg-black/5 dark:bg-white/5">
+                          <div className="p-2 border-b border-[var(--border)] bg-black/5 dark:bg-white/5 space-y-1.5">
+                            <button
+                              onClick={() => {
+                                setShowMenu(false);
+                                setShowDashboardModal(true);
+                              }}
+                              className="w-full flex items-center justify-between px-3 py-2 text-xs font-mono font-bold text-[var(--ink)] bg-[var(--surface-solid)] border border-[var(--border)] rounded-lg hover:border-[var(--accent)] transition-colors"
+                            >
+                              <span className="flex items-center gap-2">
+                                <SlidersHorizontal className="w-3.5 h-3.5 text-[var(--accent)]" />
+                                <span>CUSTOMIZE FEED</span>
+                              </span>
+                              <span className="text-[10px] text-[var(--ink-muted)]">SETTINGS</span>
+                            </button>
+
                             <button
                               onClick={() => {
                                 setShowMenu(false);
@@ -2943,7 +3962,7 @@ export default function App() {
             <div className="flex items-center p-1 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl backdrop-blur-md shadow-sm">
               <button
                 onClick={() => handleModeSwitch('crypto')}
-                className={`flex-1 py-2 sm:py-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-300 ${
+                className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
                   mode === 'crypto'
                     ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]'
                     : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
@@ -2954,7 +3973,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => handleModeSwitch('world')}
-                className={`flex-1 py-2 sm:py-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-300 ${
+                className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 ${
                   mode === 'world'
                     ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]'
                     : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
@@ -2970,52 +3989,52 @@ export default function App() {
               <input
                 type="text"
                 placeholder={mode === 'world' ? "Search Reuters, AP, BBC, DW wire..." : "Search Blockchain, Assets, Feeds..."}
-                className="w-full bg-[var(--surface-solid)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--ink)] text-xs rounded-xl py-2 pl-9 pr-8 outline-none font-sans placeholder:text-[var(--ink-muted)] transition-all"
+                className="w-full bg-[var(--surface-solid)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--ink)] text-xs rounded-xl py-1.5 pl-8 pr-7 outline-none font-sans placeholder:text-[var(--ink-muted)] transition-all"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-muted)]" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ink-muted)]" />
               {query && (
                 <button 
                   onClick={() => setQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)]"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               )}
             </div>
           </div>
 
           {/* Desktop Layout (>= md) */}
-          <div className="hidden md:flex items-center gap-3 lg:gap-4">
+          <div className="hidden md:flex items-center gap-2 lg:gap-3 xl:gap-4 w-full">
             {/* Logo with Mode Badge */}
-            <div className="flex items-center gap-2.5 cursor-pointer shrink-0" onClick={() => { setFilter('all'); setQuery(''); }}>
+            <div className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => { setFilter('all'); setQuery(''); }}>
               <div className="relative group shrink-0">
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50 group-hover:opacity-100 transition-opacity" />
                 <img 
                   src="/favicon.svg" 
                   alt="Hatty's News Logo" 
-                  className="relative w-9 h-9 rounded-xl border border-white/20 shadow-md group-hover:scale-105 transition-transform" 
+                  className="relative w-7 h-7 lg:w-8 lg:h-8 rounded-lg border border-white/20 shadow-md group-hover:scale-105 transition-transform" 
                 />
               </div>
-              <span className="logo text-3xl font-display">HATTY'S NEWS</span>
-              <span className={`hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-mono font-bold border transition-colors ${
+              <span className="logo text-xl lg:text-2xl font-display tracking-tight shrink-0">HATTY'S NEWS</span>
+              <span className={`hidden 2xl:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border transition-colors ${
                 mode === 'world' 
                   ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' 
                   : 'bg-red-500/10 text-red-500 border-red-500/20'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${mode === 'world' ? 'bg-blue-400' : 'bg-red-500'}`} />
-                {mode === 'world' ? 'WORLD WIRE' : 'CRYPTO TERMINAL'}
+                {mode === 'world' ? 'WORLD WIRE' : 'CRYPTO'}
               </span>
             </div>
 
             {/* Mode Switcher Buttons */}
-            <div className="flex items-center p-1 bg-[var(--surface-solid)] border border-[var(--border)] rounded-full backdrop-blur-md shrink-0">
+            <div className="flex items-center p-0.5 sm:p-1 bg-[var(--surface-solid)] border border-[var(--border)] rounded-full backdrop-blur-md shrink-0">
               <button
                 onClick={() => handleModeSwitch('crypto')}
-                className={`px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 transition-all duration-300 ${
+                className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1 transition-all duration-200 ${
                   mode === 'crypto'
-                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)] scale-100'
+                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.4)] scale-100'
                     : 'text-[var(--ink-muted)] hover:text-[var(--ink)] scale-95'
                 }`}
               >
@@ -3024,110 +4043,141 @@ export default function App() {
               </button>
               <button
                 onClick={() => handleModeSwitch('world')}
-                className={`px-3 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1.5 transition-all duration-300 ${
+                className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold flex items-center gap-1 transition-all duration-200 ${
                   mode === 'world'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)] scale-100'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)] scale-100'
                     : 'text-[var(--ink-muted)] hover:text-[var(--ink)] scale-95'
                 }`}
               >
                 <span>🌐</span>
-                <span>WORLD NEWS</span>
+                <span>WORLD<span className="hidden xl:inline"> NEWS</span></span>
               </button>
             </div>
 
             {/* Search Box */}
-            <div className="flex-1 min-w-[200px] relative">
+            <div className="flex-1 min-w-[100px] max-w-[180px] lg:max-w-[200px] xl:max-w-[220px] 2xl:max-w-[280px] relative">
               <input
                 type="text"
-                placeholder={mode === 'world' ? "Search Reuters, Associated Press, BBC, DW, Global Wire..." : "Search Blockchain Intelligence, Assets, Feeds..."}
-                className="w-full bg-[var(--surface-solid)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--ink)] text-xs sm:text-sm rounded-xl py-2 pl-9 pr-8 outline-none font-sans placeholder:text-[var(--ink-muted)] transition-all"
+                placeholder={mode === 'world' ? "Search world wire..." : "Search crypto wire..."}
+                className="w-full bg-[var(--surface-solid)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--ink)] text-xs rounded-xl py-1.5 pl-8 pr-7 outline-none font-sans placeholder:text-[var(--ink-muted)] transition-all"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-muted)]" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ink-muted)]" />
               {query && (
                 <button 
                   onClick={() => setQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)]"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               )}
             </div>
 
-            {/* Desktop Action Buttons */}
-            <div className="flex items-center gap-2 shrink-0 ml-auto">
+            {/* Desktop Action Buttons (Optimized width & zero overflow across all viewports) */}
+            <div className="flex items-center gap-1 lg:gap-1.5 shrink-0 ml-auto">
               {!isInstalled && (
                 <button 
                   onClick={handleInstallClick}
-                  className="ibtn w-auto px-2.5 sm:px-3 flex items-center gap-1.5 font-mono text-xs text-[var(--ink)] bg-gradient-to-r from-red-600/15 via-purple-600/15 to-blue-600/15 hover:from-red-600/30 hover:to-blue-600/30 border border-[var(--border)] shadow-sm shrink-0" 
+                  className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] text-[var(--ink)] bg-gradient-to-r from-red-600/15 via-purple-600/15 to-blue-600/15 hover:from-red-600/30 hover:to-blue-600/30 border border-[var(--border)] shadow-sm shrink-0" 
                   title="Install Hatty's News App"
                 >
-                  <Download className="w-3.5 h-3.5 text-[var(--accent)]" />
-                  <span className="hidden sm:inline font-bold">INSTALL APP</span>
+                  <Download className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+                  <span className="hidden xl:inline font-bold">INSTALL</span>
                 </button>
               )}
 
               {mode === 'crypto' ? (
                 <button 
-                  className="ibtn w-auto px-3 flex items-center gap-1.5 font-mono text-xs shrink-0" 
+                  className="ibtn w-auto px-2 py-1 flex items-center gap-1 font-mono text-[11px] shrink-0" 
                   onClick={() => setShowFearGreed(true)}
                   title="Fear & Greed Index"
                 >
-                  <Gauge className="w-4 h-4 text-[var(--accent)]" />
+                  <Gauge className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
                   {fearGreed && (
-                    <span className="hidden sm:inline font-bold" style={{ 
+                    <span className="font-bold text-[11px]" style={{ 
                       color: parseInt(fearGreed.value) > 50 ? '#22c55e' : '#ef4444' 
                     }}>
-                      {fearGreed.value} {fearGreed.value_classification.split(' ')[0]}
+                      {fearGreed.value}
+                      <span className="hidden xl:inline ml-1 font-normal text-[10px] opacity-80">
+                        {fearGreed.value_classification.split(' ')[0]}
+                      </span>
                     </span>
                   )}
                 </button>
               ) : (
                 <button 
-                  className="ibtn w-auto px-3 flex items-center gap-1.5 font-mono text-xs shrink-0 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)] transition-all" 
+                  className="ibtn w-auto px-2 py-1 flex items-center gap-1 font-mono text-[11px] shrink-0 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.2)] transition-all" 
                   onClick={() => setShowDoomsday(true)}
                   title="Doomsday Clock: 90 Seconds to Midnight"
                 >
-                  <Clock className="w-4 h-4 text-red-500 animate-pulse" />
-                  <span className="hidden sm:inline font-bold tracking-tight text-red-500">
-                    90s TO MIDNIGHT
+                  <Clock className="w-3.5 h-3.5 text-red-500 animate-pulse shrink-0" />
+                  <span className="font-bold tracking-tight text-[11px] text-red-500">
+                    90s<span className="hidden 2xl:inline ml-1 font-normal text-[10px]">MIDNIGHT</span>
                   </span>
                 </button>
               )}
 
               <button
-                className="ibtn w-auto px-2.5 sm:px-3 flex items-center gap-1.5 font-mono text-xs shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all"
+                className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all"
                 onClick={() => setShowCatalysts(true)}
                 title="Economic & Crypto Catalyst Calendar"
               >
-                <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden lg:inline font-bold tracking-tight">CATALYSTS</span>
+                <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="hidden xl:inline font-bold tracking-tight">CATALYSTS</span>
+              </button>
+
+              <button
+                className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-[var(--surface-solid)] hover:border-[var(--accent)] transition-all"
+                onClick={() => setShowDashboardModal(true)}
+                title="Personalized Feed Dashboard & Settings"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
+                <span className="hidden xl:inline font-bold tracking-tight">CUSTOMIZE</span>
+              </button>
+
+              <button
+                className={`ibtn w-8 h-8 p-0 xl:w-auto xl:px-2 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 transition-all ${
+                  notificationsEnabled
+                    ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-500 dark:text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+                    : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+                }`}
+                onClick={() => setShowNotificationModal(true)}
+                title={notificationsEnabled ? "Breaking News Alerts: Active" : "Enable Breaking News Notifications"}
+              >
+                {notificationsEnabled ? (
+                  <BellRing className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 animate-bounce shrink-0" />
+                ) : (
+                  <Bell className="w-3.5 h-3.5 shrink-0" />
+                )}
+                <span className="hidden xl:inline font-bold tracking-tight">
+                  {notificationsEnabled ? 'ALERTS ON' : 'ALERTS'}
+                </span>
               </button>
 
               <button 
-                className="ibtn shrink-0" 
+                className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0" 
                 onClick={() => setIsDark(!isDark)}
                 title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
               >
-                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
               </button>
 
               <button 
-                className="ibtn shrink-0" 
+                className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0" 
                 onClick={handleManualRefresh}
                 title={`Refresh All ${mode === 'world' ? 'World' : 'Crypto'} Feeds Now`}
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[var(--accent)]' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[var(--accent)]' : ''}`} />
               </button>
               
               <div className="relative">
                 <button 
-                  className="ibtn shrink-0" 
+                  className="ibtn w-8 h-8 p-0 flex items-center justify-center shrink-0" 
                   onClick={() => setShowMenu(!showMenu)}
                   title="Hatty's Ecosystem"
                 >
-                  <Menu className="w-4 h-4" />
+                  <Menu className="w-3.5 h-3.5" />
                 </button>
                 <AnimatePresence>
                   {showMenu && (
@@ -3144,7 +4194,21 @@ export default function App() {
                           <span className="w-2 h-2 rounded-full bg-emerald-500" />
                         </div>
 
-                        <div className="p-2 border-b border-[var(--border)] bg-black/5 dark:bg-white/5">
+                        <div className="p-2 border-b border-[var(--border)] bg-black/5 dark:bg-white/5 space-y-1.5">
+                          <button
+                            onClick={() => {
+                              setShowMenu(false);
+                              setShowDashboardModal(true);
+                            }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-xs font-mono font-bold text-[var(--ink)] bg-[var(--surface-solid)] border border-[var(--border)] rounded-lg hover:border-[var(--accent)] transition-colors"
+                          >
+                            <span className="flex items-center gap-2">
+                              <SlidersHorizontal className="w-3.5 h-3.5 text-[var(--accent)]" />
+                              <span>CUSTOMIZE FEED</span>
+                            </span>
+                            <span className="text-[10px] text-[var(--ink-muted)]">SETTINGS</span>
+                          </button>
+
                           <button
                             onClick={() => {
                               setShowMenu(false);
@@ -3185,16 +4249,17 @@ export default function App() {
         </div>
       </header>
 
-      {/* Dedicated Top Ticker Strip (Mode-Specific) */}
-      <div className="border-b border-[var(--border)] py-1.5 px-3 sm:px-4 shadow-sm bg-[var(--surface-solid)] transition-colors duration-300">
+      {/* Dedicated Top Ticker Strip (Stays Stuck with Header on Scroll) */}
+      <div id="top-sub-bar" className="py-1 px-3 sm:px-4 bg-[var(--surface-solid)]/75 backdrop-blur-md">
         <div className="max-w-[1440px] mx-auto">
           {mode === 'crypto' ? (
-            <LiveTicker />
+            <LiveTicker onPriceTick={handlePriceTick} />
           ) : (
             <CommoditiesTicker />
           )}
         </div>
       </div>
+    </div>
 
       {/* Floating Refresh Status Toast */}
       <AnimatePresence>
@@ -3273,6 +4338,16 @@ export default function App() {
               }`}>
                 {savedArticles.length}
               </span>
+            </button>
+
+            {/* Dashboard Customize Categories Pill */}
+            <button
+              onClick={() => setShowDashboardModal(true)}
+              className="fp shrink-0 border-dashed border-[var(--border)] hover:border-[var(--accent)] text-[var(--ink-muted)] hover:text-[var(--ink)] flex items-center gap-1.5 transition-all"
+              title="Personalize Feed Categories, Live Asset Tags & Density"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[var(--accent)]" />
+              <span>CUSTOMIZE</span>
             </button>
 
             {/* 60-Second Morning Brief Toggle Pill */}
@@ -3507,7 +4582,7 @@ export default function App() {
           </div>
         ) : (
           /* Article Grid */
-          <div id="grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div id="grid" className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${dashboardSettings.cardDensity === 'compact' ? 'gap-3.5' : 'gap-5'}`}>
             {filtered.map((a, idx) => {
               const cardMode = a.mode || mode;
               const cardCategories = cardMode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
@@ -3525,7 +4600,7 @@ export default function App() {
                   transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.6), ease: "easeOut" }}
                   className="card group"
                 >
-                  <div className="relative overflow-hidden w-full h-[180px] bg-[#0c0c10]">
+                  <div className={`relative overflow-hidden w-full ${dashboardSettings.cardDensity === 'compact' ? 'h-[140px]' : 'h-[180px]'} bg-[#0c0c10]`}>
                     <CardImage article={a} mode={cardMode} />
                     
                     {/* Category + NEW Overlay Badges */}
@@ -3580,6 +4655,50 @@ export default function App() {
                         {a.title}
                       </a>
                     </h2>
+
+                    {/* Feature: Live Asset Mention Tagging */}
+                    {dashboardSettings.showAssetTags && (
+                      (() => {
+                        const detected = detectAssetsInArticle(a.title, a.snippet, marketQuotes);
+                        if (detected.length === 0) return null;
+                        return (
+                          <div className="flex items-center gap-1.5 flex-wrap my-2">
+                            {detected.map(asset => {
+                              const isUp = (asset.change24h ?? 0) >= 0;
+                              return (
+                                <button
+                                  key={asset.id}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setQuery(prev => prev.toLowerCase() === asset.symbol.toLowerCase() ? '' : asset.symbol);
+                                  }}
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border transition-all ${
+                                    query.toLowerCase() === asset.symbol.toLowerCase()
+                                      ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-sm'
+                                      : isDark 
+                                        ? 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/25 text-white' 
+                                        : 'bg-black/5 hover:bg-black/10 border-black/10 hover:border-black/25 text-slate-800'
+                                  }`}
+                                  title={`Click to filter stories for ${asset.name} (${asset.symbol})`}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: asset.color }} />
+                                  <span>${asset.symbol}</span>
+                                  {asset.formatted && (
+                                    <span className="opacity-80 font-normal">{asset.formatted}</span>
+                                  )}
+                                  {typeof asset.change24h === 'number' && (
+                                    <span className={`text-[9px] font-bold ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                      {isUp ? '▲' : '▼'}{Math.abs(asset.change24h).toFixed(1)}%
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()
+                    )}
 
                     {a.snippet && (
                       <p className="text-xs text-[var(--ink-muted)] line-clamp-2 mb-3 leading-relaxed">
@@ -3649,6 +4768,42 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Floating Back-to-Top Quick Jump Button */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, y: 15, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.9 }}
+            onClick={() => {
+              window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+            }}
+            className="fixed bottom-16 right-4 sm:bottom-18 sm:right-6 z-40 px-3 py-2 rounded-full bg-[var(--surface-solid)]/95 border border-[var(--border)] text-[var(--ink)] shadow-2xl hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all backdrop-blur-md flex items-center gap-1.5 text-xs font-mono font-bold group cursor-pointer"
+            title="Return to top of feed"
+          >
+            <ChevronUp className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform text-[var(--accent)]" />
+            <span className="hidden sm:inline">TOP</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Notification Toast */}
+      <AnimatePresence>
+        {notificationSuccessToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none max-w-md px-4 w-full"
+          >
+            <div className="px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-[var(--surface-solid)]/95 text-emerald-500 dark:text-emerald-400 font-mono text-xs shadow-2xl backdrop-blur-md flex items-center gap-2 text-center justify-center">
+              <BellRing className="w-4 h-4 shrink-0 text-emerald-500" />
+              <span>{notificationSuccessToast}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Fixed Ticker Strip: LiveCoinWatch in Crypto Mode, Global Stock Tape in World Mode */}
       <div 
