@@ -23,7 +23,7 @@ export function LiveTicker({ onPriceTick }: LiveTickerProps) {
       tickFlushTimeoutRef.current = setTimeout(() => {
         tickFlushTimeoutRef.current = null;
         if (!onPriceTick) return;
-        for (const [s, data] of Object.entries(pendingTicksRef.current)) {
+        for (const [s, data] of Object.entries(pendingTicksRef.current) as [string, { price: number; change: number; formatted: string }][]) {
           onPriceTick(s, data.price, data.change, data.formatted);
         }
         pendingTicksRef.current = {};
@@ -200,7 +200,7 @@ export function LiveTicker({ onPriceTick }: LiveTickerProps) {
         <span className="text-[var(--ink-muted)] hidden sm:inline">TICKER</span>
       </div>
 
-      {Object.values(tokens).map((t) => {
+      {(Object.values(tokens) as TickerToken[]).map((t) => {
         const isUp = t.change24h >= 0;
         return (
           <div

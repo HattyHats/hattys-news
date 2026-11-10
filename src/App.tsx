@@ -76,6 +76,23 @@ export default function App() {
   });
   const [notificationSuccessToast, setNotificationSuccessToast] = useState<string | null>(null);
 
+  // Responsive Device Breakpoint for Display Ads (>= 1024px is desktop)
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(prev => (prev !== desktop ? desktop : prev));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // 60-Second Morning Brief state (persisted)
   const [showBrief, setShowBrief] = useState<boolean>(() => {
     try {
@@ -952,8 +969,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* Top Sponsored Ad Unit (Affizy Zone 1007 - 480x320) - EXACT PLACEMENT INTACT */}
-        <AffizyAdUnit zoneId="1007" bannerSize="480x320" maxWidth="max-w-[540px]" />
+        {/* Top Sponsored Ad Unit (Affizy Responsive: Desktop = 970x250 Billboard [Zone 1021], Mobile/Tablet = 480x320 [Zone 1007]) */}
+        {isDesktop ? (
+          <AffizyAdUnit zoneId="1021" bannerSize="970x250" maxWidth="max-w-[1020px]" />
+        ) : (
+          <AffizyAdUnit zoneId="1007" bannerSize="480x320" maxWidth="max-w-[540px]" />
+        )}
 
         {/* Loading Skeleton state */}
         {loading && articles.length === 0 ? (

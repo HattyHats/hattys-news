@@ -18,7 +18,7 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
     setCommodities(prev => {
       let changed = false;
       const updated = { ...prev };
-      for (const [k, item] of Object.entries(prev)) {
+      for (const [k, item] of Object.entries(prev) as [string, CommodityItem][]) {
         const q = marketQuotes[k] || marketQuotes[item.ticker] || marketQuotes[item.symbol];
         if (q && (item.price !== q.price || item.change24h !== q.change24h)) {
           changed = true;
@@ -36,7 +36,7 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
     setStocks(prev => {
       let changed = false;
       const updated = { ...prev };
-      for (const [k, item] of Object.entries(prev)) {
+      for (const [k, item] of Object.entries(prev) as [string, CommodityItem][]) {
         const q = marketQuotes[k] || marketQuotes[item.ticker] || marketQuotes[item.symbol];
         if (q && (item.price !== q.price || item.change24h !== q.change24h)) {
           changed = true;
