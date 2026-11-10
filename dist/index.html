@@ -37,55 +37,18 @@
     <meta name="twitter:description" content="Real-time Global Wire Dispatches & Live Crypto Intelligence." />
     <meta name="twitter:image" content="/pwa-512x512.png" />
 
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://hattynews.org/" />
+
     <!-- High-Performance Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-CI4osj9n.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Ck5ZmzS-.css">
+    <script type="module" crossorigin src="/assets/index-Bi0NA93G.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CFDj00QI.css">
   <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
     <div id="root"></div>
-
-    <!-- Automatic Seamless Code Update Script (Zero Double-Load, Instant Refresh on New Deploy) -->
-    <script>
-      (function() {
-        if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-          var refreshing = false;
-          // hadController is true only if the page was ALREADY controlled by an older service worker.
-          // For first-time visitors, hadController is false, completely preventing any double-load loop.
-          var hadController = Boolean(navigator.serviceWorker.controller);
-
-          navigator.serviceWorker.addEventListener('controllerchange', function() {
-            if (refreshing) return;
-            if (hadController) {
-              refreshing = true;
-              window.location.reload();
-            }
-          });
-
-          // Check for service worker updates immediately on page load
-          window.addEventListener('load', function() {
-            navigator.serviceWorker.ready.then(function(reg) {
-              reg.update().catch(function() {});
-              // Periodically check every 10 minutes in the background
-              setInterval(function() {
-                reg.update().catch(function() {});
-              }, 10 * 60 * 1000);
-            }).catch(function() {});
-          });
-
-          // Whenever the user switches back to the tab/PWA window, check for deployed updates
-          document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'visible') {
-              navigator.serviceWorker.ready.then(function(reg) {
-                reg.update().catch(function() {});
-              }).catch(function() {});
-            }
-          });
-        }
-      })();
-    </script>
 
     <!-- Main React Bundle -->
 
@@ -97,7 +60,6 @@
 
     <!-- Affizy Ad Units (Zone 1007 & Zone 1015) Static Crawler & Reviewer Verification -->
     <noscript>
-      <script src="https://affizy.network/delivery.js"></script>
       <div class="affizy-ad" data-zone="1007"></div>
       <div class="affizy-ad" data-zone="1015"></div>
     </noscript>

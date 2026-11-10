@@ -9,6 +9,27 @@ import RSSParser from 'rss-parser';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const ALLOWED_FEED_DOMAINS = [
+  'cointelegraph.com', 'coindesk.com', 'decrypt.co', 'theblock.co', 'blockworks.co',
+  'bitcoinmagazine.com', 'cryptoslate.com', 'dailycoin.com', 'u.today', 'beincrypto.com',
+  'ambcrypto.com', 'thedefiant.io', 'cryptobriefing.com', 'bankless.com', 'crypto.news',
+  'cryptopotato.com', 'newsbtc.com', 'bitcoin.com', 'news.google.com', 'bbci.co.uk',
+  'dw.com', 'france24.com', 'aljazeera.com', 'theguardian.com', 'cbc.ca', 'npr.org',
+  'upi.com', 'un.org', 'abc.net.au', 'channelnewsasia.com', 'africanews.com', 'rte.ie',
+  'nasa.gov', 'phys.org', 'arstechnica.com', 'theverge.com'
+];
+
+function isAllowedUrl(inputUrl: string): boolean {
+  try {
+    const parsed = new URL(inputUrl);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    const hostname = parsed.hostname.toLowerCase();
+    return ALLOWED_FEED_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d));
+  } catch {
+    return false;
+  }
+}
+
 function apiNewsPlugin() {
   const parser = new RSSParser({
     customFields: {
@@ -39,6 +60,13 @@ function apiNewsPlugin() {
             res.statusCode = 400;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ error: 'URL is required' }));
+            return;
+          }
+
+          if (!isAllowedUrl(feedUrl)) {
+            res.statusCode = 403;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Target domain not permitted on RSS feed allowlist' }));
             return;
           }
 

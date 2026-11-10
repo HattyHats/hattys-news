@@ -25,6 +25,60 @@ const parser = new RSSParser({
   timeout: 15000,
 });
 
+// Explicit domain allowlist to prevent Server-Side Request Forgery (SSRF)
+const ALLOWED_FEED_DOMAINS = [
+  'cointelegraph.com',
+  'coindesk.com',
+  'decrypt.co',
+  'theblock.co',
+  'blockworks.co',
+  'bitcoinmagazine.com',
+  'cryptoslate.com',
+  'dailycoin.com',
+  'u.today',
+  'beincrypto.com',
+  'ambcrypto.com',
+  'thedefiant.io',
+  'cryptobriefing.com',
+  'bankless.com',
+  'crypto.news',
+  'cryptopotato.com',
+  'newsbtc.com',
+  'bitcoin.com',
+  'news.google.com',
+  'bbci.co.uk',
+  'dw.com',
+  'france24.com',
+  'aljazeera.com',
+  'theguardian.com',
+  'cbc.ca',
+  'npr.org',
+  'upi.com',
+  'un.org',
+  'abc.net.au',
+  'channelnewsasia.com',
+  'africanews.com',
+  'rte.ie',
+  'nasa.gov',
+  'phys.org',
+  'arstechnica.com',
+  'theverge.com'
+];
+
+function isAllowedUrl(inputUrl: string): boolean {
+  try {
+    const parsed = new URL(inputUrl);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    const hostname = parsed.hostname.toLowerCase();
+    return ALLOWED_FEED_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d));
+  } catch {
+    return false;
+  }
+}
+
+// In-memory cache for warm Lambda executions (3-minute TTL)
+const lambdaFeedCache = new Map<string, { body: string; timestamp: number }>();
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return {
@@ -48,12 +102,41 @@ export const handler: Handler = async (event) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify({ error: "URL is required" }),
+      body: JSON.stringify({ error: "URL parameter is required" }),
+    };
+  }
+
+  if (!isAllowedUrl(url)) {
+    return {
+      statusCode: 403,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ error: "Target domain not permitted on RSS feed allowlist" }),
+    };
+  }
+
+  const now = Date.now();
+  const cached = lambdaFeedCache.get(url);
+  if (!nocache && cached && (now - cached.timestamp < 180000)) {
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=180, s-maxage=180",
+        "X-Cache": "HIT"
+      },
+      body: cached.body,
     };
   }
 
   try {
     const feed = await parser.parseURL(url);
+    const bodyStr = JSON.stringify(feed);
+    lambdaFeedCache.set(url, { body: bodyStr, timestamp: Date.now() });
+
     return {
       statusCode: 200,
       headers: {
@@ -61,13 +144,26 @@ export const handler: Handler = async (event) => {
         "Access-Control-Allow-Origin": "*",
         "Cache-Control": nocache
           ? "no-store, no-cache, must-revalidate, proxy-revalidate"
-          : "public, max-age=120, s-maxage=120",
+          : "public, max-age=180, s-maxage=180",
+        "X-Cache": "MISS",
         ...(nocache ? { "Pragma": "no-cache", "Expires": "0" } : {})
       },
-      body: JSON.stringify(feed),
+      body: bodyStr,
     };
   } catch (error: any) {
     console.error(`Error fetching feed from ${url}:`, error?.message || error);
+    if (cached) {
+      return {
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=60",
+          "X-Cache": "STALE-FALLBACK"
+        },
+        body: cached.body,
+      };
+    }
     return {
       statusCode: 500,
       headers: {
