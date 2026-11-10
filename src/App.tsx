@@ -942,8 +942,18 @@ function WorldNewsTicker({ articles }: { articles: Article[] }) {
   );
 }
 
-/* --- AFFIZY AD UNIT (ZONE 1007) --- */
-function AffizyAdUnit() {
+/* --- AFFIZY AD UNIT --- */
+interface AffizyAdUnitProps {
+  zoneId?: string;
+  bannerSize?: string;
+  maxWidth?: string;
+}
+
+function AffizyAdUnit({
+  zoneId = '1007',
+  bannerSize = '480x320',
+  maxWidth = 'max-w-[540px]',
+}: AffizyAdUnitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [adLoaded, setAdLoaded] = useState(false);
 
@@ -954,10 +964,10 @@ function AffizyAdUnit() {
     container.innerHTML = '';
 
     // Create target div matching Affizy specification:
-    // <div class="affizy-ad" data-zone="1007"></div>
+    // <div class="affizy-ad" data-zone="..."></div>
     const adDiv = document.createElement('div');
     adDiv.className = 'affizy-ad';
-    adDiv.setAttribute('data-zone', '1007');
+    adDiv.setAttribute('data-zone', zoneId);
     container.appendChild(adDiv);
 
     // Watch if Affizy successfully renders an ad inside adDiv
@@ -979,11 +989,11 @@ function AffizyAdUnit() {
         container.innerHTML = '';
       }
     };
-  }, []);
+  }, [zoneId]);
 
   return (
     <div className="w-full my-3 flex flex-col items-center justify-center">
-      <div className="w-full max-w-[540px] relative mx-auto" style={{ zIndex: 20 }}>
+      <div className={`w-full ${maxWidth} relative mx-auto`} style={{ zIndex: 20 }}>
         <div className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface-solid)] shadow-sm p-1.5 sm:p-2 flex flex-col items-center justify-center">
           <div ref={containerRef} className="w-full flex items-center justify-center overflow-hidden min-h-[50px]" />
           
@@ -991,7 +1001,7 @@ function AffizyAdUnit() {
             <div className="w-full py-2 px-3 flex items-center justify-between text-[11px] font-mono text-[var(--ink-muted)]">
               <span className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                <span>AFFIZY NETWORK • ZONE 1007 (480x320)</span>
+                <span>AFFIZY NETWORK • ZONE {zoneId} ({bannerSize})</span>
               </span>
               <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                 PENDING REVIEW
@@ -1000,44 +1010,6 @@ function AffizyAdUnit() {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/* --- AADS AD UNIT 2459130 --- */
-function AadsAdUnit() {
-  return (
-    <div className="w-full my-4 flex flex-col items-center justify-center">
-      {/* BEGIN AADS AD UNIT 2459130 */}
-      <div id="frame" className="w-full max-w-[728px] relative mx-auto" style={{ zIndex: 20 }}>
-        <div className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface-solid)] shadow-md transition-all">
-          <div className="w-full overflow-hidden flex items-center justify-center bg-black/5 dark:bg-black/30 p-1">
-            <iframe
-              data-aa="2459130"
-              src="https://acceptable.a-ads.com/2459130/?size=Adaptive"
-              className="w-full max-w-[728px] h-[60px] sm:h-[90px] block mx-auto rounded-lg"
-              style={{ border: 0, padding: 0, overflow: 'hidden' }}
-              title="AADS Crypto Advertisement"
-            />
-          </div>
-          <div className="w-full relative flex justify-between items-center px-3 py-1.5 bg-[var(--surface-solid)] border-t border-[var(--border)] text-[10px] font-mono text-[var(--ink-muted)]">
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span>A-ADS NETWORK • UNIT 2459130</span>
-            </span>
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--accent)] hover:underline font-bold"
-              id="frame-link"
-              href="https://aads.com/campaigns/new/?source_id=2459130&source_type=ad_unit&partner=2459130"
-            >
-              Advertise here
-            </a>
-          </div>
-        </div>
-      </div>
-      {/* END AADS AD UNIT 2459130 */}
     </div>
   );
 }
@@ -4596,8 +4568,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Affizy Ad Unit (Top Banner - Zone 1007) */}
-        <AffizyAdUnit />
+        {/* Affizy Ad Unit (Top Banner - Zone 1007 - 480x320) */}
+        <AffizyAdUnit zoneId="1007" bannerSize="480x320" maxWidth="max-w-[540px]" />
 
         {/* Loading Skeleton state */}
         {loading && articles.length === 0 ? (
@@ -4829,10 +4801,10 @@ export default function App() {
                 {idx === 7 && (
                   <div className="col-span-full my-6 flex flex-col items-center justify-center w-full">
                     <div className="text-[10px] font-mono text-[var(--ink-muted)] mb-1 uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                       <span>SPONSORED WIRE</span>
                     </div>
-                    <AadsAdUnit />
+                    <AffizyAdUnit zoneId="1015" bannerSize="300x250" maxWidth="max-w-[360px]" />
                   </div>
                 )}
               </React.Fragment>
@@ -4844,10 +4816,10 @@ export default function App() {
         {filtered.length > 0 && filtered.length < 8 && (
           <div className="my-6 flex flex-col items-center justify-center w-full">
             <div className="text-[10px] font-mono text-[var(--ink-muted)] mb-1 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
               <span>SPONSORED WIRE</span>
             </div>
-            <AadsAdUnit />
+            <AffizyAdUnit zoneId="1015" bannerSize="300x250" maxWidth="max-w-[360px]" />
           </div>
         )}
           </>
