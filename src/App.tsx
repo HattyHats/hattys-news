@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Radio, ShieldAlert, BellRing } from 'lucide-react';
+import { Radio, ShieldAlert, BellRing, Zap, Calendar, Clock, Gauge } from 'lucide-react';
 
 import { AppMode, Article, FearGreedData, FeedConfig } from './types';
 import { CRYPTO_FEEDS, WORLD_FEEDS, CRYPTO_CATEGORIES, WORLD_CATEGORIES, DEFAULT_DASHBOARD_SETTINGS } from './config/feeds';
@@ -15,6 +15,7 @@ import { cleanWireTitle, cleanWireSnippet, getPublisherRoot } from './utils/text
 import { classifyArticle } from './utils/classifier';
 import { computeArticleClusters } from './utils/clustering';
 import { loadCachedArticlesForMode, saveArticlesCache } from './utils/storage';
+import { getUpcomingCatalysts, formatExactCountdown } from './utils/formatters';
 
 // Modular Components
 import { Header } from './components/layout/Header';
@@ -452,6 +453,18 @@ export default function App() {
 
   const handleManualRefresh = async () => {
     if (loading) return;
+
+    // Smoothly scroll back to the beginning of the page
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+
+    // Reset pagination limit so user sees top stories immediately
+    setDisplayLimit(24);
+    if (filter === 'saved') {
+      setFilter('all');
+    }
+
     setRefreshToast({ message: `Fetching latest ${mode === 'world' ? 'world wire' : 'crypto'} dispatches...`, active: true });
     try {
       if (mode === 'world') {
@@ -465,7 +478,8 @@ export default function App() {
         setRefreshToast(null);
       }, 2500);
     } catch {
-      setRefreshToast(null);
+      setRefreshToast({ message: 'Sync failed. Re-trying...', active: false });
+      setTimeout(() => setRefreshToast(null), 2500);
     }
   };
 
@@ -636,9 +650,14 @@ export default function App() {
       return;
     }
 
+    // Instantly load cached articles for the target mode, preventing cross-mode bleed
+    const restored = loadCachedArticlesForMode(newMode);
+    setArticles(restored);
+    setLoading(restored.length === 0);
     setMode(newMode);
     setFilter('all');
     setQuery('');
+    setDisplayLimit(24);
 
     requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -672,19 +691,64 @@ export default function App() {
     }
   }, [mode, dashboardSettings, filter]);
 
-  // Multi-Source Story Clustering Map
-  const articleClusters = useMemo(() => computeArticleClusters(articles), [articles]);
+  // Strict topic-isolated articles for current mode (guarantees Crypto only in crypto, World only in world)
+  const currentModeArticles = useMemo(() => {
+    return articles.filter(a => !a.mode || a.mode === mode);
+  }, [articles, mode]);
 
-  // Count of new stories since last visit
+  // Multi-Source Story Clustering Map (scoped strictly to current mode)
+  const articleClusters = useMemo(() => computeArticleClusters(currentModeArticles), [currentModeArticles]);
+
+  // Count of new stories since last visit (scoped to current mode)
   const newArticlesCount = useMemo(() => {
-    return articles.filter(a => a.date.getTime() > lastVisitTime).length;
-  }, [articles, lastVisitTime]);
+    return currentModeArticles.filter(a => a.date.getTime() > lastVisitTime).length;
+  }, [currentModeArticles, lastVisitTime]);
 
-  // 60-Second Morning Brief Stories
+  // Feature 5: Nearest Macro Catalyst live countdown
+  const nearestCatalyst = useMemo(() => {
+    const list = getUpcomingCatalysts();
+    return list[0] || null;
+  }, []);
+
+  const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTimeMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nearestCountdown = useMemo(() => {
+    if (!nearestCatalyst) return null;
+    return formatExactCountdown(nearestCatalyst.date, currentTimeMs);
+  }, [nearestCatalyst, currentTimeMs]);
+
+  // Feature 3: Live Breaking News Speedometer (Wire Velocity Index)
+  const wireVelocity = useMemo(() => {
+    const oneHourAgo = currentTimeMs - 3600 * 1000;
+    const countRecent = currentModeArticles.filter(a => a.date.getTime() >= oneHourAgo).length;
+
+    let count = countRecent;
+    if (count === 0 && currentModeArticles.length >= 5) {
+      const sample = currentModeArticles.slice(0, 10);
+      const newestTime = sample[0]?.date.getTime() || currentTimeMs;
+      const oldestTime = sample[sample.length - 1]?.date.getTime() || (currentTimeMs - 3600 * 1000);
+      const spanHours = Math.max(0.5, (newestTime - oldestTime) / (3600 * 1000));
+      count = Math.max(4, Math.round(sample.length / spanHours));
+    } else if (count === 0) {
+      count = 6;
+    }
+
+    let status: 'SURGE' | 'HIGH' | 'STEADY' = 'STEADY';
+    if (count >= 18) status = 'SURGE';
+    else if (count >= 8) status = 'HIGH';
+
+    return { count, status };
+  }, [currentModeArticles, currentTimeMs]);
+
+  // 60-Second Morning Brief Stories (scoped to current mode)
   const morningBriefStories = useMemo(() => {
-    if (articles.length === 0) return [];
+    if (currentModeArticles.length === 0) return [];
     const now = Date.now();
-    const scored = articles.slice(0, 80).map(a => {
+    const scored = currentModeArticles.slice(0, 80).map(a => {
       const relatedCount = articleClusters.get(a.id)?.length || 0;
       const hoursOld = Math.max(0, (now - a.date.getTime()) / (3600 * 1000));
       const recencyScore = Math.max(0, 24 - hoursOld);
@@ -712,24 +776,24 @@ export default function App() {
     }
 
     return picked;
-  }, [articles, articleClusters]);
+  }, [currentModeArticles, articleClusters]);
 
-  // Category counts
+  // Category counts (scoped strictly to current mode)
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: articles.length };
+    const counts: Record<string, number> = { all: currentModeArticles.length };
     const base = mode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
     base.forEach(cat => {
       if (cat.id === 'all') return;
-      counts[cat.id] = articles.filter(a => 
+      counts[cat.id] = currentModeArticles.filter(a => 
         a.matchedCategories.includes(cat.id) || a.primaryCat === cat.id
       ).length;
     });
     return counts;
-  }, [articles, mode]);
+  }, [currentModeArticles, mode]);
 
-  // Filtered articles
+  // Filtered articles (strictly topic-isolated)
   const filtered = useMemo(() => {
-    const baseList = filter === 'saved' ? savedArticles : articles;
+    const baseList = filter === 'saved' ? savedArticles : currentModeArticles;
     const q = query.trim().toLowerCase();
     const cleanQ = q.replace(/^\$/, '').trim();
     const matchedAssetDef = cleanQ
@@ -742,6 +806,9 @@ export default function App() {
       : undefined;
 
     return baseList.filter(a => {
+      if (filter === 'saved' && a.mode && a.mode !== mode) {
+        return false;
+      }
       const matchCat =
         filter === 'all' ||
         filter === 'saved' ||
@@ -758,7 +825,7 @@ export default function App() {
         : false;
       return textMatch || assetMatch;
     });
-  }, [articles, savedArticles, filter, query, lastVisitTime]);
+  }, [currentModeArticles, savedArticles, filter, query, lastVisitTime, mode]);
 
   // Progressive Page Render Limit (Pagination to prevent DOM bloat & paint lag)
   const [displayLimit, setDisplayLimit] = useState(24);
@@ -894,12 +961,40 @@ export default function App() {
         />
 
         {/* Dedicated Top Ticker Strip (Stays Stuck with Header on Scroll) */}
-        <div id="top-sub-bar" className="relative z-10 py-1 px-3 sm:px-4 bg-[var(--bg2)]">
-          <div className="max-w-[1440px] mx-auto">
-            {mode === 'crypto' ? (
-              <LiveTicker onPriceTick={handlePriceTick} />
-            ) : (
-              <CommoditiesTicker marketQuotes={marketQuotes} />
+        <div id="top-sub-bar" className="relative z-10 py-1 px-3 sm:px-4 bg-[var(--bg2)] border-b border-[var(--border)]">
+          <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0 overflow-hidden">
+              {mode === 'crypto' ? (
+                <LiveTicker onPriceTick={handlePriceTick} />
+              ) : (
+                <CommoditiesTicker marketQuotes={marketQuotes} />
+              )}
+            </div>
+
+            {/* Feature 5: Prominent Macro Catalyst Countdown Ticker Pill (Desktop Only - hidden on mobile/phones to conserve screen space) */}
+            {nearestCatalyst && nearestCountdown && (
+              <button
+                type="button"
+                onClick={() => setShowCatalysts(true)}
+                className="hidden lg:inline-flex shrink-0 items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--surface-solid)] border border-[var(--border)] hover:border-[var(--accent)] text-xs font-mono transition-all cursor-pointer shadow-sm group text-left touch-manipulation my-0.5 active:scale-95"
+                title="View full Macro Catalyst Calendar and exact ticking countdowns"
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${mode === 'world' ? 'text-blue-500 dark:text-blue-400' : 'text-[var(--accent)]'}`}>
+                    NEXT CATALYST:
+                  </span>
+                </span>
+                <span className="font-bold text-[var(--ink)] truncate max-w-[160px] xl:max-w-[220px]">
+                  {nearestCatalyst.title.split('(')[0].trim()}
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 font-bold text-xs text-amber-500 dark:text-amber-400 font-mono tracking-wider">
+                  {nearestCountdown.formatted}
+                </span>
+                <span className="text-[10px] text-[var(--ink-muted)] group-hover:text-[var(--accent)] hidden xl:inline">
+                  [VIEW CALENDAR →]
+                </span>
+              </button>
             )}
           </div>
         </div>
@@ -940,6 +1035,32 @@ export default function App() {
         <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-muted)] mb-4 px-1 flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span>SHOWING: <strong className="text-[var(--ink)]">{filtered.length}</strong> {filter === 'saved' ? 'SAVED DISPATCHES' : mode === 'world' ? 'GLOBAL DISPATCHES' : 'CRYPTO DISPATCHES'}</span>
+
+            {/* Feature 3: Live Wire Velocity Speedometer Pill */}
+            <div 
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[10px] sm:text-[11px] font-mono font-bold transition-all cursor-default ${
+                wireVelocity.status === 'SURGE'
+                  ? 'bg-red-500/10 text-red-500 border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.2)]'
+                  : wireVelocity.status === 'HIGH'
+                    ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/30'
+                    : 'bg-[var(--surface-solid)] text-[var(--ink-muted)] border-[var(--border)]'
+              }`}
+              title={`Breaking Wire Velocity: ${wireVelocity.count} dispatches per hour based on incoming wire feed cadence`}
+            >
+              <Zap className={`w-3 h-3 ${wireVelocity.status === 'SURGE' ? 'fill-red-500 animate-bounce' : 'fill-current'}`} />
+              <span className="hidden sm:inline">SPEEDOMETER:</span>
+              <span className="text-[var(--ink)] font-black">{wireVelocity.count}/HR</span>
+              <span className={`text-[9px] px-1 py-0.2 rounded font-black tracking-wider uppercase ${
+                wireVelocity.status === 'SURGE'
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : wireVelocity.status === 'HIGH'
+                    ? 'bg-emerald-500 text-black'
+                    : 'bg-black/10 dark:bg-white/10 text-[var(--ink-muted)]'
+              }`}>
+                {wireVelocity.status}
+              </span>
+            </div>
+
             {refreshToast && (
               <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono border ${
                 refreshToast.active 

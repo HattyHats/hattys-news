@@ -45,7 +45,11 @@ export const CRYPTO_FEEDS: FeedConfig[] = [
   { n: 'AMBCrypto', u: 'https://ambcrypto.com/feed/', defaultCat: 'altcoin' },
   { n: 'The Defiant', u: 'https://thedefiant.io/api/feed', defaultCat: 'defi' },
   { n: 'CryptoPotato', u: 'https://cryptopotato.com/feed/', defaultCat: 'all' },
-  { n: 'Bitcoin.com', u: 'https://news.bitcoin.com/feed/', defaultCat: 'bitcoin' }
+  { n: 'Bitcoin.com', u: 'https://news.bitcoin.com/feed/', defaultCat: 'bitcoin' },
+  { n: 'NewsBTC', u: 'https://www.newsbtc.com/feed/', defaultCat: 'all' },
+  { n: 'Crypto.News', u: 'https://crypto.news/feed/', defaultCat: 'all' },
+  { n: 'Bankless', u: 'https://www.bankless.com/rss/feed', defaultCat: 'defi' },
+  { n: 'TechCrunch Crypto', u: 'https://techcrunch.com/category/cryptocurrency/feed/', defaultCat: 'all' }
 ];
 
 /* --- UNBIASED WORLD NEWS CONFIGURATION --- */
@@ -76,12 +80,14 @@ export const WORLD_FEEDS: FeedConfig[] = [
   { n: 'BBC World', u: 'https://feeds.bbci.co.uk/news/world/rss.xml', defaultCat: 'all' },
   { n: 'BBC Business', u: 'https://feeds.bbci.co.uk/news/business/rss.xml', defaultCat: 'economy' },
   { n: 'BBC Technology', u: 'https://feeds.bbci.co.uk/news/technology/rss.xml', defaultCat: 'tech' },
+  { n: 'BBC Science', u: 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml', defaultCat: 'environment' },
   { n: 'DW News', u: 'https://rss.dw.com/rdf/rss-en-all', defaultCat: 'all' },
   { n: 'France 24', u: 'https://www.france24.com/en/rss', defaultCat: 'all' },
   { n: 'Al Jazeera', u: 'https://www.aljazeera.com/xml/rss/all.xml', defaultCat: 'geopolitics' },
   { n: 'The Guardian World', u: 'https://www.theguardian.com/world/rss', defaultCat: 'all' },
   { n: 'CBC World', u: 'https://www.cbc.ca/cmlink/rss-world', defaultCat: 'all' },
   { n: 'NPR World', u: 'https://feeds.npr.org/1004/rss.xml', defaultCat: 'all' },
+  { n: 'NPR Politics', u: 'https://feeds.npr.org/1014/rss.xml', defaultCat: 'politics' },
   { n: 'PBS NewsHour', u: 'https://news.google.com/rss/search?q=source:%22PBS+NewsHour%22&hl=en-US&gl=US&ceid=US:en', defaultCat: 'politics' },
   { n: 'UPI World', u: 'https://rss.upi.com/news/world_news.rss', defaultCat: 'all' },
   { n: 'UN News', u: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml', defaultCat: 'geopolitics' },
@@ -89,6 +95,10 @@ export const WORLD_FEEDS: FeedConfig[] = [
   { n: 'CNA World', u: 'https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311', defaultCat: 'all' },
   { n: 'NHK World', u: 'https://news.google.com/rss/search?q=source:%22NHK+WORLD-JAPAN%22&hl=en-US&gl=US&ceid=US:en', defaultCat: 'all' },
   { n: 'NASA Space Wire', u: 'https://www.nasa.gov/news-release/feed/', defaultCat: 'space' },
+  { n: 'Space.com', u: 'https://www.space.com/feeds/all', defaultCat: 'space' },
+  { n: 'Phys.org', u: 'https://phys.org/rss-feed/', defaultCat: 'space' },
+  { n: 'ScienceDaily', u: 'https://www.sciencedaily.com/rss/all.xml', defaultCat: 'space' },
+  { n: 'Ars Technica', u: 'https://feeds.arstechnica.com/arstechnica/index', defaultCat: 'tech' },
   { n: 'The Verge', u: 'https://www.theverge.com/rss/index.xml', defaultCat: 'tech' }
 ];
 

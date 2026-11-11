@@ -13,10 +13,11 @@ const ALLOWED_FEED_DOMAINS = [
   'cointelegraph.com', 'coindesk.com', 'decrypt.co', 'theblock.co', 'blockworks.co',
   'bitcoinmagazine.com', 'cryptoslate.com', 'dailycoin.com', 'u.today', 'beincrypto.com',
   'ambcrypto.com', 'thedefiant.io', 'cryptobriefing.com', 'bankless.com', 'crypto.news',
-  'cryptopotato.com', 'newsbtc.com', 'bitcoin.com', 'news.google.com', 'bbci.co.uk',
-  'dw.com', 'france24.com', 'aljazeera.com', 'theguardian.com', 'cbc.ca', 'npr.org',
-  'upi.com', 'un.org', 'abc.net.au', 'channelnewsasia.com', 'africanews.com', 'rte.ie',
-  'nasa.gov', 'phys.org', 'arstechnica.com', 'theverge.com'
+  'cryptopotato.com', 'newsbtc.com', 'bitcoin.com', 'techcrunch.com', 'news.google.com',
+  'bbci.co.uk', 'bbc.co.uk', 'bbc.com', 'dw.com', 'france24.com', 'aljazeera.com',
+  'theguardian.com', 'cbc.ca', 'npr.org', 'upi.com', 'un.org', 'abc.net.au',
+  'channelnewsasia.com', 'africanews.com', 'rte.ie', 'nasa.gov', 'space.com',
+  'phys.org', 'sciencedaily.com', 'arstechnica.com', 'theverge.com', 'reuters.com', 'apnews.com'
 ];
 
 function isAllowedUrl(inputUrl) {

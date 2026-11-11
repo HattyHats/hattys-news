@@ -17,6 +17,7 @@ export function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
             ...a,
             title,
             snippet,
+            mode: targetMode,
             id: `${targetMode}-${a.src || 'wire'}-${normId}`,
             img: (a.img && !a.img.startsWith('data:image/svg+xml;utf8')) ? a.img : getEditorialPhoto(a.primaryCat, title, targetMode),
             date: new Date(a.date)
@@ -31,6 +32,8 @@ export function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
 export function saveArticlesCache(targetMode: AppMode, articles: Article[]) {
   try {
     const cacheKey = targetMode === 'world' ? 'hattys_news_world_cache_v3' : 'hattys_news_crypto_cache_v3';
-    localStorage.setItem(cacheKey, JSON.stringify(articles.slice(0, 250)));
+    // Strict isolation: only save articles matching targetMode to target cache
+    const isolated = articles.filter(a => !a.mode || a.mode === targetMode);
+    localStorage.setItem(cacheKey, JSON.stringify(isolated.slice(0, 250)));
   } catch {}
 }

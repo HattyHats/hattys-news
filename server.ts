@@ -32,6 +32,28 @@ const parser = new RSSParser({
   timeout: 15000,
 });
 
+const ALLOWED_FEED_DOMAINS = [
+  'cointelegraph.com', 'coindesk.com', 'decrypt.co', 'theblock.co', 'blockworks.co',
+  'bitcoinmagazine.com', 'cryptoslate.com', 'dailycoin.com', 'u.today', 'beincrypto.com',
+  'ambcrypto.com', 'thedefiant.io', 'cryptobriefing.com', 'bankless.com', 'crypto.news',
+  'cryptopotato.com', 'newsbtc.com', 'bitcoin.com', 'techcrunch.com', 'news.google.com',
+  'bbci.co.uk', 'bbc.co.uk', 'bbc.com', 'dw.com', 'france24.com', 'aljazeera.com',
+  'theguardian.com', 'cbc.ca', 'npr.org', 'upi.com', 'un.org', 'abc.net.au',
+  'channelnewsasia.com', 'africanews.com', 'rte.ie', 'nasa.gov', 'space.com',
+  'phys.org', 'sciencedaily.com', 'arstechnica.com', 'theverge.com', 'reuters.com', 'apnews.com'
+];
+
+function isAllowedUrl(inputUrl: string): boolean {
+  try {
+    const parsed = new URL(inputUrl);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    const hostname = parsed.hostname.toLowerCase();
+    return ALLOWED_FEED_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d));
+  } catch {
+    return false;
+  }
+}
+
 async function startServer() {
   console.log("Initializing Hatty News Server on port 4000...");
   const app = express();
@@ -293,6 +315,10 @@ async function startServer() {
     const { url } = req.query;
     if (!url || typeof url !== "string") {
       return res.status(400).json({ error: "URL is required" });
+    }
+
+    if (!isAllowedUrl(url)) {
+      return res.status(403).json({ error: "Target domain not permitted on RSS feed allowlist" });
     }
 
     try {

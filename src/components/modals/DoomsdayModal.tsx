@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, ExternalLink } from 'lucide-react';
 
@@ -9,6 +9,20 @@ export interface DoomsdayModalProps {
 }
 
 export function DoomsdayModal({ isOpen, onClose, isDark }: DoomsdayModalProps) {
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.touchAction = originalTouchAction;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const threats = [
@@ -47,23 +61,26 @@ export function DoomsdayModal({ isOpen, onClose, isDark }: DoomsdayModalProps) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4 overflow-hidden overscroll-none select-none">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/80 backdrop-blur-md"
+        className="fixed inset-0 bg-black/85 backdrop-blur-md cursor-pointer"
         onClick={onClose}
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-[var(--surface-solid)] border border-red-500/30 rounded-2xl p-5 sm:p-7 shadow-2xl z-10 text-[var(--ink)] scrollbar-none"
+        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto overscroll-contain bg-[var(--surface-solid)] border border-red-500/30 rounded-2xl p-5 sm:p-7 shadow-2xl z-10 text-[var(--ink)] select-text touch-pan-y scrollbar-thin"
+        onClick={(e) => e.stopPropagation()}
       >
         <button 
-          className="absolute top-4 right-4 text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors p-1 cursor-pointer"
+          type="button"
           onClick={onClose}
+          aria-label="Close Doomsday Clock Modal"
+          className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 w-10 h-10 rounded-xl bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 active:scale-95 text-[var(--ink)] flex items-center justify-center transition-all cursor-pointer border border-[var(--border)] shadow-sm touch-manipulation z-30"
         >
           <X className="w-5 h-5" />
         </button>

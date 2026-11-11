@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { motion } from 'motion/react';
-import { Clock, Bookmark, Share2, Check, ExternalLink, Zap, Layers } from 'lucide-react';
+import { Clock, Bookmark, Share2, Check, ExternalLink, Zap, Layers, ShieldCheck } from 'lucide-react';
 import { Article, AppMode, DashboardSettings } from '../../types';
 import { CardImage } from './CardImage';
 import { detectAssetsInArticle } from '../../utils/classifier';
@@ -160,53 +160,101 @@ export const ArticleCard = memo(function ArticleCard({
           </p>
         )}
 
-        {/* Feature: Multi-Source Story Clustering + Side-by-Side Perspective Trigger */}
-        {relatedSources.length > 0 && (
-          <div className={`mb-3 p-2.5 rounded-lg border border-[var(--border)] ${
-            isDark ? 'bg-white/[0.03]' : 'bg-slate-50'
-          }`}>
-            <div className="flex items-center justify-between gap-1 mb-1.5">
-              <div className="text-[9px] font-mono font-bold uppercase tracking-wider text-[var(--ink-muted)] flex items-center gap-1">
-                <Layers className="w-2.5 h-2.5 text-[var(--accent)]" />
-                <span>ALSO COVERED BY ({relatedSources.length}):</span>
+        {/* Feature 2: Consensus Fact-Check Meter + Multi-Source Story Clustering */}
+        {relatedSources.length > 0 && (() => {
+          const totalOutlets = relatedSources.length + 1;
+          const isHighConsensus = totalOutlets >= 4;
+          const isMidConsensus = totalOutlets === 3;
+
+          const consensusLabel = isHighConsensus
+            ? '100% CROSS-WIRE CONSENSUS'
+            : isMidConsensus
+              ? '3-OUTLET WIRE CONSENSUS'
+              : 'DUAL-SOURCE VERIFIED';
+
+          const consensusSub = isHighConsensus
+            ? '4+ NEWSROOMS VERIFIED'
+            : isMidConsensus
+              ? 'HIGH FACTUAL AGREEMENT'
+              : '2 INDEPENDENT OUTLETS';
+
+          const consensusColor = isHighConsensus
+            ? 'text-emerald-500 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+            : isMidConsensus
+              ? 'text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/30'
+              : 'text-amber-500 dark:text-amber-400 bg-amber-500/10 border-amber-500/30';
+
+          const meterBarClass = isHighConsensus
+            ? 'w-full bg-emerald-500'
+            : isMidConsensus
+              ? 'w-3/4 bg-cyan-500'
+              : 'w-1/2 bg-amber-500';
+
+          return (
+            <div className={`mb-3 p-2.5 rounded-lg border border-[var(--border)] ${
+              isDark ? 'bg-white/[0.03]' : 'bg-slate-50'
+            }`}>
+              {/* Consensus Header & Compare Button */}
+              <div className="flex items-center justify-between gap-1.5 mb-1.5 pb-1.5 border-b border-[var(--border)]">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${
+                    isHighConsensus ? 'text-emerald-500' : isMidConsensus ? 'text-cyan-500' : 'text-amber-500'
+                  }`} />
+                  <span className={`text-[9px] font-mono font-black uppercase tracking-wider px-1.5 py-0.5 rounded border truncate ${consensusColor}`}>
+                    {consensusLabel}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onOpenPerspective(article, relatedSources)}
+                  className={`shrink-0 text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all cursor-pointer flex items-center gap-1 active:scale-95 touch-manipulation ${
+                    cardMode === 'world'
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20'
+                      : 'bg-red-600 hover:bg-red-500 text-white shadow-sm shadow-red-500/20'
+                  }`}
+                  title="Compare coverage, tone, and framing side-by-side"
+                >
+                  <span>COMPARE</span>
+                  <span className="font-sans text-[10px]">⇄</span>
+                </button>
               </div>
 
-              {/* Side-by-Side Perspective Comparator Button */}
-              <button
-                onClick={() => onOpenPerspective(article, relatedSources)}
-                className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all cursor-pointer flex items-center gap-1 ${
-                  cardMode === 'world'
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20'
-                    : 'bg-red-600 hover:bg-red-500 text-white shadow-sm shadow-red-500/20'
-                }`}
-                title="Compare coverage and headline framing across outlets side-by-side"
-              >
-                <span>COMPARE PERSPECTIVES</span>
-                <span className="font-sans text-[10px]">⇄</span>
-              </button>
-            </div>
+              {/* Progress Meter Bar */}
+              <div className="w-full h-1 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden mb-2">
+                <div className={`h-full rounded-full transition-all duration-500 ${meterBarClass}`} />
+              </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {relatedSources.map(rel => (
-                <a
-                  key={rel.id}
-                  href={rel.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border transition-colors inline-flex items-center gap-1 ${
-                    cardMode === 'world'
-                      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/25 hover:bg-blue-500/20'
-                      : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25 hover:bg-amber-500/20'
-                  }`}
-                  title={rel.title}
-                >
-                  <span>{rel.src}</span>
-                  <ExternalLink className="w-2.5 h-2.5 opacity-70" />
-                </a>
-              ))}
+              <div className="flex items-center justify-between text-[9px] font-mono font-bold uppercase tracking-wider text-[var(--ink-muted)] mb-1.5">
+                <div className="flex items-center gap-1">
+                  <Layers className="w-2.5 h-2.5 text-[var(--accent)]" />
+                  <span>ALSO COVERED BY ({relatedSources.length}):</span>
+                </div>
+                <span className="opacity-80 font-normal">{consensusSub}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {relatedSources.map(rel => (
+                  <a
+                    key={rel.id}
+                    href={rel.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border transition-colors inline-flex items-center gap-1 ${
+                      cardMode === 'world'
+                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/25 hover:bg-blue-500/20'
+                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25 hover:bg-amber-500/20'
+                    }`}
+                    title={rel.title}
+                  >
+                    <span>{rel.src}</span>
+                    <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         <div className="flex-1 min-h-[0.5rem]"></div>
 

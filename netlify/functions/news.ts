@@ -45,8 +45,11 @@ const ALLOWED_FEED_DOMAINS = [
   'cryptopotato.com',
   'newsbtc.com',
   'bitcoin.com',
+  'techcrunch.com',
   'news.google.com',
   'bbci.co.uk',
+  'bbc.co.uk',
+  'bbc.com',
   'dw.com',
   'france24.com',
   'aljazeera.com',
@@ -60,9 +63,13 @@ const ALLOWED_FEED_DOMAINS = [
   'africanews.com',
   'rte.ie',
   'nasa.gov',
+  'space.com',
   'phys.org',
+  'sciencedaily.com',
   'arstechnica.com',
-  'theverge.com'
+  'theverge.com',
+  'reuters.com',
+  'apnews.com'
 ];
 
 function isAllowedUrl(inputUrl: string): boolean {

@@ -26,6 +26,15 @@ export function DashboardSettingsModal({
   useEffect(() => {
     if (isOpen) {
       setActiveTab(mode);
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.touchAction = originalTouchAction;
+      };
     }
   }, [isOpen, mode]);
 
@@ -93,39 +102,42 @@ export function DashboardSettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-      <div className="fixed inset-0" onClick={onClose} />
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-4 overflow-hidden overscroll-none select-none">
+      <div className="fixed inset-0 bg-black/85 backdrop-blur-md cursor-pointer" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, scale: 0.94, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 15 }}
-        className="relative w-full max-w-lg bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-lg bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[92vh] select-text"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[var(--accent)]">
+        <div className="p-4 sm:p-5 border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+            <div className="p-2 rounded-xl bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[var(--accent)] shrink-0">
               <SlidersHorizontal className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-display tracking-wide text-[var(--ink)]">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-display tracking-wide text-[var(--ink)] truncate">
                 PERSONALIZED DASHBOARD
               </h2>
-              <p className="text-[11px] font-mono text-[var(--ink-muted)]">
+              <p className="text-[10px] sm:text-[11px] font-mono text-[var(--ink-muted)] truncate">
                 CUSTOMIZE FEED CATEGORIES, LIVE TAGGING & DISPLAY
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--border)]/40 transition-colors cursor-pointer"
+            aria-label="Close Dashboard Settings"
+            className="shrink-0 w-10 h-10 rounded-xl bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 active:scale-95 text-[var(--ink)] flex items-center justify-center transition-all cursor-pointer border border-[var(--border)] shadow-sm touch-manipulation z-30"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-5 overflow-y-auto space-y-5 flex-1">
+        <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain space-y-5 flex-1 touch-pan-y scrollbar-thin">
           {/* Mode Tabs */}
           <div className="flex items-center p-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl">
             <button

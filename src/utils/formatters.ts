@@ -21,6 +21,31 @@ export function formatCountdown(targetDate: Date, nowMs = Date.now()): string {
   return `IN ${days}d ${hours}h`;
 }
 
+export function formatExactCountdown(targetDate: Date, nowMs = Date.now()): {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isLive: boolean;
+  formatted: string;
+} {
+  const diff = targetDate.getTime() - nowMs;
+  if (diff <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, isLive: true, formatted: 'EVENT IN PROGRESS / LIVE' };
+  }
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const formatted = days > 0
+    ? `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`
+    : `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+
+  return { days, hours, minutes, seconds, isLive: false, formatted };
+}
+
 export function getUpcomingCatalysts(): CatalystEvent[] {
   const now = new Date();
   const d = (daysAhead: number, hourUtc = 13, minUtc = 30) => {
