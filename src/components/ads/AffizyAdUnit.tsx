@@ -4,12 +4,14 @@ export interface AffizyAdUnitProps {
   zoneId?: string;
   bannerSize?: string;
   maxWidth?: string;
+  noCardWrapper?: boolean;
 }
 
 export function AffizyAdUnit({
   zoneId = '1007',
   bannerSize = '480x320',
   maxWidth = 'max-w-[540px]',
+  noCardWrapper = false,
 }: AffizyAdUnitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [adLoaded, setAdLoaded] = useState(false);
@@ -47,6 +49,25 @@ export function AffizyAdUnit({
       }
     };
   }, [zoneId]);
+
+  if (noCardWrapper) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center">
+        <div ref={containerRef} className="w-full flex items-center justify-center overflow-hidden min-h-[250px]" />
+        {!adLoaded && (
+          <div className="w-full py-2 px-3 flex items-center justify-between text-[11px] font-mono text-[var(--ink-muted)]">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              <span>AFFIZY NETWORK • ZONE {zoneId} ({bannerSize})</span>
+            </span>
+            <span className="text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+              PENDING REVIEW
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full my-3 flex flex-col items-center justify-center">

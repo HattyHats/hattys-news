@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap, Calendar, Bookmark, ExternalLink } from 'lucide-react';
+import { Zap, Calendar, Bookmark, ExternalLink, Volume2, VolumeX, Pause, Play, Square } from 'lucide-react';
 import { Article, AppMode } from '../../types';
 import { formatTimeAgo } from '../../utils/formatters';
 
@@ -18,6 +18,42 @@ interface MorningBriefProps {
   onOpenPerspective: (article: Article, related: Article[]) => void;
 }
 
+// Helper to select the highest-quality natural human voice (Neural, Enhanced, Siri, Google)
+function getBestNaturalVoice(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices || voices.length === 0) return null;
+
+  // 1. Natural / Enhanced / Neural English voices (macOS Enhanced, iOS Siri, Edge Natural)
+  const premium = voices.filter(v =>
+    v.lang.startsWith('en') && /natural|enhanced|premium|neural|siri/i.test(v.name)
+  );
+  if (premium.length > 0) {
+    const favorite = premium.find(v => /ava|samantha|jenny|aria|karen|allison|serena|daniel/i.test(v.name));
+    return favorite || premium[0];
+  }
+
+  // 2. High-quality human voices from Apple, Google, Microsoft
+  const branded = voices.filter(v =>
+    v.lang.startsWith('en') && (
+      /google (us|uk)|samantha|karen|jenny|aria|moira|tessa|daniel|alex/i.test(v.name)
+    )
+  );
+  if (branded.length > 0) {
+    const favorite = branded.find(v => /google us|samantha|jenny|karen|aria/i.test(v.name));
+    return favorite || branded[0];
+  }
+
+  // 3. Fallback to US or UK English voice
+  const english = voices.filter(v => v.lang.startsWith('en'));
+  if (english.length > 0) {
+    const enUS = english.find(v => v.lang.includes('US') || v.lang.includes('GB'));
+    return enUS || english[0];
+  }
+
+  return voices[0] || null;
+}
+
 export function MorningBrief({
   showBrief,
   morningBriefStories,
@@ -31,6 +67,132 @@ export function MorningBrief({
   onToggleSave,
   onOpenPerspective,
 }: MorningBriefProps) {
+  // Feature 3: Realistic Natural Audio Brief Reader
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isPausedAudio, setIsPausedAudio] = useState(false);
+  const [activeSpeakingIdx, setActiveSpeakingIdx] = useState<number | null>(null);
+  const [activeVoiceName, setActiveVoiceName] = useState<string>('');
+  const bestVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+
+  // Discover and cache the best neural / natural voice on mount
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    const loadVoice = () => {
+      const voice = getBestNaturalVoice();
+      bestVoiceRef.current = voice;
+      if (voice) {
+        setActiveVoiceName(voice.name.replace(/Microsoft |Google |Apple /i, ''));
+      }
+    };
+
+    loadVoice();
+    window.speechSynthesis.onvoiceschanged = loadVoice;
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
+
+  // Stop speech if brief is closed, mode changes, or component unmounts
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [mode, showBrief]);
+
+  const handleStopAudio = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlayingAudio(false);
+    setIsPausedAudio(false);
+    setActiveSpeakingIdx(null);
+  };
+
+  const handleTogglePlayAudio = () => {
+    if (!('speechSynthesis' in window)) {
+      alert("Text-to-speech is not supported by your current browser.");
+      return;
+    }
+
+    if (isPlayingAudio) {
+      if (isPausedAudio) {
+        window.speechSynthesis.resume();
+        setIsPausedAudio(false);
+      } else {
+        window.speechSynthesis.pause();
+        setIsPausedAudio(true);
+      }
+      return;
+    }
+
+    // Start fresh natural audio brief sequence
+    window.speechSynthesis.cancel();
+    setIsPlayingAudio(true);
+    setIsPausedAudio(false);
+
+    // Refresh voice reference in case voices loaded late
+    if (!bestVoiceRef.current) {
+      bestVoiceRef.current = getBestNaturalVoice();
+    }
+
+    const playNextStory = (idx: number) => {
+      if (idx >= morningBriefStories.length) {
+        setIsPlayingAudio(false);
+        setIsPausedAudio(false);
+        setActiveSpeakingIdx(null);
+        return;
+      }
+
+      setActiveSpeakingIdx(idx);
+      const item = morningBriefStories[idx];
+      const total = morningBriefStories.length;
+      const cleanTitle = item.article.title.replace(/[\n\r]+/g, ' ').trim();
+      const sourceName = item.article.src;
+
+      // Realistic, human-sounding newscaster phrasing with natural pauses
+      let script = '';
+      if (idx === 0) {
+        script = `Welcome to Hatty's News sixty-second ${mode === 'world' ? 'world' : 'crypto'} brief. Here are today's top stories. First, ${cleanTitle}. Reported by ${sourceName}.`;
+      } else if (idx === total - 1) {
+        script = `And finally... ${cleanTitle}. Covered by ${sourceName}. That concludes your sixty-second brief.`;
+      } else {
+        const transitions = [
+          `Next story... ${cleanTitle}. From ${sourceName}.`,
+          `Also developing... ${cleanTitle}. According to ${sourceName}.`,
+          `In other news... ${cleanTitle}. Reported by ${sourceName}.`
+        ];
+        script = transitions[(idx - 1) % transitions.length];
+      }
+
+      const utterance = new SpeechSynthesisUtterance(script);
+      if (bestVoiceRef.current) {
+        utterance.voice = bestVoiceRef.current;
+      }
+      // Fine-tuned human inflection: relaxed broadcast pace & warm pitch
+      utterance.rate = 0.98;
+      utterance.pitch = 1.04;
+
+      utterance.onend = () => {
+        setTimeout(() => {
+          playNextStory(idx + 1);
+        }, 550); // Natural breath pause between dispatches
+      };
+
+      utterance.onerror = () => {
+        handleStopAudio();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    playNextStory(0);
+  };
+
   return (
     <AnimatePresence initial={false}>
       {showBrief && morningBriefStories.length > 0 && filter !== 'saved' && !query && (
@@ -77,13 +239,42 @@ export function MorningBrief({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Feature 3: Audio Brief Player Button */}
+                <div className="inline-flex items-center gap-1 bg-black/10 dark:bg-white/10 p-0.5 rounded-lg border border-[var(--border)]">
+                  <button
+                    onClick={handleTogglePlayAudio}
+                    className={`text-[11px] font-mono px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 ${
+                      isPlayingAudio
+                        ? 'bg-emerald-500 text-black shadow-sm'
+                        : 'text-[var(--ink)] hover:bg-black/10 dark:hover:bg-white/10'
+                    }`}
+                    title={isPlayingAudio ? (isPausedAudio ? 'Resume Audio Brief' : 'Pause Audio Brief') : 'Listen to 60-Second Audio Brief'}
+                  >
+                    {isPlayingAudio ? (
+                      isPausedAudio ? <Play className="w-3.5 h-3.5 fill-current" /> : <Pause className="w-3.5 h-3.5 fill-current" />
+                    ) : (
+                      <Volume2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+                    )}
+                    <span>{isPlayingAudio ? (isPausedAudio ? 'RESUME' : 'PAUSE') : 'LISTEN'}</span>
+                  </button>
+                  {isPlayingAudio && (
+                    <button
+                      onClick={handleStopAudio}
+                      className="text-[11px] font-mono p-1 rounded-md text-[var(--ink-muted)] hover:text-red-400 transition-colors cursor-pointer"
+                      title="Stop Audio Brief"
+                    >
+                      <Square className="w-3.5 h-3.5 fill-current" />
+                    </button>
+                  )}
+                </div>
+
                 <button
                   onClick={onOpenCatalysts}
                   className="text-[11px] font-mono px-2.5 py-1 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>UPCOMING CATALYSTS</span>
+                  <span className="hidden sm:inline">UPCOMING</span> CATALYSTS
                 </button>
                 <button
                   onClick={onToggleBrief}
@@ -97,11 +288,17 @@ export function MorningBrief({
             <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               {morningBriefStories.map((item, i) => {
                 const isSaved = savedIds.has(item.article.id);
+                const isSpeakingThis = activeSpeakingIdx === i;
+
                 return (
                   <div
                     key={item.article.id}
-                    className={`group relative rounded-xl border border-[var(--border)] p-3 flex flex-col justify-between transition-all hover:border-[var(--accent)]/50 ${
-                      isDark ? 'bg-black/25 hover:bg-black/40' : 'bg-white/90 hover:bg-white shadow-sm'
+                    className={`group relative rounded-xl border p-3 flex flex-col justify-between transition-all ${
+                      isSpeakingThis
+                        ? 'border-emerald-500 ring-2 ring-emerald-500/40 bg-emerald-500/10 shadow-lg scale-[1.02]'
+                        : `border-[var(--border)] hover:border-[var(--accent)]/50 ${
+                            isDark ? 'bg-black/25 hover:bg-black/40' : 'bg-white/90 hover:bg-white shadow-sm'
+                          }`
                     }`}
                   >
                     <div>

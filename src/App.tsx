@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react';
 import { Radio, ShieldAlert, BellRing, Zap, Calendar, Clock, Gauge } from 'lucide-react';
 
-import { AppMode, Article, FearGreedData, FeedConfig } from './types';
+import { AppMode, Article, FearGreedData, FeedConfig, ViewLayoutMode } from './types';
 import { CRYPTO_FEEDS, WORLD_FEEDS, CRYPTO_CATEGORIES, WORLD_CATEGORIES, DEFAULT_DASHBOARD_SETTINGS } from './config/feeds';
 import { ASSET_DEFINITIONS } from './config/assets';
 import { getEditorialPhoto } from './config/photos';
@@ -22,6 +22,8 @@ import { Header } from './components/layout/Header';
 import { MorningBrief } from './components/layout/MorningBrief';
 import { FilterTabs } from './components/layout/FilterTabs';
 import { ArticleCard } from './components/cards/ArticleCard';
+import { SponsoredCard } from './components/cards/SponsoredCard';
+import { TerminalWireView } from './components/views/TerminalWireView';
 import { AffizyAdUnit } from './components/ads/AffizyAdUnit';
 import { BackToTop } from './components/common/BackToTop';
 import { LiveTicker } from './components/tickers/LiveTicker';
@@ -45,6 +47,26 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState<boolean>(initialCached.length === 0);
   const [isDark, setIsDark] = useState(true);
+
+  // Feature 2: Terminal Pro View Mode Toggle (Grid vs. Dense Wire)
+  const [viewMode, setViewMode] = useState<ViewLayoutMode>(() => {
+    try {
+      const saved = localStorage.getItem('hattys_view_mode');
+      return saved === 'wire' ? 'wire' : 'grid';
+    } catch {
+      return 'grid';
+    }
+  });
+
+  const toggleViewMode = () => {
+    setViewMode(prev => {
+      const next = prev === 'grid' ? 'wire' : 'grid';
+      try {
+        localStorage.setItem('hattys_view_mode', next);
+      } catch {}
+      return next;
+    });
+  };
 
   // Modals & Navigation
   const [fearGreed, setFearGreed] = useState<FearGreedData | null>(null);
@@ -1011,9 +1033,11 @@ export default function App() {
           savedArticles={savedArticles}
           showBrief={showBrief}
           mode={mode}
+          viewMode={viewMode}
           onSetFilter={setFilter}
           onOpenDashboard={() => setShowDashboardModal(true)}
           onToggleBrief={toggleBrief}
+          onToggleViewMode={toggleViewMode}
         />
 
         {/* 60-Second Morning Brief */}
@@ -1138,49 +1162,23 @@ export default function App() {
               </button>
             </div>
           </div>
-        ) : (
-          /* Article Grid */
+        ) : viewMode === 'wire' ? (
           <>
-            <div id="grid" className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${dashboardSettings.cardDensity === 'compact' ? 'gap-3.5' : 'gap-5'}`}>
-              {visibleArticles.map((a, idx) => {
-                const isNew = a.date.getTime() > lastVisitTime;
-                const isSaved = savedIds.has(a.id);
-                const relatedSources = articleClusters.get(a.id) || [];
-
-                return (
-                  <React.Fragment key={a.id || idx}>
-                    <ArticleCard
-                      article={a}
-                      mode={mode}
-                      idx={idx}
-                      isDark={isDark}
-                      isSaved={isSaved}
-                      isNew={isNew}
-                      copiedId={copiedId}
-                      dashboardSettings={dashboardSettings}
-                      marketQuotes={marketQuotes}
-                      relatedSources={relatedSources}
-                      searchQuery={query}
-                      onToggleSave={toggleSaveArticle}
-                      onCopyLink={handleCopyLink}
-                      onSetQuery={setQuery}
-                      onOpenPerspective={handleOpenPerspective}
-                    />
-
-                    {/* In-Feed Sponsored Unit (Affizy Zone 1015 - 300x250) - Displayed after 8 articles (idx === 7) - EXACT PLACEMENT INTACT */}
-                    {idx === 7 && (
-                      <div className="col-span-full my-6 flex flex-col items-center justify-center w-full">
-                        <div className="text-[10px] font-mono text-[var(--ink-muted)] mb-1 uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                          <span>SPONSORED WIRE</span>
-                        </div>
-                        <AffizyAdUnit zoneId="1015" bannerSize="300x250" maxWidth="max-w-[360px]" />
-                      </div>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </div>
+            {/* Feature 2: High-Density Terminal Wire Stream View */}
+            <TerminalWireView
+              articles={visibleArticles}
+              mode={mode}
+              isDark={isDark}
+              savedIds={savedIds}
+              copiedId={copiedId}
+              articleClusters={articleClusters}
+              dashboardSettings={dashboardSettings}
+              marketQuotes={marketQuotes}
+              onToggleSave={toggleSaveArticle}
+              onCopyLink={handleCopyLink}
+              onOpenPerspective={handleOpenPerspective}
+              onSetQuery={setQuery}
+            />
 
             {/* Load More Dispatches Button */}
             {filtered.length > displayLimit && (
@@ -1194,15 +1192,64 @@ export default function App() {
                 </button>
               </div>
             )}
+          </>
+        ) : (
+          /* Article Grid */
+          <>
+            {(() => {
+              const sponsoredCardIndex = visibleArticles.length >= 6 ? 5 : visibleArticles.length - 1;
 
-            {/* Fallback In-Feed Sponsored Unit: If fewer than 8 articles match current filter/search */}
-            {filtered.length > 0 && filtered.length < 8 && (
-              <div className="my-6 flex flex-col items-center justify-center w-full">
-                <div className="text-[10px] font-mono text-[var(--ink-muted)] mb-1 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                  <span>SPONSORED WIRE</span>
+              return (
+                <div id="grid" className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${dashboardSettings.cardDensity === 'compact' ? 'gap-3.5' : 'gap-5'}`}>
+                  {visibleArticles.map((a, idx) => {
+                    const isNew = a.date.getTime() > lastVisitTime;
+                    const isSaved = savedIds.has(a.id);
+                    const relatedSources = articleClusters.get(a.id) || [];
+                    // Feature 1: Front-Page Lead Story / Hero Presentation
+                    const isHero = idx === 0 && filter === 'all' && !query;
+
+                    return (
+                      <React.Fragment key={a.id || idx}>
+                        <ArticleCard
+                          article={a}
+                          mode={mode}
+                          idx={idx}
+                          isDark={isDark}
+                          isSaved={isSaved}
+                          isNew={isNew}
+                          isHero={isHero}
+                          copiedId={copiedId}
+                          dashboardSettings={dashboardSettings}
+                          marketQuotes={marketQuotes}
+                          relatedSources={relatedSources}
+                          searchQuery={query}
+                          onToggleSave={toggleSaveArticle}
+                          onCopyLink={handleCopyLink}
+                          onSetQuery={setQuery}
+                          onOpenPerspective={handleOpenPerspective}
+                        />
+
+                        {/* In-Feed Sponsored Unit (Affizy Zone 1015 - 300x250) - Molds natively into 1 card slot without breaking grid */}
+                        {idx === sponsoredCardIndex && (
+                          <SponsoredCard idx={idx} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
-                <AffizyAdUnit zoneId="1015" bannerSize="300x250" maxWidth="max-w-[360px]" />
+              );
+            })()}
+
+            {/* Load More Dispatches Button */}
+            {filtered.length > displayLimit && (
+              <div className="flex justify-center my-8">
+                <button
+                  onClick={() => setDisplayLimit(prev => prev + 24)}
+                  className="rbtn px-8 py-3 text-xs font-mono tracking-wider cursor-pointer shadow-lg hover:shadow-red-500/15 flex items-center gap-2"
+                >
+                  <span>LOAD MORE DISPATCHES ({filtered.length - displayLimit} REMAINING)</span>
+                  <span className="font-sans text-xs">▼</span>
+                </button>
               </div>
             )}
           </>

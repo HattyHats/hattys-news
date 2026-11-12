@@ -160,6 +160,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
   }
 
   .cs {
@@ -175,11 +176,11 @@
 
   .ct {
     font-weight: 700;
-    font-size: 0.98rem;
-    line-height: 1.45;
-    margin-bottom: 0.6rem;
+    font-size: 0.96rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

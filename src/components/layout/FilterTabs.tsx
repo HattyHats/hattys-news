@@ -1,6 +1,6 @@
 import React from 'react';
-import { Flame, Bookmark, SlidersHorizontal, Zap, ChevronUp, ChevronDown } from 'lucide-react';
-import { CategoryConfig, AppMode, Article } from '../../types';
+import { Flame, Bookmark, SlidersHorizontal, Zap, ChevronUp, ChevronDown, LayoutGrid, List } from 'lucide-react';
+import { CategoryConfig, AppMode, Article, ViewLayoutMode } from '../../types';
 
 interface FilterTabsProps {
   categories: CategoryConfig[];
@@ -10,9 +10,11 @@ interface FilterTabsProps {
   savedArticles: Article[];
   showBrief: boolean;
   mode: AppMode;
+  viewMode: ViewLayoutMode;
   onSetFilter: (filterId: string) => void;
   onOpenDashboard: () => void;
   onToggleBrief: () => void;
+  onToggleViewMode: () => void;
 }
 
 export function FilterTabs({
@@ -23,9 +25,11 @@ export function FilterTabs({
   savedArticles,
   showBrief,
   mode,
+  viewMode,
   onSetFilter,
   onOpenDashboard,
   onToggleBrief,
+  onToggleViewMode,
 }: FilterTabsProps) {
   return (
     <div className="mb-5">
@@ -109,6 +113,36 @@ export function FilterTabs({
           <span>60S BRIEF</span>
           {showBrief ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
+
+        {/* Feature 2: Terminal Pro View vs Cards Grid Switcher */}
+        <div className="inline-flex items-center rounded-lg border border-[var(--border)] p-0.5 bg-black/10 dark:bg-white/5 shrink-0">
+          <button
+            type="button"
+            onClick={() => viewMode !== 'grid' && onToggleViewMode()}
+            className={`px-2 py-1 rounded text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
+              viewMode === 'grid'
+                ? 'bg-[var(--accent)] text-white shadow-sm'
+                : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+            }`}
+            title="Switch to Card Grid View"
+          >
+            <LayoutGrid className="w-3 h-3" />
+            <span className="hidden sm:inline">CARDS</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => viewMode !== 'wire' && onToggleViewMode()}
+            className={`px-2 py-1 rounded text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
+              viewMode === 'wire'
+                ? 'bg-[var(--accent)] text-white shadow-sm'
+                : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+            }`}
+            title="Switch to High-Density Terminal Wire Stream"
+          >
+            <List className="w-3 h-3" />
+            <span className="hidden sm:inline">TERMINAL WIRE</span>
+          </button>
+        </div>
       </div>
     </div>
   );

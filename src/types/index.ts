@@ -1,4 +1,17 @@
 export type AppMode = 'crypto' | 'world';
+export type ViewLayoutMode = 'grid' | 'wire';
+
+export interface StoryImpact {
+  type: 'BULLISH' | 'BEARISH' | 'POLICY' | 'BREAKING';
+  label: string;
+  badgeClass: string;
+}
+
+export interface OutletMeta {
+  name: string;
+  flag: string;
+  region: string;
+}
 
 export interface Article {
   id: string;
