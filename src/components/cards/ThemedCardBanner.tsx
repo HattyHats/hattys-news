@@ -56,28 +56,12 @@ export function ThemedCardBanner({
     <div 
       className="w-full h-full relative overflow-hidden flex flex-col justify-end gap-2 px-4 pb-3.5 pt-11 select-none"
       style={{
-        background: `linear-gradient(135deg, #09090d 0%, ${color2} 100%)`
+        background: `radial-gradient(circle at 85% 15%, ${color1}33 0%, transparent 55%), linear-gradient(135deg, #09090d 0%, ${color2} 100%)`
       }}
     >
-      <div 
-        className="absolute inset-0 opacity-20 pointer-events-none"
-        style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.2) 1px, transparent 0)',
-          backgroundSize: '24px 24px'
-        }}
-      />
-      <div 
-        className="absolute -top-10 -right-10 w-36 h-36 rounded-full blur-3xl opacity-30 pointer-events-none"
-        style={{ backgroundColor: color1 }}
-      />
-      <div 
-        className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full blur-2xl opacity-20 pointer-events-none"
-        style={{ backgroundColor: color1 }}
-      />
-
       <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-1.5">
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="w-2 h-2 rounded-full animate-ping shrink-0" style={{ backgroundColor: color1 }} />
+          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color1 }} />
           <span className="text-[10px] font-mono font-bold tracking-wider uppercase truncate" style={{ color: color1 }}>
             {label}
           </span>

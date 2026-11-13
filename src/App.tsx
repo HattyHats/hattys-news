@@ -15,7 +15,52 @@ import { cleanWireTitle, cleanWireSnippet, getPublisherRoot, safeParseDate, extr
 import { classifyArticle } from './utils/classifier';
 import { computeArticleClusters } from './utils/clustering';
 import { loadCachedArticlesForMode, saveArticlesCache } from './utils/storage';
-import { getUpcomingCatalysts, formatExactCountdown } from './utils/formatters';
+import { getUpcomingCatalysts } from './utils/formatters';
+
+const EMPTY_RELATED: Article[] = [];
+
+function pickFeedThumbnail(item: any): string {
+  if (item.enclosure?.url && typeof item.enclosure.url === 'string') {
+    return item.enclosure.url;
+  }
+  const media = item['media:content'];
+  if (Array.isArray(media) && media.length > 0) {
+    // Prefer a crisp medium variant (420px-960px wide) when feeds like The Guardian supply multiple sizes
+    let bestUrl = '';
+    let bestScore = -1;
+    for (const entry of media) {
+      const url = entry?.$?.url || entry?.url;
+      if (!url) continue;
+      const w = parseInt(String(entry?.$?.width || ''), 10);
+      if (!isNaN(w) && w > 0) {
+        const score = w >= 420 && w <= 960 ? 1000 - Math.abs(680 - w) : w > 960 ? 400 - Math.min(399, (w - 960) / 10) : w;
+        if (score > bestScore) {
+          bestScore = score;
+          bestUrl = url;
+        }
+      } else if (!bestUrl) {
+        bestUrl = url;
+      }
+    }
+    if (bestUrl) return bestUrl;
+  } else if (media) {
+    const singleUrl = media?.$?.url || media?.url;
+    if (singleUrl) return singleUrl;
+  }
+  if (item['media:thumbnail']) {
+    const thumb = item['media:thumbnail']?.$?.url || item['media:thumbnail']?.url;
+    if (thumb) return thumb;
+  }
+  const content = item.contentEncoded || item.content || item.description || '';
+  const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (match && match[1]) {
+    const candidate = match[1].trim();
+    if (!candidate.includes('feedburner') && !candidate.includes('pixel') && !candidate.includes('spacer') && !candidate.endsWith('.gif')) {
+      return candidate;
+    }
+  }
+  return '';
+}
 
 // Modular Components
 import { Header } from './components/layout/Header';
@@ -26,6 +71,7 @@ import { SponsoredCard } from './components/cards/SponsoredCard';
 import { TerminalWireView } from './components/views/TerminalWireView';
 import { AffizyAdUnit } from './components/ads/AffizyAdUnit';
 import { BackToTop } from './components/common/BackToTop';
+import { CatalystCountdownPill } from './components/common/CatalystCountdownPill';
 import { LiveTicker } from './components/tickers/LiveTicker';
 import { StockTickerTape } from './components/tickers/StockTickerTape';
 import { CommoditiesTicker } from './components/tickers/CommoditiesTicker';
@@ -292,14 +338,18 @@ export default function App() {
     DIA: { price: 521.37, change24h: -1.24, formatted: '$521.37' },
   });
 
-  const handlePriceTick = useCallback((sym: string, price: number, change: number, formatted: string) => {
+  const handleBatchPriceTick = useCallback((updates: Record<string, { price: number; change: number; formatted: string }>) => {
     setMarketQuotes(prev => {
-      const cur = prev[sym];
-      if (cur && cur.price === price && cur.change24h === change) return prev;
-      return {
-        ...prev,
-        [sym]: { price, change24h: change, formatted }
-      };
+      let changed = false;
+      const next = { ...prev };
+      for (const [sym, data] of Object.entries(updates)) {
+        const cur = prev[sym];
+        if (!cur || cur.price !== data.price || cur.change24h !== data.change) {
+          changed = true;
+          next[sym] = { price: data.price, change24h: data.change, formatted: data.formatted };
+        }
+      }
+      return changed ? next : prev;
     });
   }, []);
 
@@ -376,25 +426,8 @@ export default function App() {
       const data = await response.json();
       if (!data.items || !Array.isArray(data.items)) return [];
 
-      return data.items.map((i: any, idx: number) => {
-        let img = '';
-        if (i.enclosure?.url) {
-          img = i.enclosure.url;
-        } else if (i['media:content']) {
-          const media = i['media:content'];
-          img = Array.isArray(media) ? (media[0]?.$?.url || media[0]?.url) : (media?.$?.url || media?.url);
-        } else if (i['media:thumbnail']) {
-          img = i['media:thumbnail']?.$?.url || i['media:thumbnail']?.url;
-        } else {
-          const content = i.contentEncoded || i.content || i.description || '';
-          const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
-          if (match && match[1]) {
-            const candidate = match[1].trim();
-            if (!candidate.includes('feedburner') && !candidate.includes('pixel') && !candidate.includes('spacer') && !candidate.endsWith('.gif')) {
-              img = candidate;
-            }
-          }
-        }
+      return data.items.slice(0, 18).map((i: any, idx: number) => {
+        let img = pickFeedThumbnail(i);
 
         if (img && img.startsWith('http://')) {
           img = img.replace(/^http:\/\//i, 'https://');
@@ -473,8 +506,9 @@ export default function App() {
 
       if (accumulated.length > 0) {
         accumulated.sort((a, b) => b.date.getTime() - a.date.getTime());
-        setArticles(accumulated);
-        saveArticlesCache(targetMode, accumulated);
+        const capped = accumulated.slice(0, 180);
+        setArticles(capped);
+        saveArticlesCache(targetMode, capped);
       }
     } catch (err) {
       console.error('Failed to aggregate feeds', err);
@@ -755,33 +789,23 @@ export default function App() {
     return currentModeArticles.filter(a => a.date.getTime() > lastVisitTime).length;
   }, [currentModeArticles, lastVisitTime]);
 
-  // Feature 5: Nearest Macro Catalyst live countdown
+  // Feature 5: Nearest Macro Catalyst (live 1s tick isolated in CatalystCountdownPill)
   const nearestCatalyst = useMemo(() => {
     const list = getUpcomingCatalysts();
     return list[0] || null;
   }, []);
 
-  const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTimeMs(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const nearestCountdown = useMemo(() => {
-    if (!nearestCatalyst) return null;
-    return formatExactCountdown(nearestCatalyst.date, currentTimeMs);
-  }, [nearestCatalyst, currentTimeMs]);
-
-  // Feature 3: Live Breaking News Speedometer (Wire Velocity Index)
+  // Feature 3: Live Breaking News Speedometer (Wire Velocity Index, recalculated when feed updates)
   const wireVelocity = useMemo(() => {
-    const oneHourAgo = currentTimeMs - 3600 * 1000;
+    const nowMs = Date.now();
+    const oneHourAgo = nowMs - 3600 * 1000;
     const countRecent = currentModeArticles.filter(a => a.date.getTime() >= oneHourAgo).length;
 
     let count = countRecent;
     if (count === 0 && currentModeArticles.length >= 5) {
       const sample = currentModeArticles.slice(0, 10);
-      const newestTime = sample[0]?.date.getTime() || currentTimeMs;
-      const oldestTime = sample[sample.length - 1]?.date.getTime() || (currentTimeMs - 3600 * 1000);
+      const newestTime = sample[0]?.date.getTime() || nowMs;
+      const oldestTime = sample[sample.length - 1]?.date.getTime() || (nowMs - 3600 * 1000);
       const spanHours = Math.max(0.5, (newestTime - oldestTime) / (3600 * 1000));
       count = Math.max(4, Math.round(sample.length / spanHours));
     } else if (count === 0) {
@@ -793,7 +817,7 @@ export default function App() {
     else if (count >= 8) status = 'HIGH';
 
     return { count, status };
-  }, [currentModeArticles, currentTimeMs]);
+  }, [currentModeArticles]);
 
   // 60-Second Morning Brief Stories (scoped to current mode)
   const morningBriefStories = useMemo(() => {
@@ -890,8 +914,13 @@ export default function App() {
     return filtered.slice(0, displayLimit);
   }, [filtered, displayLimit]);
 
+  const copyTimerRef = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+  }, []);
+
   // Copy share link helper
-  const handleCopyLink = (id: string, link: string) => {
+  const handleCopyLink = useCallback((id: string, link: string) => {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link).catch(() => {});
@@ -905,8 +934,9 @@ export default function App() {
       }
     } catch {}
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+    if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = window.setTimeout(() => setCopiedId(null), 2000);
+  }, []);
 
   // Open Perspective Comparator Modal
   const handleOpenPerspective = useCallback((primary: Article, related: Article[]) => {
@@ -929,6 +959,14 @@ export default function App() {
     () => (readerArticle ? filtered.findIndex(a => a.id === readerArticle.id) : -1),
     [readerArticle, filtered]
   );
+
+  const handleCloseReader = useCallback(() => {
+    setReaderArticle(null);
+  }, []);
+
+  const handleOpenCatalysts = useCallback(() => {
+    setShowCatalysts(true);
+  }, []);
 
   const handleOpenReader = useCallback((article: Article) => {
     setReaderArticle(article);
@@ -1018,7 +1056,7 @@ export default function App() {
         marketQuotes={marketQuotes}
         articleIndex={readerIndex}
         totalCount={filtered.length}
-        onClose={() => setReaderArticle(null)}
+        onClose={handleCloseReader}
         onPrevArticle={handlePrevReader}
         onNextArticle={handleNextReader}
         onSelectArticle={handleOpenReader}
@@ -1069,36 +1107,20 @@ export default function App() {
           <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0 overflow-hidden">
               {mode === 'crypto' ? (
-                <LiveTicker onPriceTick={handlePriceTick} />
+                <LiveTicker onBatchPriceTick={handleBatchPriceTick} />
               ) : (
                 <CommoditiesTicker marketQuotes={marketQuotes} />
               )}
             </div>
 
-            {/* Feature 5: Prominent Macro Catalyst Countdown Ticker Pill (Desktop Only - hidden on mobile/phones to conserve screen space) */}
-            {nearestCatalyst && nearestCountdown && (
-              <button
-                type="button"
-                onClick={() => setShowCatalysts(true)}
-                className="hidden lg:inline-flex shrink-0 items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--surface-solid)] border border-[var(--border)] hover:border-[var(--accent)] text-xs font-mono transition-all cursor-pointer shadow-sm group text-left touch-manipulation my-0.5 active:scale-95"
-                title="View full Macro Catalyst Calendar and exact ticking countdowns"
-              >
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                  <span className={`text-[10px] font-black uppercase tracking-wider ${mode === 'world' ? 'text-blue-500 dark:text-blue-400' : 'text-[var(--accent)]'}`}>
-                    NEXT CATALYST:
-                  </span>
-                </span>
-                <span className="font-bold text-[var(--ink)] truncate max-w-[160px] xl:max-w-[220px]">
-                  {nearestCatalyst.title.split('(')[0].trim()}
-                </span>
-                <span className="px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 font-bold text-xs text-amber-500 dark:text-amber-400 font-mono tracking-wider">
-                  {nearestCountdown.formatted}
-                </span>
-                <span className="text-[10px] text-[var(--ink-muted)] group-hover:text-[var(--accent)] hidden xl:inline">
-                  [VIEW CALENDAR →]
-                </span>
-              </button>
+            {/* Feature 5: Prominent Macro Catalyst Countdown Ticker Pill (Desktop Only - isolated 1s timer) */}
+            {nearestCatalyst && (
+              <CatalystCountdownPill
+                title={nearestCatalyst.title.split('(')[0].trim()}
+                targetDate={nearestCatalyst.date}
+                mode={mode}
+                onOpenCatalysts={handleOpenCatalysts}
+              />
             )}
           </div>
         </div>
@@ -1288,7 +1310,7 @@ export default function App() {
                   {visibleArticles.map((a, idx) => {
                     const isNew = a.date.getTime() > lastVisitTime;
                     const isSaved = savedIds.has(a.id);
-                    const relatedSources = articleClusters.get(a.id) || [];
+                    const relatedSources = articleClusters.get(a.id) || EMPTY_RELATED;
                     // Feature 1: Front-Page Lead Story / Hero Presentation
                     const isHero = idx === 0 && filter === 'all' && !query;
 
@@ -1316,7 +1338,7 @@ export default function App() {
 
                         {/* In-Feed Sponsored Unit (Affizy Zone 1015 - 300x250) - Molds natively into 1 card slot without breaking grid */}
                         {idx === sponsoredCardIndex && (
-                          <SponsoredCard idx={idx} />
+                          <SponsoredCard key="sponsored-feed-card" idx={idx} />
                         )}
                       </React.Fragment>
                     );
@@ -1381,9 +1403,11 @@ export default function App() {
         </div>
 
         {/* World News Mode: Global Stock Market & Indices Ticker */}
-        <div className={mode === 'world' ? 'block' : 'hidden'}>
-          <StockTickerTape isDark={isDark} marketQuotes={marketQuotes} />
-        </div>
+        {mode === 'world' && (
+          <div>
+            <StockTickerTape isDark={isDark} marketQuotes={marketQuotes} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { Article, AppMode } from '../../types';
 import { getEditorialPhoto } from '../../config/photos';
 import { ThemedCardBanner } from './ThemedCardBanner';
 
-export function CardImage({
+export const CardImage = memo(function CardImage({
   article,
   mode,
+  priority = false,
 }: {
   article: Article;
   mode: AppMode;
+  priority?: boolean;
 }) {
   const [imgSrc, setImgSrc] = useState<string>(() => {
     if (article.img && !article.img.startsWith('data:image/svg+xml;utf8')) {
@@ -52,10 +54,14 @@ export function CardImage({
     <img
       src={imgSrc}
       alt=""
+      width={640}
+      height={360}
       className="ci"
-      loading="lazy"
+      loading={priority ? 'eager' : 'lazy'}
+      decoding="async"
+      fetchPriority={priority ? 'high' : 'low'}
       referrerPolicy="no-referrer"
       onError={handleError}
     />
   );
-}
+});

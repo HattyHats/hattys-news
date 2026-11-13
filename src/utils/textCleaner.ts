@@ -146,10 +146,10 @@ export function extractReadableBody(rawHtml: string, cleanedTitle: string): { fu
     }
   }
 
-  let fullText = deduped.join('\n\n').slice(0, 3500).trim();
-  if (fullText.length === 3500) {
+  let fullText = deduped.join('\n\n').slice(0, 1400).trim();
+  if (fullText.length === 1400) {
     const lastPeriod = fullText.lastIndexOf('.');
-    if (lastPeriod > 2800) {
+    if (lastPeriod > 1050) {
       fullText = fullText.slice(0, lastPeriod + 1);
     } else {
       fullText = fullText + '…';

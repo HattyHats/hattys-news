@@ -37,7 +37,7 @@ export function saveArticlesCache(targetMode: AppMode, articles: Article[]) {
     // Strict isolation: only save articles matching targetMode to target cache; cap fullText to stay well under localStorage quota
     const isolated = articles
       .filter(a => !a.mode || a.mode === targetMode)
-      .slice(0, 250)
+      .slice(0, 180)
       .map(a => ({
         ...a,
         fullText: a.fullText ? a.fullText.slice(0, 1400) : undefined,

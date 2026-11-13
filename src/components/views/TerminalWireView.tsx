@@ -1,10 +1,11 @@
 import React, { memo } from 'react';
-import { motion } from 'motion/react';
 import { ExternalLink, Bookmark, Share2, Check, ShieldCheck, BookOpen } from 'lucide-react';
 import { Article, AppMode, DashboardSettings } from '../../types';
 import { formatTimeAgo } from '../../utils/formatters';
 import { detectStoryImpact, getOutletBadge, detectAssetsInArticle } from '../../utils/classifier';
 import { AffizyAdUnit } from '../ads/AffizyAdUnit';
+
+const EMPTY_RELATED: Article[] = [];
 
 interface TerminalWireViewProps {
   articles: Article[];
@@ -42,7 +43,7 @@ export const TerminalWireView = memo(function TerminalWireView({
       {/* Terminal View Header Bar */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-black/40 dark:bg-black/60 border-b border-[var(--border)] font-mono text-[11px] text-[var(--ink-muted)] font-bold tracking-wider uppercase">
         <div className="flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500" />
           <span className="text-[var(--ink)]">TERMINAL LIVE WIRE STREAM</span>
           <span className="opacity-60 hidden sm:inline">• HIGH-FREQUENCY DISPATCH FEED</span>
         </div>
@@ -59,7 +60,7 @@ export const TerminalWireView = memo(function TerminalWireView({
 
           return articles.map((art, idx) => {
             const isSaved = savedIds.has(art.id);
-            const related = articleClusters.get(art.id) || [];
+            const related = articleClusters.get(art.id) || EMPTY_RELATED;
             const impact = detectStoryImpact(art.title, art.snippet);
             const outlet = getOutletBadge(art.src);
             const detectedAssets = dashboardSettings.showAssetTags

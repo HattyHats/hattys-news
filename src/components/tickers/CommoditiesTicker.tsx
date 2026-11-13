@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { memo, useState, useEffect, useRef } from 'react';
 import { CommodityItem } from '../../types';
 import { DEFAULT_COMMODITIES, DEFAULT_STOCKS } from '../../config/assets';
 
@@ -6,12 +6,13 @@ interface CommoditiesTickerProps {
   marketQuotes?: Record<string, { price: number; change24h: number; formatted: string }>;
 }
 
-export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
+export const CommoditiesTicker = memo(function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
   const [tickerView, setTickerView] = useState<'commodities' | 'stocks'>('commodities');
   const [commodities, setCommodities] = useState<Record<string, CommodityItem>>(DEFAULT_COMMODITIES);
   const [stocks, setStocks] = useState<Record<string, CommodityItem>>(DEFAULT_STOCKS);
   const baseCommoditiesRef = useRef<Record<string, { price: number; change24h: number }>>({});
   const baseStocksRef = useRef<Record<string, { price: number; change24h: number }>>({});
+  const flashTimerRef = useRef<number | null>(null);
 
   // Sync quotes when parent App passes updated centralized quotes
   useEffect(() => {
@@ -61,7 +62,8 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
     const cKeys = Object.keys(DEFAULT_COMMODITIES);
     const sKeys = Object.keys(DEFAULT_STOCKS);
 
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       // Tick Commodities
       const targetC = cKeys[Math.floor(Math.random() * cKeys.length)];
       setCommodities(prev => {
@@ -120,7 +122,11 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
         };
       });
 
-      setTimeout(() => {
+      if (flashTimerRef.current !== null) {
+        window.clearTimeout(flashTimerRef.current);
+      }
+      flashTimerRef.current = window.setTimeout(() => {
+        flashTimerRef.current = null;
         setCommodities(prev => {
           if (!prev[targetC] || prev[targetC].flash === null) return prev;
           return { ...prev, [targetC]: { ...prev[targetC], flash: null } };
@@ -130,9 +136,14 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
           return { ...prev, [targetS]: { ...prev[targetS], flash: null } };
         });
       }, 450);
-    }, 2400);
+    }, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.clearInterval(interval);
+      if (flashTimerRef.current !== null) {
+        window.clearTimeout(flashTimerRef.current);
+      }
+    };
   }, []);
 
   const activeItems = tickerView === 'commodities' 
@@ -152,7 +163,7 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
           }`}
           title="Show Live Commodities & Energy"
         >
-          <span className={`w-1.5 h-1.5 rounded-full ${tickerView === 'commodities' ? 'bg-amber-500 animate-ping' : 'bg-gray-400'} shrink-0`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${tickerView === 'commodities' ? 'bg-amber-500' : 'bg-gray-400'} shrink-0`} />
           COMMODITIES
         </button>
         <button
@@ -164,7 +175,7 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
           }`}
           title="Show Live Stocks & Indices"
         >
-          <span className={`w-1.5 h-1.5 rounded-full ${tickerView === 'stocks' ? 'bg-blue-500 animate-ping' : 'bg-gray-400'} shrink-0`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${tickerView === 'stocks' ? 'bg-blue-500' : 'bg-gray-400'} shrink-0`} />
           STOCKS
         </button>
       </div>
@@ -194,4 +205,4 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
       </div>
     </div>
   );
-}
+});

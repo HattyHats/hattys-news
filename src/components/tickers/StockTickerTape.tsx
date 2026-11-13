@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { TapeQuote } from '../../types';
 import { INITIAL_TAPE_QUOTES } from '../../config/assets';
 
@@ -7,7 +7,7 @@ interface StockTickerTapeProps {
   marketQuotes?: Record<string, { price: number; change24h: number; formatted: string }>;
 }
 
-export function StockTickerTape({ isDark, marketQuotes }: StockTickerTapeProps) {
+export const StockTickerTape = memo(function StockTickerTape({ isDark, marketQuotes }: StockTickerTapeProps) {
   const [quotes, setQuotes] = useState<TapeQuote[]>(INITIAL_TAPE_QUOTES);
 
   // Sync quotes whenever marketQuotes updates from centralized hook
@@ -80,4 +80,4 @@ export function StockTickerTape({ isDark, marketQuotes }: StockTickerTapeProps) 
       </div>
     </div>
   );
-}
+});

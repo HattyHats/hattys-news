@@ -1,5 +1,4 @@
 import React, { memo } from 'react';
-import { motion } from 'motion/react';
 import { ExternalLink, ShieldCheck } from 'lucide-react';
 import { AffizyAdUnit } from '../ads/AffizyAdUnit';
 
@@ -9,19 +8,13 @@ interface SponsoredCardProps {
 
 export const SponsoredCard = memo(function SponsoredCard({ idx = 7 }: SponsoredCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.6), ease: "easeOut" }}
+    <div
       className="card group col-span-1 flex flex-col justify-between overflow-hidden relative shadow-sm hover:border-blue-500/40 transition-all min-h-[340px] sm:min-h-[380px]"
     >
       {/* Top Header Bar matching terminal wire style */}
       <div className="px-3.5 py-2.5 bg-black/30 dark:bg-black/50 border-b border-[var(--border)] flex items-center justify-between">
         <div className="flex items-center gap-2 font-mono text-[11px]">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-          </span>
+          <span className="inline-flex rounded-full h-2 w-2 bg-blue-500" />
           <span className="font-bold text-[var(--ink)] tracking-wider uppercase">
             SPONSORED DISPATCH
           </span>
@@ -49,6 +42,6 @@ export const SponsoredCard = memo(function SponsoredCard({ idx = 7 }: SponsoredC
           <ExternalLink className="w-2.5 h-2.5" />
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 });

@@ -1,4 +1,31 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { memo, useRef, useState, useEffect, useMemo } from 'react';
+
+let affizyScanTimer: number | null = null;
+
+/** Coalesce Affizy delivery.js execution across concurrent zone mounts so it runs once per batch instead of once per component mount. */
+function scheduleAffizyScan() {
+  if (typeof window === 'undefined') return;
+  if (affizyScanTimer !== null) {
+    window.clearTimeout(affizyScanTimer);
+  }
+  affizyScanTimer = window.setTimeout(() => {
+    affizyScanTimer = null;
+    const pending = document.querySelector('.affizy-ad[data-zone]:not([data-affizy-loaded])');
+    if (!pending) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://affizy.network/delivery.js';
+    script.async = true;
+    const cleanup = () => {
+      try {
+        script.remove();
+      } catch {}
+    };
+    script.onload = cleanup;
+    script.onerror = cleanup;
+    document.body.appendChild(script);
+  }, 180);
+}
 
 export interface AffizyAdUnitProps {
   zoneId?: string;
@@ -7,7 +34,7 @@ export interface AffizyAdUnitProps {
   noCardWrapper?: boolean;
 }
 
-export function AffizyAdUnit({
+export const AffizyAdUnit = memo(function AffizyAdUnit({
   zoneId = '1007',
   bannerSize = '480x320',
   maxWidth = 'max-w-[540px]',
@@ -50,6 +77,7 @@ export function AffizyAdUnit({
     if (!container) return;
 
     container.innerHTML = '';
+    setAdLoaded(false);
 
     // Create target div matching Affizy specification:
     // <div class="affizy-ad" data-zone="..."></div>
@@ -65,11 +93,7 @@ export function AffizyAdUnit({
     });
     observer.observe(adDiv, { attributes: true, attributeFilter: ['style'], childList: true });
 
-    // Inject the delivery script dynamically so it discovers the adDiv on mount
-    const script = document.createElement('script');
-    script.src = 'https://affizy.network/delivery.js';
-    script.async = true;
-    container.appendChild(script);
+    scheduleAffizyScan();
 
     return () => {
       observer.disconnect();
@@ -106,7 +130,7 @@ export function AffizyAdUnit({
   const renderPendingBar = () => (
     <div className="w-full py-2 px-2.5 sm:px-3 flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] font-mono text-[var(--ink-muted)]">
       <span className="flex items-center gap-2 min-w-0">
-        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shrink-0" />
+        <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
         <span className="truncate">AFFIZY NETWORK • ZONE {zoneId} ({bannerSize})</span>
       </span>
       <span className="text-[9px] sm:text-[10px] text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 shrink-0">
@@ -134,4 +158,4 @@ export function AffizyAdUnit({
       </div>
     </div>
   );
-}
+});

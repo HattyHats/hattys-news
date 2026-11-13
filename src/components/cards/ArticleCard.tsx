@@ -1,5 +1,4 @@
-import React, { memo } from 'react';
-import { motion } from 'motion/react';
+import React, { memo, useMemo } from 'react';
 import { Clock, Bookmark, Share2, Check, ExternalLink, Zap, ShieldCheck, Flame, BookOpen } from 'lucide-react';
 import { Article, AppMode, DashboardSettings } from '../../types';
 import { CardImage } from './CardImage';
@@ -52,23 +51,26 @@ export const ArticleCard = memo(function ArticleCard({
   const badgeClass = categoryConfig.badgeClass || (cardMode === 'world' ? 'badge-world-top' : 'badge-all');
 
   // Feature 4: Story Impact Classification
-  const storyImpact = detectStoryImpact(article.title, article.snippet);
+  const storyImpact = useMemo(() => detectStoryImpact(article.title, article.snippet), [article.title, article.snippet]);
 
   // Feature 5: Outlet Country & Wire Desk Metas
-  const outlet = getOutletBadge(article.src);
+  const outlet = useMemo(() => getOutletBadge(article.src), [article.src]);
+
+  // Detected financial asset tags (only re-runs when article or quotes update)
+  const detectedAssets = useMemo(
+    () => (dashboardSettings.showAssetTags ? detectAssetsInArticle(article.title, article.snippet, marketQuotes) : []),
+    [dashboardSettings.showAssetTags, article.title, article.snippet, marketQuotes]
+  );
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.6), ease: "easeOut" }}
+    <article
       className={`card group ${isHero ? 'lg:col-span-2 sm:col-span-2 shadow-2xl border-[var(--accent)]/35' : 'col-span-1'}`}
     >
       <div
         onClick={() => onOpenArticle(article)}
         className={`relative overflow-hidden w-full cursor-pointer ${isHero ? 'h-[240px] sm:h-[280px]' : dashboardSettings.cardDensity === 'compact' ? 'h-[140px]' : 'h-[180px]'} bg-[#0c0c10]`}
       >
-        <CardImage article={article} mode={cardMode} />
+        <CardImage article={article} mode={cardMode} priority={idx < 4} />
         
         {/* Category + Hero + NEW Overlay Badges */}
         <div className="absolute top-2.5 left-2.5 right-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
@@ -78,7 +80,7 @@ export const ArticleCard = memo(function ArticleCard({
               LEAD DISPATCH
             </span>
           )}
-          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase backdrop-blur-md ${badgeClass}`}>
+          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase bg-black/80 ${badgeClass}`}>
             {categoryConfig.label}
           </span>
           {isNew && (
@@ -88,7 +90,7 @@ export const ArticleCard = memo(function ArticleCard({
             </span>
           )}
           {storyImpact && (
-            <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase backdrop-blur-md border ${storyImpact.badgeClass}`}>
+            <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase bg-black/80 border ${storyImpact.badgeClass}`}>
               {storyImpact.label}
             </span>
           )}
@@ -101,10 +103,10 @@ export const ArticleCard = memo(function ArticleCard({
         >
           <button
             onClick={() => onToggleSave(article)}
-            className={`w-7 h-7 rounded-full backdrop-blur-md flex items-center justify-center transition-all cursor-pointer ${
+            className={`w-7 h-7 rounded-full flex items-center justify-center transition-opacity cursor-pointer ${
               isSaved
                 ? 'bg-amber-500 text-black opacity-100 shadow-lg shadow-amber-500/30'
-                : 'bg-black/60 hover:bg-black/90 text-gray-300 hover:text-white opacity-90 sm:opacity-0 sm:group-hover:opacity-100'
+                : 'bg-black/80 hover:bg-black text-gray-200 hover:text-white opacity-90 sm:opacity-0 sm:group-hover:opacity-100'
             }`}
             title={isSaved ? 'Remove from Read-Later Queue' : 'Save to Read-Later Queue'}
           >
@@ -112,7 +114,7 @@ export const ArticleCard = memo(function ArticleCard({
           </button>
           <button 
             onClick={() => onCopyLink(article.id, article.link)}
-            className="w-7 h-7 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md text-gray-300 hover:text-white flex items-center justify-center transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+            className="w-7 h-7 rounded-full bg-black/80 hover:bg-black text-gray-200 hover:text-white flex items-center justify-center transition-opacity opacity-90 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
             title="Copy Article Link"
           >
             {copiedId === article.id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Share2 className="w-3.5 h-3.5" />}
@@ -151,47 +153,41 @@ export const ArticleCard = memo(function ArticleCard({
           </h2>
 
           {/* Live Asset Mention Tagging */}
-          {dashboardSettings.showAssetTags && (
-            (() => {
-              const detected = detectAssetsInArticle(article.title, article.snippet, marketQuotes);
-              if (detected.length === 0) return null;
-              return (
-                <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden mb-2">
-                  {detected.slice(0, 3).map(asset => {
-                    const isUp = (asset.change24h ?? 0) >= 0;
-                    return (
-                      <button
-                        key={asset.id}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onSetQuery(prev => prev.toLowerCase() === asset.symbol.toLowerCase() ? '' : asset.symbol);
-                        }}
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border transition-all cursor-pointer shrink-0 ${
-                          searchQuery.toLowerCase() === asset.symbol.toLowerCase()
-                            ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-sm'
-                            : isDark 
-                              ? 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/25 text-white' 
-                              : 'bg-black/5 hover:bg-black/10 border-black/10 hover:border-black/25 text-slate-800'
-                        }`}
-                        title={`Click to filter stories for ${asset.name} (${asset.symbol})`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: asset.color }} />
-                        <span>${asset.symbol}</span>
-                        {asset.formatted && (
-                          <span className="opacity-80 font-normal">{asset.formatted}</span>
-                        )}
-                        {typeof asset.change24h === 'number' && (
-                          <span className={`text-[9px] font-bold ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            {isUp ? '▲' : '▼'}{Math.abs(asset.change24h).toFixed(1)}%
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })()
+          {detectedAssets.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-nowrap overflow-hidden mb-2">
+              {detectedAssets.slice(0, 3).map(asset => {
+                const isUp = (asset.change24h ?? 0) >= 0;
+                return (
+                  <button
+                    key={asset.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onSetQuery(prev => prev.toLowerCase() === asset.symbol.toLowerCase() ? '' : asset.symbol);
+                    }}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border transition-colors cursor-pointer shrink-0 ${
+                      searchQuery.toLowerCase() === asset.symbol.toLowerCase()
+                        ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-sm'
+                        : isDark 
+                          ? 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/25 text-white' 
+                          : 'bg-black/5 hover:bg-black/10 border-black/10 hover:border-black/25 text-slate-800'
+                    }`}
+                    title={`Click to filter stories for ${asset.name} (${asset.symbol})`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: asset.color }} />
+                    <span>${asset.symbol}</span>
+                    {asset.formatted && (
+                      <span className="opacity-80 font-normal">{asset.formatted}</span>
+                    )}
+                    {typeof asset.change24h === 'number' && (
+                      <span className={`text-[9px] font-bold ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {isUp ? '▲' : '▼'}{Math.abs(asset.change24h).toFixed(1)}%
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           )}
 
           {/* Normalized Snippet with 2-line clamp & balanced height */}
@@ -287,6 +283,6 @@ export const ArticleCard = memo(function ArticleCard({
           </div>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 });

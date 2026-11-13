@@ -97,9 +97,11 @@
     display: flex;
     flex-direction: column;
     transition: border-color var(--t), box-shadow var(--t), transform var(--t), background-color var(--t);
-    animation: fadeIn 0.4s ease both;
+    animation: fadeIn 0.3s ease both;
     position: relative;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    content-visibility: auto;
+    contain-intrinsic-size: auto 380px;
   }
 
   html.light .card {
