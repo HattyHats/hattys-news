@@ -23,6 +23,8 @@ export interface Article {
   primaryCat: string;
   matchedCategories: string[];
   snippet?: string;
+  fullText?: string;
+  readingMinutes?: number;
   mode: AppMode;
 }
 

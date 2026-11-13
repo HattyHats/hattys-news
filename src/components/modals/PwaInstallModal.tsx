@@ -18,18 +18,22 @@ export function PwaInstallModal({
   onInstalled
 }: PwaInstallModalProps) {
   useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      const originalTouchAction = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
 
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.touchAction = originalTouchAction;
-      };
-    }
-  }, [isOpen]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -47,7 +51,7 @@ export function PwaInstallModal({
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-md max-h-[92vh] overflow-y-auto overscroll-contain bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-2xl z-10 text-[var(--ink)] select-text touch-pan-y scrollbar-thin"
+          className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain touch-scroll bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-2xl z-10 text-[var(--ink)] select-text touch-pan-y scrollbar-thin"
           onClick={(e) => e.stopPropagation()}
         >
           <button 
@@ -102,12 +106,19 @@ export function PwaInstallModal({
               <div className="space-y-4">
                 <div className="text-left space-y-2.5 bg-[var(--bg)] p-4 rounded-xl border border-[var(--border)] text-xs font-mono text-[var(--ink-muted)]">
                   <div className="flex items-center gap-2 text-[var(--ink)] font-bold">
-                    <Smartphone className="w-4 h-4 text-emerald-500" />
-                    <span>FAST 1-CLICK INSTALLATION</span>
+                    <Smartphone className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>{deferredPrompt ? 'FAST 1-CLICK INSTALLATION' : 'INSTALL VIA CHROME / EDGE MENU'}</span>
                   </div>
-                  <p className="text-[11px] text-[var(--ink-muted)]">
-                    Click the install button below or select <strong className="text-[var(--ink)]">"Install Hatty's News"</strong> from your browser menu.
-                  </p>
+                  {deferredPrompt ? (
+                    <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed">
+                      Click the install button below to add <strong className="text-[var(--ink)]">Hatty&apos;s News</strong> to your dock, taskbar, or home screen as a native-style standalone app.
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5 text-[11px] text-[var(--ink-muted)] leading-relaxed">
+                      <li>• <strong className="text-[var(--ink)]">Desktop Chrome/Edge:</strong> Click the <strong className="text-[var(--ink)]">Install App</strong> icon in the address bar, or open <strong className="text-[var(--ink)]">⋮ → Cast, save, and share → Install page as app…</strong></li>
+                      <li>• <strong className="text-[var(--ink)]">Android Chrome:</strong> Tap <strong className="text-[var(--ink)]">⋮ → Add to Home screen / Install app</strong>.</li>
+                    </ul>
+                  )}
                 </div>
 
                 <button

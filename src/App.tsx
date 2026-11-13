@@ -11,7 +11,7 @@ import { AppMode, Article, FearGreedData, FeedConfig, ViewLayoutMode } from './t
 import { CRYPTO_FEEDS, WORLD_FEEDS, CRYPTO_CATEGORIES, WORLD_CATEGORIES, DEFAULT_DASHBOARD_SETTINGS } from './config/feeds';
 import { ASSET_DEFINITIONS } from './config/assets';
 import { getEditorialPhoto } from './config/photos';
-import { cleanWireTitle, cleanWireSnippet, getPublisherRoot } from './utils/textCleaner';
+import { cleanWireTitle, cleanWireSnippet, getPublisherRoot, safeParseDate, extractReadableBody } from './utils/textCleaner';
 import { classifyArticle } from './utils/classifier';
 import { computeArticleClusters } from './utils/clustering';
 import { loadCachedArticlesForMode, saveArticlesCache } from './utils/storage';
@@ -36,6 +36,7 @@ import { DashboardSettingsModal } from './components/modals/DashboardSettingsMod
 import { FearGreedModal } from './components/modals/FearGreedModal';
 import { PwaInstallModal } from './components/modals/PwaInstallModal';
 import { PerspectiveModal } from './components/modals/PerspectiveModal';
+import { ArticleReaderDrawer } from './components/modals/ArticleReaderDrawer';
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>('crypto');
@@ -81,10 +82,13 @@ export default function App() {
   const [refreshToast, setRefreshToast] = useState<{ message: string; active: boolean } | null>(null);
   const fetchSeqRef = useRef(0);
 
-  // Perspective Comparator Modal State (New Feature)
+  // Perspective Comparator Modal State
   const [perspectiveModalOpen, setPerspectiveModalOpen] = useState(false);
   const [perspectivePrimary, setPerspectivePrimary] = useState<Article | null>(null);
   const [perspectiveRelated, setPerspectiveRelated] = useState<Article[]>([]);
+
+  // In-App Terminal Reader Drawer State
+  const [readerArticle, setReaderArticle] = useState<Article | null>(null);
 
   // Notifications State
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
@@ -205,8 +209,28 @@ export default function App() {
         setDeferredPrompt(e);
       };
 
+      const handleAppInstalled = () => {
+        setIsInstalled(true);
+        setDeferredPrompt(null);
+        document.body.classList.add('pwa-installed');
+      };
+
+      const standaloneMql = window.matchMedia('(display-mode: standalone)');
+      const handleStandaloneChange = (ev: MediaQueryListEvent) => {
+        if (ev.matches) {
+          setIsInstalled(true);
+          document.body.classList.add('pwa-installed');
+        }
+      };
+
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.addEventListener('appinstalled', handleAppInstalled);
+      standaloneMql.addEventListener?.('change', handleStandaloneChange);
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.removeEventListener('appinstalled', handleAppInstalled);
+        standaloneMql.removeEventListener?.('change', handleStandaloneChange);
+      };
     }
   }, []);
 
@@ -335,10 +359,10 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch individual feed with fast 5s timeout
+  // Fetch individual feed with resilient 8.5s timeout
   const fetchFeed = async (feed: FeedConfig, targetMode: AppMode, forceRefresh = false): Promise<Article[]> => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 8500);
 
     try {
       const cacheBust = forceRefresh ? `&_t=${Date.now()}&nocache=1` : '';
@@ -378,7 +402,9 @@ export default function App() {
 
         const rawTitle = i.title ? i.title.trim() : (targetMode === 'world' ? 'World Wire Update' : 'Crypto Market Update');
         const title = cleanWireTitle(rawTitle);
+        const rawBodyHtml = i.contentEncoded || i.content || i.description || i.contentSnippet || '';
         const snippet = cleanWireSnippet(i.contentSnippet || i.description || '', title);
+        const { fullText, readingMinutes } = extractReadableBody(rawBodyHtml, title);
         const { primary, matched } = classifyArticle(title, snippet, feed.defaultCat, targetMode);
 
         if (!img) {
@@ -392,11 +418,13 @@ export default function App() {
           title,
           link: i.link || '#',
           img,
-          date: new Date(i.pubDate || i.isoDate || Date.now()),
+          date: safeParseDate(i.pubDate || i.isoDate),
           src: feed.n,
           primaryCat: primary,
           matchedCategories: matched,
           snippet,
+          fullText,
+          readingMinutes,
           mode: targetMode
         };
       });
@@ -648,18 +676,19 @@ export default function App() {
     }
   }, [mode, loadNews]);
 
-  // Theme Sync
+  // Theme & App Mode Sync (dark/light + crypto red vs world blue accent theme)
   useEffect(() => {
+    document.body.classList.toggle('world-mode', mode === 'world');
     if (isDark) {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#030303');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'world' ? '#060a14' : '#030303');
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f8fafc');
     }
-  }, [isDark]);
+  }, [isDark, mode]);
 
   // Mode Switch Handler
   const handleModeSwitch = (newMode: AppMode) => {
@@ -841,7 +870,8 @@ export default function App() {
       const textMatch =
         a.title.toLowerCase().includes(q) ||
         a.src.toLowerCase().includes(q) ||
-        Boolean(a.snippet && a.snippet.toLowerCase().includes(q));
+        Boolean(a.snippet && a.snippet.toLowerCase().includes(q)) ||
+        Boolean(a.fullText && a.fullText.toLowerCase().includes(q));
       const assetMatch = matchedAssetDef
         ? matchedAssetDef.regex.test(`${a.title} ${a.snippet || ''}`)
         : false;
@@ -884,6 +914,37 @@ export default function App() {
     setPerspectiveRelated(related);
     setPerspectiveModalOpen(true);
   }, []);
+
+  // In-App Reader Drawer Helpers
+  useEffect(() => {
+    setReaderArticle(null);
+  }, [mode]);
+
+  const readerRelated = useMemo(
+    () => (readerArticle ? articleClusters.get(readerArticle.id) || [] : []),
+    [readerArticle, articleClusters]
+  );
+
+  const readerIndex = useMemo(
+    () => (readerArticle ? filtered.findIndex(a => a.id === readerArticle.id) : -1),
+    [readerArticle, filtered]
+  );
+
+  const handleOpenReader = useCallback((article: Article) => {
+    setReaderArticle(article);
+  }, []);
+
+  const handlePrevReader = useCallback(() => {
+    if (readerIndex > 0) {
+      setReaderArticle(filtered[readerIndex - 1]);
+    }
+  }, [readerIndex, filtered]);
+
+  const handleNextReader = useCallback(() => {
+    if (readerIndex >= 0 && readerIndex < filtered.length - 1) {
+      setReaderArticle(filtered[readerIndex + 1]);
+    }
+  }, [readerIndex, filtered]);
 
   // LiveCoinWatch bottom widget loader
   useEffect(() => {
@@ -944,6 +1005,27 @@ export default function App() {
         isIOS={isIOS}
         deferredPrompt={deferredPrompt}
         onInstalled={() => setIsInstalled(true)}
+      />
+
+      {/* In-App Slide-Over Terminal Reader Drawer */}
+      <ArticleReaderDrawer
+        article={readerArticle}
+        relatedArticles={readerRelated}
+        mode={mode}
+        isDark={isDark}
+        isSaved={readerArticle ? savedIds.has(readerArticle.id) : false}
+        copiedId={copiedId}
+        marketQuotes={marketQuotes}
+        articleIndex={readerIndex}
+        totalCount={filtered.length}
+        onClose={() => setReaderArticle(null)}
+        onPrevArticle={handlePrevReader}
+        onNextArticle={handleNextReader}
+        onSelectArticle={handleOpenReader}
+        onToggleSave={toggleSaveArticle}
+        onCopyLink={handleCopyLink}
+        onOpenPerspective={handleOpenPerspective}
+        onFilterBySymbol={setQuery}
       />
 
       {/* Perspective Comparator Modal (Side-by-Side Coverage Analysis) */}
@@ -1023,7 +1105,7 @@ export default function App() {
       </div>
 
       {/* Main Stream Area */}
-      <main className="max-w-[1440px] mx-auto my-6 px-4">
+      <main className="max-w-[1440px] mx-auto my-4 sm:my-6 px-3 sm:px-4">
         {/* Navigation Category Filters */}
         <FilterTabs
           categories={activeCategories}
@@ -1053,6 +1135,7 @@ export default function App() {
           onOpenCatalysts={() => setShowCatalysts(true)}
           onToggleSave={toggleSaveArticle}
           onOpenPerspective={handleOpenPerspective}
+          onOpenArticle={handleOpenReader}
         />
 
         {/* Status subheader */}
@@ -1074,7 +1157,7 @@ export default function App() {
               <Zap className={`w-3 h-3 ${wireVelocity.status === 'SURGE' ? 'fill-red-500 animate-bounce' : 'fill-current'}`} />
               <span className="hidden sm:inline">SPEEDOMETER:</span>
               <span className="text-[var(--ink)] font-black">{wireVelocity.count}/HR</span>
-              <span className={`text-[9px] px-1 py-0.2 rounded font-black tracking-wider uppercase ${
+              <span className={`text-[9px] px-1.5 py-0.5 rounded leading-none font-black tracking-wider uppercase ${
                 wireVelocity.status === 'SURGE'
                   ? 'bg-red-500 text-white animate-pulse'
                   : wireVelocity.status === 'HIGH'
@@ -1177,6 +1260,7 @@ export default function App() {
               onToggleSave={toggleSaveArticle}
               onCopyLink={handleCopyLink}
               onOpenPerspective={handleOpenPerspective}
+              onOpenArticle={handleOpenReader}
               onSetQuery={setQuery}
             />
 
@@ -1227,6 +1311,7 @@ export default function App() {
                           onCopyLink={handleCopyLink}
                           onSetQuery={setQuery}
                           onOpenPerspective={handleOpenPerspective}
+                          onOpenArticle={handleOpenReader}
                         />
 
                         {/* In-Feed Sponsored Unit (Affizy Zone 1015 - 300x250) - Molds natively into 1 card slot without breaking grid */}
@@ -1266,7 +1351,7 @@ export default function App() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none max-w-md px-4 w-full"
+            className="fixed bottom-[calc(74px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-50 pointer-events-none max-w-md px-4 w-full"
           >
             <div className="px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-[var(--surface-solid)]/95 text-emerald-500 dark:text-emerald-400 font-mono text-xs shadow-2xl backdrop-blur-md flex items-center gap-2 text-center justify-center">
               <BellRing className="w-4 h-4 shrink-0 text-emerald-500" />

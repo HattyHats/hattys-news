@@ -1,5 +1,5 @@
 import { Article, AppMode } from '../types';
-import { cleanWireTitle, cleanWireSnippet } from './textCleaner';
+import { cleanWireTitle, cleanWireSnippet, safeParseDate } from './textCleaner';
 import { getEditorialPhoto } from '../config/photos';
 
 export function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
@@ -17,10 +17,12 @@ export function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
             ...a,
             title,
             snippet,
+            fullText: typeof a.fullText === 'string' ? a.fullText : undefined,
+            readingMinutes: typeof a.readingMinutes === 'number' ? a.readingMinutes : undefined,
             mode: targetMode,
             id: `${targetMode}-${a.src || 'wire'}-${normId}`,
             img: (a.img && !a.img.startsWith('data:image/svg+xml;utf8')) ? a.img : getEditorialPhoto(a.primaryCat, title, targetMode),
-            date: new Date(a.date)
+            date: safeParseDate(a.date)
           };
         });
       }
@@ -32,8 +34,14 @@ export function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
 export function saveArticlesCache(targetMode: AppMode, articles: Article[]) {
   try {
     const cacheKey = targetMode === 'world' ? 'hattys_news_world_cache_v3' : 'hattys_news_crypto_cache_v3';
-    // Strict isolation: only save articles matching targetMode to target cache
-    const isolated = articles.filter(a => !a.mode || a.mode === targetMode);
-    localStorage.setItem(cacheKey, JSON.stringify(isolated.slice(0, 250)));
+    // Strict isolation: only save articles matching targetMode to target cache; cap fullText to stay well under localStorage quota
+    const isolated = articles
+      .filter(a => !a.mode || a.mode === targetMode)
+      .slice(0, 250)
+      .map(a => ({
+        ...a,
+        fullText: a.fullText ? a.fullText.slice(0, 1400) : undefined,
+      }));
+    localStorage.setItem(cacheKey, JSON.stringify(isolated));
   } catch {}
 }

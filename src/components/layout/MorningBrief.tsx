@@ -1,8 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap, Calendar, Bookmark, ExternalLink, Volume2, VolumeX, Pause, Play, Square } from 'lucide-react';
+import { Zap, Calendar, Bookmark, Volume2, Pause, Play, Square, Gauge, BookOpen } from 'lucide-react';
 import { Article, AppMode } from '../../types';
 import { formatTimeAgo } from '../../utils/formatters';
+import {
+  BRIEF_SPEED_OPTIONS,
+  createSpeechQueueController,
+  formatVoiceLabel,
+  getRankedEnglishVoices,
+  loadSavedSpeechRate,
+  loadSavedVoiceUri,
+  saveSpeechRate,
+  saveVoiceUri,
+  SpeechQueueController,
+} from '../../utils/speech';
 
 interface MorningBriefProps {
   showBrief: boolean;
@@ -16,42 +27,7 @@ interface MorningBriefProps {
   onOpenCatalysts: () => void;
   onToggleSave: (article: Article) => void;
   onOpenPerspective: (article: Article, related: Article[]) => void;
-}
-
-// Helper to select the highest-quality natural human voice (Neural, Enhanced, Siri, Google)
-function getBestNaturalVoice(): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices || voices.length === 0) return null;
-
-  // 1. Natural / Enhanced / Neural English voices (macOS Enhanced, iOS Siri, Edge Natural)
-  const premium = voices.filter(v =>
-    v.lang.startsWith('en') && /natural|enhanced|premium|neural|siri/i.test(v.name)
-  );
-  if (premium.length > 0) {
-    const favorite = premium.find(v => /ava|samantha|jenny|aria|karen|allison|serena|daniel/i.test(v.name));
-    return favorite || premium[0];
-  }
-
-  // 2. High-quality human voices from Apple, Google, Microsoft
-  const branded = voices.filter(v =>
-    v.lang.startsWith('en') && (
-      /google (us|uk)|samantha|karen|jenny|aria|moira|tessa|daniel|alex/i.test(v.name)
-    )
-  );
-  if (branded.length > 0) {
-    const favorite = branded.find(v => /google us|samantha|jenny|karen|aria/i.test(v.name));
-    return favorite || branded[0];
-  }
-
-  // 3. Fallback to US or UK English voice
-  const english = voices.filter(v => v.lang.startsWith('en'));
-  if (english.length > 0) {
-    const enUS = english.find(v => v.lang.includes('US') || v.lang.includes('GB'));
-    return enUS || english[0];
-  }
-
-  return voices[0] || null;
+  onOpenArticle: (article: Article) => void;
 }
 
 export function MorningBrief({
@@ -66,28 +42,65 @@ export function MorningBrief({
   onOpenCatalysts,
   onToggleSave,
   onOpenPerspective,
+  onOpenArticle,
 }: MorningBriefProps) {
-  // Feature 3: Realistic Natural Audio Brief Reader
+  // Feature 3 + 6: Realistic Natural Audio Brief Reader with Voice Picker & Speed Control
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isPausedAudio, setIsPausedAudio] = useState(false);
   const [activeSpeakingIdx, setActiveSpeakingIdx] = useState<number | null>(null);
-  const [activeVoiceName, setActiveVoiceName] = useState<string>('');
-  const bestVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const [audioNotice, setAudioNotice] = useState<string | null>(null);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceUri, setSelectedVoiceUri] = useState<string>(() => loadSavedVoiceUri());
+  const [playbackRate, setPlaybackRate] = useState<number>(() => loadSavedSpeechRate());
 
-  // Discover and cache the best neural / natural voice on mount
+  const selectedVoiceUriRef = useRef(selectedVoiceUri);
+  selectedVoiceUriRef.current = selectedVoiceUri;
+  const playbackRateRef = useRef(playbackRate);
+  playbackRateRef.current = playbackRate;
+  const currentStoryIdxRef = useRef<number>(0);
+  const controllerRef = useRef<SpeechQueueController | null>(null);
+
+  if (!controllerRef.current) {
+    controllerRef.current = createSpeechQueueController({
+      getVoiceUri: () => selectedVoiceUriRef.current,
+      getRate: () => playbackRateRef.current,
+      betweenItemDelayMs: 450,
+      onItemStart: (idx) => {
+        currentStoryIdxRef.current = idx;
+        setActiveSpeakingIdx(idx);
+        setAudioNotice(null);
+      },
+      onComplete: () => {
+        setIsPlayingAudio(false);
+        setIsPausedAudio(false);
+        setActiveSpeakingIdx(null);
+      },
+      onError: (reason) => {
+        setIsPlayingAudio(false);
+        setIsPausedAudio(false);
+        setActiveSpeakingIdx(null);
+        setAudioNotice(`Speech engine issue (${reason}) — try another voice`);
+      },
+    });
+  }
+
+  // Discover ranked English neural / natural voices on mount & when Chrome finishes loading voices
   useEffect(() => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
-    const loadVoice = () => {
-      const voice = getBestNaturalVoice();
-      bestVoiceRef.current = voice;
-      if (voice) {
-        setActiveVoiceName(voice.name.replace(/Microsoft |Google |Apple /i, ''));
-      }
+    const loadVoiceList = () => {
+      setVoices(getRankedEnglishVoices());
     };
 
-    loadVoice();
-    window.speechSynthesis.onvoiceschanged = loadVoice;
+    loadVoiceList();
+    const synth = window.speechSynthesis;
+    if (typeof synth.addEventListener === 'function') {
+      synth.addEventListener('voiceschanged', loadVoiceList);
+      return () => {
+        synth.removeEventListener('voiceschanged', loadVoiceList);
+      };
+    }
+    synth.onvoiceschanged = loadVoiceList;
     return () => {
       if (window.speechSynthesis) {
         window.speechSynthesis.onvoiceschanged = null;
@@ -95,102 +108,92 @@ export function MorningBrief({
     };
   }, []);
 
-  // Stop speech if brief is closed, mode changes, or component unmounts
+  // Stop speech cleanly if brief closes, mode changes, or component unmounts
   useEffect(() => {
     return () => {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      controllerRef.current?.stop();
+      setIsPlayingAudio(false);
+      setIsPausedAudio(false);
+      setActiveSpeakingIdx(null);
+      setAudioNotice(null);
     };
   }, [mode, showBrief]);
 
   const handleStopAudio = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    controllerRef.current?.stop();
     setIsPlayingAudio(false);
     setIsPausedAudio(false);
     setActiveSpeakingIdx(null);
+    setAudioNotice(null);
+  };
+
+  const buildBriefScripts = () => {
+    const total = morningBriefStories.length;
+    return morningBriefStories.map((item, idx) => {
+      const cleanTitle = item.article.title.replace(/[\n\r]+/g, ' ').trim();
+      const sourceName = item.article.src;
+      if (idx === 0) {
+        return `Welcome to Hatty's News sixty-second ${mode === 'world' ? 'world' : 'crypto'} brief. Here are today's top stories. First, ${cleanTitle}. Reported by ${sourceName}.`;
+      }
+      if (idx === total - 1) {
+        return `And finally... ${cleanTitle}. Covered by ${sourceName}. That concludes your sixty-second brief.`;
+      }
+      const transitions = [
+        `Next story... ${cleanTitle}. From ${sourceName}.`,
+        `Also developing... ${cleanTitle}. According to ${sourceName}.`,
+        `In other news... ${cleanTitle}. Reported by ${sourceName}.`
+      ];
+      return transitions[(idx - 1) % transitions.length];
+    });
+  };
+
+  const startBriefSequence = (startIdx: number) => {
+    const scripts = buildBriefScripts();
+    if (scripts.length === 0) return;
+    setAudioNotice(null);
+    setIsPlayingAudio(true);
+    setIsPausedAudio(false);
+    controllerRef.current?.start(scripts, startIdx);
   };
 
   const handleTogglePlayAudio = () => {
-    if (!('speechSynthesis' in window)) {
-      alert("Text-to-speech is not supported by your current browser.");
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setAudioNotice('Text-to-speech is not supported in this browser.');
       return;
     }
 
     if (isPlayingAudio) {
       if (isPausedAudio) {
-        window.speechSynthesis.resume();
+        controllerRef.current?.resume();
         setIsPausedAudio(false);
       } else {
-        window.speechSynthesis.pause();
+        controllerRef.current?.pause();
         setIsPausedAudio(true);
       }
       return;
     }
 
-    // Start fresh natural audio brief sequence
-    window.speechSynthesis.cancel();
-    setIsPlayingAudio(true);
-    setIsPausedAudio(false);
+    startBriefSequence(0);
+  };
 
-    // Refresh voice reference in case voices loaded late
-    if (!bestVoiceRef.current) {
-      bestVoiceRef.current = getBestNaturalVoice();
+  const handleCycleRate = () => {
+    const idx = BRIEF_SPEED_OPTIONS.findIndex(r => Math.abs(r - playbackRate) < 0.02);
+    const nextRate = BRIEF_SPEED_OPTIONS[(idx + 1) % BRIEF_SPEED_OPTIONS.length];
+    setPlaybackRate(nextRate);
+    playbackRateRef.current = nextRate;
+    saveSpeechRate(nextRate);
+    if (isPlayingAudio && !isPausedAudio) {
+      startBriefSequence(currentStoryIdxRef.current);
     }
+  };
 
-    const playNextStory = (idx: number) => {
-      if (idx >= morningBriefStories.length) {
-        setIsPlayingAudio(false);
-        setIsPausedAudio(false);
-        setActiveSpeakingIdx(null);
-        return;
-      }
-
-      setActiveSpeakingIdx(idx);
-      const item = morningBriefStories[idx];
-      const total = morningBriefStories.length;
-      const cleanTitle = item.article.title.replace(/[\n\r]+/g, ' ').trim();
-      const sourceName = item.article.src;
-
-      // Realistic, human-sounding newscaster phrasing with natural pauses
-      let script = '';
-      if (idx === 0) {
-        script = `Welcome to Hatty's News sixty-second ${mode === 'world' ? 'world' : 'crypto'} brief. Here are today's top stories. First, ${cleanTitle}. Reported by ${sourceName}.`;
-      } else if (idx === total - 1) {
-        script = `And finally... ${cleanTitle}. Covered by ${sourceName}. That concludes your sixty-second brief.`;
-      } else {
-        const transitions = [
-          `Next story... ${cleanTitle}. From ${sourceName}.`,
-          `Also developing... ${cleanTitle}. According to ${sourceName}.`,
-          `In other news... ${cleanTitle}. Reported by ${sourceName}.`
-        ];
-        script = transitions[(idx - 1) % transitions.length];
-      }
-
-      const utterance = new SpeechSynthesisUtterance(script);
-      if (bestVoiceRef.current) {
-        utterance.voice = bestVoiceRef.current;
-      }
-      // Fine-tuned human inflection: relaxed broadcast pace & warm pitch
-      utterance.rate = 0.98;
-      utterance.pitch = 1.04;
-
-      utterance.onend = () => {
-        setTimeout(() => {
-          playNextStory(idx + 1);
-        }, 550); // Natural breath pause between dispatches
-      };
-
-      utterance.onerror = () => {
-        handleStopAudio();
-      };
-
-      window.speechSynthesis.speak(utterance);
-    };
-
-    playNextStory(0);
+  const handleVoiceChange = (nextUri: string) => {
+    setSelectedVoiceUri(nextUri);
+    selectedVoiceUriRef.current = nextUri;
+    saveVoiceUri(nextUri);
+    if (isPlayingAudio && !isPausedAudio) {
+      startBriefSequence(currentStoryIdxRef.current);
+    }
   };
 
   return (
@@ -222,7 +225,7 @@ export function MorningBrief({
                   <Zap className="w-4 h-4" />
                 </span>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="font-display text-lg sm:text-xl tracking-wide text-[var(--ink)] leading-none">
                       60-SECOND {mode === 'world' ? 'GLOBAL' : 'CRYPTO'} BRIEF
                     </h2>
@@ -237,11 +240,16 @@ export function MorningBrief({
                   <p className="text-[11px] font-mono text-[var(--ink-muted)] mt-0.5">
                     Ranked by multi-source wire consensus & breaking velocity
                   </p>
+                  {audioNotice && (
+                    <p className="text-[11px] font-mono text-amber-500 mt-1 font-bold">
+                      {audioNotice}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Feature 3: Audio Brief Player Button */}
-                <div className="inline-flex items-center gap-1 bg-black/10 dark:bg-white/10 p-0.5 rounded-lg border border-[var(--border)]">
+                {/* Feature 3 + 6: Audio Brief Player + Speed + Voice Picker */}
+                <div className="inline-flex items-center gap-1 bg-black/10 dark:bg-white/10 p-0.5 rounded-lg border border-[var(--border)] flex-wrap">
                   <button
                     onClick={handleTogglePlayAudio}
                     className={`text-[11px] font-mono px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 ${
@@ -258,6 +266,7 @@ export function MorningBrief({
                     )}
                     <span>{isPlayingAudio ? (isPausedAudio ? 'RESUME' : 'PAUSE') : 'LISTEN'}</span>
                   </button>
+
                   {isPlayingAudio && (
                     <button
                       onClick={handleStopAudio}
@@ -266,6 +275,33 @@ export function MorningBrief({
                     >
                       <Square className="w-3.5 h-3.5 fill-current" />
                     </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleCycleRate}
+                    className="px-2 py-1 rounded-md text-[10px] font-mono font-bold text-[var(--ink)] bg-[var(--surface-solid)]/80 hover:bg-[var(--surface-solid)] border border-[var(--border)] flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Cycle playback speed (0.9x / 1.0x / 1.15x / 1.3x)"
+                  >
+                    <Gauge className="w-3 h-3 text-emerald-500" />
+                    <span>{playbackRate.toFixed(playbackRate === 1 || playbackRate === 0.9 || playbackRate === 1.3 ? 1 : 2)}x</span>
+                  </button>
+
+                  {voices.length > 0 && (
+                    <select
+                      value={selectedVoiceUri}
+                      onChange={(e) => handleVoiceChange(e.target.value)}
+                      aria-label="Select narrator voice"
+                      title="Select narrator voice for 60s Audio Brief"
+                      className="text-[10px] font-mono font-semibold bg-[var(--surface-solid)] text-[var(--ink)] border border-[var(--border)] rounded-md px-1.5 py-1 max-w-[130px] sm:max-w-[165px] truncate outline-none cursor-pointer hover:border-emerald-500/40"
+                    >
+                      <option value="auto">Auto (Best Natural)</option>
+                      {voices.slice(0, 18).map((v) => (
+                        <option key={v.voiceURI} value={v.voiceURI}>
+                          {formatVoiceLabel(v)}
+                        </option>
+                      ))}
+                    </select>
                   )}
                 </div>
 
@@ -285,7 +321,7 @@ export function MorningBrief({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {morningBriefStories.map((item, i) => {
                 const isSaved = savedIds.has(item.article.id);
                 const isSpeakingThis = activeSpeakingIdx === i;
@@ -326,14 +362,13 @@ export function MorningBrief({
                           </button>
                         )}
                       </div>
-                      <a
-                        href={item.article.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-bold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors line-clamp-3 leading-snug block"
+                      <button
+                        type="button"
+                        onClick={() => onOpenArticle(item.article)}
+                        className="text-left text-xs font-bold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors line-clamp-3 leading-snug block w-full cursor-pointer"
                       >
                         {item.article.title}
-                      </a>
+                      </button>
                     </div>
 
                     <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[var(--border)] text-[10px] font-mono text-[var(--ink-muted)]">
@@ -348,14 +383,14 @@ export function MorningBrief({
                         >
                           <Bookmark className={`w-3 h-3 ${isSaved ? 'fill-amber-400' : ''}`} />
                         </button>
-                        <a
-                          href={item.article.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[var(--accent)] hover:underline inline-flex items-center gap-0.5 font-bold"
+                        <button
+                          type="button"
+                          onClick={() => onOpenArticle(item.article)}
+                          className="text-[var(--accent)] hover:underline inline-flex items-center gap-1 font-bold cursor-pointer"
                         >
-                          READ <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
+                          <BookOpen className="w-2.5 h-2.5" />
+                          <span>READ</span>
+                        </button>
                       </div>
                     </div>
                   </div>

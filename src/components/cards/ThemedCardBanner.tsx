@@ -54,7 +54,7 @@ export function ThemedCardBanner({
 
   return (
     <div 
-      className="w-full h-[180px] relative overflow-hidden flex flex-col justify-between p-4 select-none"
+      className="w-full h-full relative overflow-hidden flex flex-col justify-end gap-2 px-4 pb-3.5 pt-11 select-none"
       style={{
         background: `linear-gradient(135deg, #09090d 0%, ${color2} 100%)`
       }}
@@ -75,17 +75,17 @@ export function ThemedCardBanner({
         style={{ backgroundColor: color1 }}
       />
 
-      <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-2">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: color1 }} />
-          <span className="text-[10px] font-mono font-bold tracking-wider uppercase" style={{ color: color1 }}>
+      <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="w-2 h-2 rounded-full animate-ping shrink-0" style={{ backgroundColor: color1 }} />
+          <span className="text-[10px] font-mono font-bold tracking-wider uppercase truncate" style={{ color: color1 }}>
             {label}
           </span>
         </div>
-        <span className="text-xl leading-none">{symbol}</span>
+        <span className="text-lg leading-none shrink-0">{symbol}</span>
       </div>
 
-      <div className="relative z-10 my-auto py-1">
+      <div className="relative z-10 my-auto">
         <p className="text-white font-sans font-extrabold text-sm line-clamp-2 leading-snug drop-shadow-md">
           {title}
         </p>

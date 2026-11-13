@@ -37,25 +37,44 @@ function parseXmlFeed(xmlText) {
   const itemRegex = /<(?:item|entry)[\s>]([\s\S]*?)<\/(?:item|entry)>/gi;
   let match;
 
+  function decodeEntities(val) {
+    return val
+      .replace(/&#x([0-9a-f]+);/gi, (m, hex) => {
+        const code = parseInt(hex, 16);
+        return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : m;
+      })
+      .replace(/&#(\d+);/g, (m, dec) => {
+        const code = parseInt(dec, 10);
+        return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : m;
+      })
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;|&apos;/gi, "'")
+      .replace(/&rsquo;/gi, '’')
+      .replace(/&lsquo;/gi, '‘')
+      .replace(/&rdquo;/gi, '”')
+      .replace(/&ldquo;/gi, '“')
+      .replace(/&mdash;/gi, '—')
+      .replace(/&ndash;/gi, '–')
+      .replace(/&hellip;/gi, '…')
+      .replace(/&nbsp;/gi, ' ');
+  }
+
   function getTag(block, tag) {
     const r = new RegExp(`<${tag}(?:\\s+[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, 'i');
     const m = block.match(r);
     if (!m) return '';
     let val = m[1].trim();
     val = val.replace(/^<!\[CDATA\[([\s\S]*?)\]\]>$/i, '$1').trim();
-    return val
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&apos;/g, "'");
+    return decodeEntities(val);
   }
 
   function getAttr(block, tag, attr) {
     const r = new RegExp(`<${tag}[^>]*\\s+${attr}=["']([^"']+)["'][^>]*\\/?>`, 'i');
     const m = block.match(r);
-    return m ? m[1] : '';
+    return m ? decodeEntities(m[1]) : '';
   }
 
   while ((match = itemRegex.exec(xmlText)) !== null) {
@@ -70,7 +89,7 @@ function parseXmlFeed(xmlText) {
     const description = getTag(block, 'description') || getTag(block, 'summary');
     const contentEncoded = getTag(block, 'content:encoded') || getTag(block, 'content');
 
-    const contentSnippet = (description || contentEncoded)
+    const contentSnippet = decodeEntities(description || contentEncoded)
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
@@ -79,11 +98,16 @@ function parseXmlFeed(xmlText) {
     const mediaContentUrl = getAttr(block, 'media:content', 'url');
     const mediaThumbnailUrl = getAttr(block, 'media:thumbnail', 'url');
 
+    const parsedDate = pubDate ? new Date(pubDate) : null;
+    const isoDate = parsedDate && !isNaN(parsedDate.getTime())
+      ? parsedDate.toISOString()
+      : new Date().toISOString();
+
     const item = {
       title,
       link,
       pubDate,
-      isoDate: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+      isoDate,
       contentSnippet: contentSnippet.slice(0, 300),
       description,
       content: contentEncoded || description,
@@ -475,8 +499,8 @@ const server = http.createServer(async (req, res) => {
   // Static File Serving from dist/
   if (fs.existsSync(distPath)) {
     // Sanitize path to prevent directory traversal
-    let safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
-    if (safePath === '/' || safePath === '\\') safePath = 'index.html';
+    let safePath = path.normalize(pathname.replace(/^\/+/, '')).replace(/^(\.\.[\/\\])+/, '');
+    if (!safePath || safePath === '.' || safePath === '\\') safePath = 'index.html';
     
     let filePath = path.join(distPath, safePath);
 
@@ -487,7 +511,7 @@ const server = http.createServer(async (req, res) => {
 
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-    const isNoCache = filePath.endsWith('index.html') || filePath.endsWith('sw.js') || filePath.endsWith('registerSW.js') || filePath.endsWith('webmanifest');
+    const isNoCache = filePath.endsWith('index.html') || filePath.endsWith('sw.js') || filePath.endsWith('sw-notifications.js') || filePath.endsWith('registerSW.js') || filePath.endsWith('webmanifest');
 
     const headers = {
       'Content-Type': contentType,

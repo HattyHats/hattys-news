@@ -18,18 +18,22 @@ export function NotificationModal({
   onTest: () => void;
 }) {
   useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      const originalTouchAction = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
 
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.touchAction = originalTouchAction;
-      };
-    }
-  }, [isOpen]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -46,7 +50,7 @@ export function NotificationModal({
         initial={{ opacity: 0, scale: 0.92, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 20 }}
-        className="relative w-full max-w-lg bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-2xl z-10 max-h-[92vh] overflow-y-auto overscroll-contain text-[var(--ink)] select-text touch-pan-y scrollbar-thin"
+        className="relative w-full max-w-lg bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-2xl z-10 max-h-[90dvh] overflow-y-auto overscroll-contain touch-scroll text-[var(--ink)] select-text touch-pan-y scrollbar-thin"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -64,7 +68,7 @@ export function NotificationModal({
           </div>
 
           <div className="cs mb-1">REAL-TIME DISPATCH ALERTS</div>
-          <h2 className="font-display text-3xl sm:text-4xl text-[var(--ink)] mb-2">
+          <h2 className="font-display text-2xl sm:text-4xl text-[var(--ink)] mb-2 leading-tight">
             BREAKING NEWS NOTIFICATIONS
           </h2>
           <p className="text-xs text-[var(--ink-muted)] max-w-md mx-auto mb-4 leading-relaxed">

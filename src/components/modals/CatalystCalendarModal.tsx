@@ -18,20 +18,24 @@ export function CatalystCalendarModal({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const events = useMemo(() => getUpcomingCatalysts(), []);
 
-  // Lock background webpage scroll while modal is active
+  // Lock background webpage scroll & allow Escape close while modal is active
   useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      const originalTouchAction = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
 
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.touchAction = originalTouchAction;
-      };
-    }
-  }, [isOpen]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   // High-precision 1-second live countdown ticker
   useEffect(() => {
@@ -70,7 +74,7 @@ export function CatalystCalendarModal({
         initial={{ opacity: 0, scale: 0.94, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 15 }}
-        className="relative w-full max-w-2xl h-[92vh] sm:h-auto sm:max-h-[88vh] flex flex-col bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl z-10 text-[var(--ink)] overflow-hidden select-text"
+        className="relative w-full max-w-2xl max-h-[90dvh] sm:max-h-[88dvh] flex flex-col bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl z-10 text-[var(--ink)] overflow-hidden select-text"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky Header with Unmissable Touch-Friendly Close Button */}
@@ -121,7 +125,7 @@ export function CatalystCalendarModal({
         </div>
 
         {/* Scrollable Events List (Smooth Mobile Touch-Pan) */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-3.5 touch-pan-y -webkit-overflow-scrolling-touch scrollbar-thin">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-3.5 touch-pan-y touch-scroll scrollbar-thin">
           {filteredEvents.map(ev => {
             const countdown = formatExactCountdown(ev.date, nowMs);
             return (

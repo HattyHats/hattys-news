@@ -59,9 +59,9 @@ export function Header({
         {/* Mobile & Tablet Layout (< lg) */}
         <div className="flex flex-col gap-2 lg:hidden">
           {/* Mobile Row 1: Brand & Actions */}
-          <div className="relative z-30 flex items-center justify-between gap-1 w-full">
+          <div className="relative z-30 flex items-center justify-between gap-1.5 w-full">
             <div 
-              className="flex items-center gap-1.5 cursor-pointer shrink-0" 
+              className="flex items-center gap-1.5 cursor-pointer min-w-0" 
               onClick={() => { onSetFilter('all'); onSetQuery(''); }}
             >
               <div className="relative group shrink-0">
@@ -72,18 +72,18 @@ export function Header({
                   className="relative w-6 h-6 sm:w-7 sm:h-7 rounded-lg border border-white/20 shadow-md" 
                 />
               </div>
-              <span className="logo text-lg sm:text-xl font-display tracking-tight whitespace-nowrap">HATTY'S NEWS</span>
+              <span className="logo text-base sm:text-xl font-display tracking-tight whitespace-nowrap truncate">HATTY'S NEWS</span>
             </div>
 
-            {/* Mobile Action Buttons */}
-            <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            {/* Mobile Action Buttons (compact <=5-6 icons so 320px+ never overflows) */}
+            <div className="flex items-center gap-1 shrink-0">
               {!isInstalled && (
                 <button 
                   onClick={onInstallClick}
                   className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center font-mono text-xs text-[var(--accent)] bg-[var(--surface-solid)] border border-[var(--border)] cursor-pointer" 
                   title="Install App"
                 >
-                  <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <Download className="w-3.5 h-3.5" />
                 </button>
               )}
 
@@ -93,7 +93,7 @@ export function Header({
                   onClick={onOpenFearGreed}
                   title="Fear & Greed Index"
                 >
-                  <Gauge className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[var(--accent)]" />
+                  <Gauge className="w-3.5 h-3.5 text-[var(--accent)]" />
                 </button>
               ) : (
                 <button 
@@ -101,24 +101,16 @@ export function Header({
                   onClick={onOpenDoomsday}
                   title="Doomsday Clock: 90 Seconds to Midnight"
                 >
-                  <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-500 animate-pulse" />
+                  <Clock className="w-3.5 h-3.5 text-red-500 animate-pulse" />
                 </button>
               )}
 
               <button
-                className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0 cursor-pointer"
+                className="ibtn hidden min-[440px]:flex w-7 h-7 sm:w-8 sm:h-8 p-0 items-center justify-center shrink-0 cursor-pointer"
                 onClick={onOpenCatalysts}
                 title="Economic & Crypto Catalyst Calendar"
               >
-                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
-              </button>
-
-              <button
-                className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0 cursor-pointer"
-                onClick={onOpenDashboard}
-                title="Personalized Feed Dashboard & Settings"
-              >
-                <SlidersHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[var(--accent)]" />
+                <Calendar className="w-3.5 h-3.5 text-amber-400" />
               </button>
 
               <button
@@ -131,9 +123,9 @@ export function Header({
                 title={notificationsEnabled ? "Breaking News Alerts: Active" : "Enable Breaking News Notifications"}
               >
                 {notificationsEnabled ? (
-                  <BellRing className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-500 dark:text-emerald-400 animate-bounce" />
+                  <BellRing className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 animate-bounce" />
                 ) : (
-                  <Bell className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <Bell className="w-3.5 h-3.5" />
                 )}
               </button>
 
@@ -142,7 +134,7 @@ export function Header({
                 onClick={onToggleDark}
                 title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
               >
-                {isDark ? <Sun className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <Moon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+                {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
               </button>
 
               <button 
@@ -150,16 +142,16 @@ export function Header({
                 onClick={onManualRefresh}
                 title={`Refresh All ${mode === 'world' ? 'World' : 'Crypto'} Feeds Now`}
               >
-                <RefreshCw className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${loading ? 'animate-spin text-[var(--accent)]' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[var(--accent)]' : ''}`} />
               </button>
               
               <div className="relative">
                 <button 
                   className="ibtn w-7 h-7 sm:w-8 sm:h-8 p-0 flex items-center justify-center shrink-0 cursor-pointer" 
                   onClick={() => setShowMenu(!showMenu)}
-                  title="Hatty's Ecosystem"
+                  title="Hatty's Ecosystem & Quick Tools"
                 >
-                  <Menu className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <Menu className="w-3.5 h-3.5" />
                 </button>
                 <AnimatePresence>
                   {showMenu && (
@@ -169,7 +161,7 @@ export function Header({
                         initial={{ opacity: 0, y: 8, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        className="absolute right-0 mt-2 w-64 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-[100] overflow-hidden text-[var(--ink)]"
+                        className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto touch-scroll bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-[100] text-[var(--ink)]"
                       >
                         <div className="p-3 text-[10px] font-mono text-[var(--ink-muted)] uppercase border-b border-[var(--border)] bg-[var(--bg)] flex items-center justify-between">
                           <span>Hatty's Network</span>
@@ -177,6 +169,20 @@ export function Header({
                         </div>
 
                         <div className="p-2 border-b border-[var(--border)] bg-black/5 dark:bg-white/5 space-y-1.5">
+                          <button
+                            onClick={() => {
+                              setShowMenu(false);
+                              onOpenCatalysts();
+                            }}
+                            className="w-full flex items-center justify-between px-3 py-2 text-xs font-mono font-bold text-[var(--ink)] bg-[var(--surface-solid)] border border-[var(--border)] rounded-lg hover:border-amber-400 transition-colors cursor-pointer"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                              <span>CATALYST CALENDAR</span>
+                            </span>
+                            <span className="text-[10px] text-[var(--ink-muted)]">EVENTS</span>
+                          </button>
+
                           <button
                             onClick={() => {
                               setShowMenu(false);
@@ -331,7 +337,7 @@ export function Header({
           </div>
 
           {/* Search Box */}
-          <div className="flex-1 min-w-[90px] max-w-[150px] xl:max-w-[190px] 2xl:max-w-[260px] relative">
+          <div className="flex-1 min-w-[110px] max-w-[200px] xl:max-w-[250px] 2xl:max-w-[310px] relative">
             <input
               type="text"
               placeholder={mode === 'world' ? "Search world..." : "Search crypto..."}
@@ -355,11 +361,11 @@ export function Header({
             {!isInstalled && (
               <button 
                 onClick={onInstallClick}
-                className="ibtn w-8 h-8 p-0 2xl:w-auto 2xl:px-2.5 2xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] text-[var(--ink)] bg-gradient-to-r from-red-600/15 via-purple-600/15 to-blue-600/15 hover:from-red-600/30 hover:to-blue-600/30 border border-[var(--border)] shadow-sm shrink-0 cursor-pointer" 
+                className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2.5 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] text-[var(--ink)] bg-gradient-to-r from-red-600/15 via-purple-600/15 to-blue-600/15 hover:from-red-600/30 hover:to-blue-600/30 border border-[var(--border)] shadow-sm shrink-0 cursor-pointer" 
                 title="Install Hatty's News App"
               >
                 <Download className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
-                <span className="hidden 2xl:inline font-bold">INSTALL</span>
+                <span className="hidden xl:inline font-bold">INSTALL</span>
               </button>
             )}
 
@@ -395,25 +401,25 @@ export function Header({
             )}
 
             <button
-              className="ibtn w-8 h-8 p-0 2xl:w-auto 2xl:px-2.5 2xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all cursor-pointer"
+              className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2.5 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all cursor-pointer"
               onClick={onOpenCatalysts}
               title="Economic & Crypto Catalyst Calendar"
             >
               <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span className="hidden 2xl:inline font-bold tracking-tight">CATALYSTS</span>
+              <span className="hidden xl:inline font-bold tracking-tight">CATALYSTS</span>
             </button>
 
             <button
-              className="ibtn w-8 h-8 p-0 2xl:w-auto 2xl:px-2.5 2xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-[var(--surface-solid)] hover:border-[var(--accent)] transition-all cursor-pointer"
+              className="ibtn w-8 h-8 p-0 xl:w-auto xl:px-2.5 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 bg-[var(--surface-solid)] hover:border-[var(--accent)] transition-all cursor-pointer"
               onClick={onOpenDashboard}
               title="Personalized Feed Dashboard & Settings"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
-              <span className="hidden 2xl:inline font-bold tracking-tight">CUSTOMIZE</span>
+              <span className="hidden xl:inline font-bold tracking-tight">CUSTOMIZE</span>
             </button>
 
             <button
-              className={`ibtn w-8 h-8 p-0 2xl:w-auto 2xl:px-2.5 2xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 transition-all cursor-pointer ${
+              className={`ibtn w-8 h-8 p-0 xl:w-auto xl:px-2.5 xl:py-1 flex items-center justify-center gap-1 font-mono text-[11px] shrink-0 transition-all cursor-pointer ${
                 notificationsEnabled
                   ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-500 dark:text-emerald-400 border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
                   : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
@@ -426,7 +432,7 @@ export function Header({
               ) : (
                 <Bell className="w-3.5 h-3.5 shrink-0" />
               )}
-              <span className="hidden 2xl:inline font-bold tracking-tight">
+              <span className="hidden xl:inline font-bold tracking-tight">
                 {notificationsEnabled ? 'ALERTS ON' : 'ALERTS'}
               </span>
             </button>
@@ -463,7 +469,7 @@ export function Header({
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-64 bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-[100] overflow-hidden text-[var(--ink)]"
+                      className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto touch-scroll bg-[var(--surface-solid)] border border-[var(--border)] rounded-xl shadow-2xl z-[100] text-[var(--ink)]"
                     >
                       <div className="p-3 text-[10px] font-mono text-[var(--ink-muted)] uppercase border-b border-[var(--border)] bg-[var(--bg)] flex items-center justify-between">
                         <span>Hatty's Network</span>

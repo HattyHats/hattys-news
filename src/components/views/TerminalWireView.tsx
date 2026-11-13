@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { motion } from 'motion/react';
-import { ExternalLink, Bookmark, Share2, Check, ShieldCheck, Zap, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { ExternalLink, Bookmark, Share2, Check, ShieldCheck, BookOpen } from 'lucide-react';
 import { Article, AppMode, DashboardSettings } from '../../types';
 import { formatTimeAgo } from '../../utils/formatters';
 import { detectStoryImpact, getOutletBadge, detectAssetsInArticle } from '../../utils/classifier';
@@ -18,6 +18,7 @@ interface TerminalWireViewProps {
   onToggleSave: (article: Article) => void;
   onCopyLink: (id: string, link: string) => void;
   onOpenPerspective: (article: Article, related: Article[]) => void;
+  onOpenArticle: (article: Article) => void;
   onSetQuery: (q: string | ((prev: string) => string)) => void;
 }
 
@@ -33,6 +34,7 @@ export const TerminalWireView = memo(function TerminalWireView({
   onToggleSave,
   onCopyLink,
   onOpenPerspective,
+  onOpenArticle,
   onSetQuery,
 }: TerminalWireViewProps) {
   return (
@@ -85,19 +87,19 @@ export const TerminalWireView = memo(function TerminalWireView({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {/* Outlet Flag & Name */}
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-black/10 dark:bg-white/10 text-[var(--ink)] border border-[var(--border)]">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] leading-none font-mono font-bold bg-black/10 dark:bg-white/10 text-[var(--ink)] border border-[var(--border)]">
                         <span>{outlet.flag}</span>
                         <span className="truncate">{outlet.name}</span>
                       </span>
 
                       {/* Primary Category Pill */}
-                      <span className="text-[9px] font-mono uppercase font-bold px-1.5 py-0.2 rounded bg-black/5 dark:bg-white/5 text-[var(--ink-muted)] border border-[var(--border)]">
+                      <span className="text-[9px] font-mono uppercase font-bold px-1.5 py-0.5 rounded leading-none bg-black/5 dark:bg-white/5 text-[var(--ink-muted)] border border-[var(--border)]">
                         {art.primaryCat}
                       </span>
 
                       {/* Story Impact Badge */}
                       {impact && (
-                        <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.2 rounded border ${impact.badgeClass}`}>
+                        <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded leading-none border ${impact.badgeClass}`}>
                           {impact.label}
                         </span>
                       )}
@@ -107,7 +109,7 @@ export const TerminalWireView = memo(function TerminalWireView({
                         <button
                           key={ast.id}
                           onClick={() => onSetQuery(ast.symbol)}
-                          className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/30 hover:bg-[var(--accent)]/20 transition-colors cursor-pointer"
+                          className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded leading-none bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/30 hover:bg-[var(--accent)]/20 transition-colors cursor-pointer"
                           title={`Filter for ${ast.symbol}`}
                         >
                           ${ast.symbol} {ast.formatted}
@@ -116,15 +118,14 @@ export const TerminalWireView = memo(function TerminalWireView({
                     </div>
 
                     {/* Headline Text */}
-                    <a
-                      href={art.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-sans font-bold text-sm sm:text-[15px] text-[var(--ink)] hover:text-[var(--accent)] transition-colors leading-snug line-clamp-2"
+                    <button
+                      type="button"
+                      onClick={() => onOpenArticle(art)}
+                      className="text-left font-sans font-bold text-sm sm:text-[15px] text-[var(--ink)] hover:text-[var(--accent)] transition-colors leading-snug line-clamp-2 cursor-pointer"
                       title={art.title}
                     >
                       {art.title}
-                    </a>
+                    </button>
                   </div>
                 </div>
 
@@ -170,15 +171,25 @@ export const TerminalWireView = memo(function TerminalWireView({
                     {copiedId === art.id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Share2 className="w-3.5 h-3.5" />}
                   </button>
 
-                  {/* Read Article Link */}
+                  {/* Read In-Terminal Drawer Button */}
+                  <button
+                    type="button"
+                    onClick={() => onOpenArticle(art)}
+                    className="rbtn px-2.5 py-1 text-[10px] rounded-md cursor-pointer"
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>READ</span>
+                  </button>
+
+                  {/* Open External Source */}
                   <a
                     href={art.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rbtn px-2.5 py-1 text-[10px] rounded-md"
+                    className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
+                    title={`Open original source on ${outlet.name}`}
                   >
-                    <span>OPEN</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
               </div>

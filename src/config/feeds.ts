@@ -93,7 +93,7 @@ export const WORLD_FEEDS: FeedConfig[] = [
   { n: 'UN News', u: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml', defaultCat: 'geopolitics' },
   { n: 'ABC News AU', u: 'https://www.abc.net.au/news/feed/51120/rss.xml', defaultCat: 'all' },
   { n: 'CNA World', u: 'https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6311', defaultCat: 'all' },
-  { n: 'NHK World', u: 'https://news.google.com/rss/search?q=source:%22NHK+WORLD-JAPAN%22&hl=en-US&gl=US&ceid=US:en', defaultCat: 'all' },
+  { n: 'NHK World', u: 'https://news.google.com/rss/search?q=site:nhk.or.jp/nhkworld&hl=en-US&gl=US&ceid=US:en', defaultCat: 'all' },
   { n: 'NASA Space Wire', u: 'https://www.nasa.gov/news-release/feed/', defaultCat: 'space' },
   { n: 'Space.com', u: 'https://www.space.com/feeds/all', defaultCat: 'space' },
   { n: 'Phys.org', u: 'https://phys.org/rss-feed/', defaultCat: 'space' },

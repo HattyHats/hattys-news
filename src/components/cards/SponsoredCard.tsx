@@ -13,7 +13,7 @@ export const SponsoredCard = memo(function SponsoredCard({ idx = 7 }: SponsoredC
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: Math.min(idx * 0.03, 0.6), ease: "easeOut" }}
-      className="card group col-span-1 flex flex-col justify-between overflow-hidden relative shadow-sm hover:border-blue-500/40 transition-all min-h-[380px]"
+      className="card group col-span-1 flex flex-col justify-between overflow-hidden relative shadow-sm hover:border-blue-500/40 transition-all min-h-[340px] sm:min-h-[380px]"
     >
       {/* Top Header Bar matching terminal wire style */}
       <div className="px-3.5 py-2.5 bg-black/30 dark:bg-black/50 border-b border-[var(--border)] flex items-center justify-between">

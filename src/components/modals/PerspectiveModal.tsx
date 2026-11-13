@@ -20,27 +20,31 @@ export function PerspectiveModal({
   relatedArticles,
   mode,
 }: PerspectiveModalProps) {
-  // Mobile Background Scroll Lock: prevents the underlying webpage from scrolling or rubber-banding while modal is open
+  // Mobile Background Scroll Lock + Escape key close
   useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      const originalTouchAction = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
 
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.touchAction = originalTouchAction;
-      };
-    }
-  }, [isOpen]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen || !primaryArticle) return null;
 
   const allPerspectives = [primaryArticle, ...relatedArticles];
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-2.5 sm:p-5 overflow-hidden overscroll-none select-none">
+    <div className="fixed inset-0 z-[100010] flex items-center justify-center p-2.5 sm:p-5 overflow-hidden overscroll-none select-none">
       {/* Dimmed backdrop with direct tap-to-close */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -55,7 +59,7 @@ export function PerspectiveModal({
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="relative w-full max-w-5xl h-[94vh] sm:h-auto sm:max-h-[88vh] flex flex-col bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl z-10 text-[var(--ink)] overflow-hidden select-text"
+        className="relative w-full max-w-5xl max-h-[90dvh] sm:max-h-[88dvh] flex flex-col bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl z-10 text-[var(--ink)] overflow-hidden select-text"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky Header with Unmissable Touch-Friendly Close Button */}
@@ -100,7 +104,7 @@ export function PerspectiveModal({
         </div>
 
         {/* Scrollable Comparison Content Area (Smooth Mobile Touch-Pan) */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 touch-pan-y -webkit-overflow-scrolling-touch scrollbar-thin">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 touch-pan-y touch-scroll scrollbar-thin">
           {/* Feature 2: Consensus Verification Matrix */}
           <div className="p-4 rounded-xl border border-[var(--border)] bg-black/15 dark:bg-white/[0.02]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border)]">

@@ -17,18 +17,22 @@ export function FearGreedModal({
   isDark,
 }: FearGreedModalProps) {
   useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      const originalTouchAction = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
 
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.touchAction = originalTouchAction;
-      };
-    }
-  }, [isOpen]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -46,7 +50,7 @@ export function FearGreedModal({
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-md max-h-[92vh] overflow-y-auto overscroll-contain bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-2xl z-10 text-[var(--ink)] select-text touch-pan-y"
+          className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain touch-scroll bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 shadow-2xl z-10 text-[var(--ink)] select-text touch-pan-y"
           onClick={(e) => e.stopPropagation()}
         >
           <button 
@@ -60,13 +64,13 @@ export function FearGreedModal({
 
           <div className="text-center">
             <div className="cs mb-1">MARKET SENTIMENT MONITOR</div>
-            <h2 className="font-display text-4xl text-[var(--ink)] mb-6">FEAR & GREED INDEX</h2>
+            <h2 className="font-display text-3xl sm:text-4xl text-[var(--ink)] mb-5">FEAR & GREED INDEX</h2>
             
             {fearGreed ? (
               <div className="space-y-6">
                 {/* Gauge Visualization (Needle Sweeps Cleanly - No Text Overlap) */}
-                <div className="relative inline-flex items-center justify-center pt-2">
-                  <svg width="240" height="130" viewBox="0 0 240 130" className="overflow-visible">
+                <div className="relative inline-flex items-center justify-center pt-2 w-full">
+                  <svg viewBox="0 0 240 130" className="w-full max-w-[240px] h-auto overflow-visible">
                     {/* Background Track */}
                     <path 
                       d="M 35 115 A 85 85 0 0 1 205 115" 

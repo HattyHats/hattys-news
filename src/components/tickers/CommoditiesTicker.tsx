@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CommodityItem } from '../../types';
 import { DEFAULT_COMMODITIES, DEFAULT_STOCKS } from '../../config/assets';
 
@@ -10,6 +10,8 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
   const [tickerView, setTickerView] = useState<'commodities' | 'stocks'>('commodities');
   const [commodities, setCommodities] = useState<Record<string, CommodityItem>>(DEFAULT_COMMODITIES);
   const [stocks, setStocks] = useState<Record<string, CommodityItem>>(DEFAULT_STOCKS);
+  const baseCommoditiesRef = useRef<Record<string, { price: number; change24h: number }>>({});
+  const baseStocksRef = useRef<Record<string, { price: number; change24h: number }>>({});
 
   // Sync quotes when parent App passes updated centralized quotes
   useEffect(() => {
@@ -20,8 +22,9 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
       const updated = { ...prev };
       for (const [k, item] of Object.entries(prev) as [string, CommodityItem][]) {
         const q = marketQuotes[k] || marketQuotes[item.ticker] || marketQuotes[item.symbol];
-        if (q && (item.price !== q.price || item.change24h !== q.change24h)) {
+        if (q && (baseCommoditiesRef.current[k]?.price !== q.price || baseCommoditiesRef.current[k]?.change24h !== q.change24h)) {
           changed = true;
+          baseCommoditiesRef.current[k] = { price: q.price, change24h: q.change24h };
           updated[k] = {
             ...item,
             price: q.price,
@@ -38,8 +41,9 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
       const updated = { ...prev };
       for (const [k, item] of Object.entries(prev) as [string, CommodityItem][]) {
         const q = marketQuotes[k] || marketQuotes[item.ticker] || marketQuotes[item.symbol];
-        if (q && (item.price !== q.price || item.change24h !== q.change24h)) {
+        if (q && (baseStocksRef.current[k]?.price !== q.price || baseStocksRef.current[k]?.change24h !== q.change24h)) {
           changed = true;
+          baseStocksRef.current[k] = { price: q.price, change24h: q.change24h };
           updated[k] = {
             ...item,
             price: q.price,
@@ -52,7 +56,7 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
     });
   }, [marketQuotes]);
 
-  // Micro-tick simulation loop: continuous real-time market movements with green/red flashes
+  // Subtle anchored live micro-tick pulse bounded within ±0.25% of synced quote
   useEffect(() => {
     const cKeys = Object.keys(DEFAULT_COMMODITIES);
     const sKeys = Object.keys(DEFAULT_STOCKS);
@@ -63,10 +67,18 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
       setCommodities(prev => {
         const item = prev[targetC];
         if (!item) return prev;
-        const deltaPct = (Math.random() - 0.48) * 0.0015;
-        const newPrice = Math.max(0.01, item.price * (1 + deltaPct));
+        const base = baseCommoditiesRef.current[targetC] || {
+          price: DEFAULT_COMMODITIES[targetC].price,
+          change24h: DEFAULT_COMMODITIES[targetC].change24h,
+        };
+        const deltaPct = (Math.random() - 0.5) * 0.0014;
+        const rawPrice = item.price * (1 + deltaPct);
+        const minP = base.price * 0.9975;
+        const maxP = base.price * 1.0025;
+        const newPrice = Math.min(maxP, Math.max(minP, rawPrice));
         const flash: 'up' | 'down' = newPrice >= item.price ? 'up' : 'down';
-        const newChange = item.change24h + (deltaPct * 100);
+        const driftFromBase = ((newPrice - base.price) / Math.max(base.price, 0.01)) * 100;
+        const newChange = base.change24h + driftFromBase;
 
         let formatted = '';
         if (item.symbol === 'GOLD') {
@@ -88,10 +100,18 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
       setStocks(prev => {
         const item = prev[targetS];
         if (!item) return prev;
-        const deltaPct = (Math.random() - 0.48) * 0.0012;
-        const newPrice = Math.max(0.01, item.price * (1 + deltaPct));
+        const base = baseStocksRef.current[targetS] || {
+          price: DEFAULT_STOCKS[targetS].price,
+          change24h: DEFAULT_STOCKS[targetS].change24h,
+        };
+        const deltaPct = (Math.random() - 0.5) * 0.0012;
+        const rawPrice = item.price * (1 + deltaPct);
+        const minP = base.price * 0.9975;
+        const maxP = base.price * 1.0025;
+        const newPrice = Math.min(maxP, Math.max(minP, rawPrice));
         const flash: 'up' | 'down' = newPrice >= item.price ? 'up' : 'down';
-        const newChange = item.change24h + (deltaPct * 100);
+        const driftFromBase = ((newPrice - base.price) / Math.max(base.price, 0.01)) * 100;
+        const newChange = base.change24h + driftFromBase;
         const formatted = `$${newPrice.toFixed(2)}`;
 
         return {
@@ -120,7 +140,7 @@ export function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
     : (Object.values(stocks) as CommodityItem[]);
 
   return (
-    <div className="w-full flex items-center justify-between gap-2 overflow-x-auto scrollbar-none py-1">
+    <div className="w-full flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-1">
       {/* Switcher Badge: Toggle Between Commodities and Stocks */}
       <div className="flex items-center gap-1 bg-black/20 p-0.5 rounded-lg border border-[var(--border)] shrink-0 font-mono text-[10px]">
         <button

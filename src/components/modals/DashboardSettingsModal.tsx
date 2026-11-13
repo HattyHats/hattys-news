@@ -24,19 +24,23 @@ export function DashboardSettingsModal({
   const [activeTab, setActiveTab] = useState<AppMode>(mode);
 
   useEffect(() => {
-    if (isOpen) {
-      setActiveTab(mode);
-      const originalOverflow = document.body.style.overflow;
-      const originalTouchAction = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+    if (!isOpen) return;
+    setActiveTab(mode);
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
 
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.touchAction = originalTouchAction;
-      };
-    }
-  }, [isOpen, mode]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, mode, onClose]);
 
   if (!isOpen) return null;
 
@@ -108,7 +112,7 @@ export function DashboardSettingsModal({
         initial={{ opacity: 0, scale: 0.94, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 15 }}
-        className="relative w-full max-w-lg bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[92vh] select-text"
+        className="relative w-full max-w-lg bg-[var(--surface-solid)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90dvh] select-text"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -137,45 +141,45 @@ export function DashboardSettingsModal({
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain space-y-5 flex-1 touch-pan-y scrollbar-thin">
+        <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain touch-scroll space-y-5 flex-1 touch-pan-y scrollbar-thin">
           {/* Mode Tabs */}
           <div className="flex items-center p-1 bg-[var(--bg)] border border-[var(--border)] rounded-xl">
             <button
               onClick={() => setActiveTab('crypto')}
-              className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === 'crypto'
                   ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md'
                   : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
               }`}
             >
               <span>⚡</span>
-              <span>CRYPTO CATEGORIES</span>
+              <span>CRYPTO<span className="hidden sm:inline"> CATEGORIES</span></span>
             </button>
             <button
               onClick={() => setActiveTab('world')}
-              className={`flex-1 py-1.5 sm:py-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === 'world'
                   ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
                   : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
               }`}
             >
               <span>🌐</span>
-              <span>WORLD WIRE CATEGORIES</span>
+              <span>WORLD WIRE<span className="hidden sm:inline"> CATEGORIES</span></span>
             </button>
           </div>
 
           {/* Section: Category Visibility & Order */}
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between gap-2 mb-2">
               <label className="text-xs font-mono font-bold text-[var(--ink)] uppercase flex items-center gap-1.5">
                 <span>FEED CATEGORY PILLS & REORDER</span>
               </label>
-              <span className="text-[10px] font-mono text-[var(--ink-muted)]">
+              <span className="text-[10px] font-mono text-[var(--ink-muted)] shrink-0">
                 USE ARROWS TO REORDER
               </span>
             </div>
 
-            <div className="space-y-1.5 bg-[var(--bg)] p-2 rounded-xl border border-[var(--border)] max-h-56 overflow-y-auto">
+            <div className="space-y-1.5 bg-[var(--bg)] p-2 rounded-xl border border-[var(--border)] max-h-56 overflow-y-auto touch-scroll">
               {categoriesInOrder.map((cat, idx) => {
                 const isHidden = hiddenSet.has(cat.id);
                 const isAll = cat.id === 'all';
@@ -184,16 +188,16 @@ export function DashboardSettingsModal({
                 return (
                   <div
                     key={cat.id}
-                    className={`flex items-center justify-between p-2 rounded-lg border text-xs font-mono transition-all ${
+                    className={`flex items-center justify-between gap-2 p-2 rounded-lg border text-xs font-mono transition-all ${
                       isHidden
                         ? 'opacity-50 bg-black/5 dark:bg-white/5 border-transparent'
                         : 'bg-[var(--surface-solid)] border-[var(--border)] shadow-xs'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">{cat.icon}</span>
-                      <span className="font-bold text-[var(--ink)]">{cat.label}</span>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/10 text-[var(--ink-muted)]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm shrink-0">{cat.icon}</span>
+                      <span className="font-bold text-[var(--ink)] truncate">{cat.label}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full leading-none bg-black/10 dark:bg-white/10 text-[var(--ink-muted)] shrink-0">
                         {count}
                       </span>
                     </div>
@@ -245,14 +249,14 @@ export function DashboardSettingsModal({
           </div>
 
           {/* Section: Live Asset Mention Tagging Toggle */}
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex items-center justify-between gap-3">
+          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm">🏷️</span>
                 <span className="text-xs font-mono font-bold text-[var(--ink)]">
                   LIVE ASSET MENTION TAGGING
                 </span>
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold leading-none bg-amber-500/15 text-amber-400 border border-amber-500/30">
                   LIVE
                 </span>
               </div>
@@ -262,7 +266,7 @@ export function DashboardSettingsModal({
             </div>
             <button
               onClick={() => onUpdateSettings({ ...settings, showAssetTags: !settings.showAssetTags })}
-              className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold border shrink-0 transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold border shrink-0 self-start sm:self-center transition-all cursor-pointer ${
                 settings.showAssetTags
                   ? 'bg-emerald-500 text-black border-emerald-400 shadow-md shadow-emerald-500/20'
                   : 'bg-black/10 dark:bg-white/10 text-[var(--ink-muted)] border-[var(--border)]'
@@ -273,7 +277,7 @@ export function DashboardSettingsModal({
           </div>
 
           {/* Section: Card Density */}
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex items-center justify-between gap-3">
+          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm">📐</span>
@@ -285,7 +289,7 @@ export function DashboardSettingsModal({
                 Standard gives full editorial presentation; Compact provides high-density market terminal layout.
               </p>
             </div>
-            <div className="flex items-center gap-1 bg-[var(--surface-solid)] p-1 rounded-lg border border-[var(--border)] shrink-0 font-mono text-[10px]">
+            <div className="flex items-center gap-1 bg-[var(--surface-solid)] p-1 rounded-lg border border-[var(--border)] shrink-0 self-start sm:self-center font-mono text-[10px]">
               <button
                 onClick={() => onUpdateSettings({ ...settings, cardDensity: 'comfortable' })}
                 className={`px-2 py-1 rounded font-bold transition-all cursor-pointer ${

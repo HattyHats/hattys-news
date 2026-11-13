@@ -10,18 +10,22 @@ export interface DoomsdayModalProps {
 
 export function DoomsdayModal({ isOpen, onClose, isDark }: DoomsdayModalProps) {
   useEffect(() => {
-    if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      const originalTouchAction = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
 
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.touchAction = originalTouchAction;
-      };
-    }
-  }, [isOpen]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -73,7 +77,7 @@ export function DoomsdayModal({ isOpen, onClose, isDark }: DoomsdayModalProps) {
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto overscroll-contain bg-[var(--surface-solid)] border border-red-500/30 rounded-2xl p-5 sm:p-7 shadow-2xl z-10 text-[var(--ink)] select-text touch-pan-y scrollbar-thin"
+        className="relative w-full max-w-xl max-h-[90dvh] overflow-y-auto overscroll-contain bg-[var(--surface-solid)] border border-red-500/30 rounded-2xl p-5 sm:p-7 shadow-2xl z-10 text-[var(--ink)] select-text touch-pan-y touch-scroll scrollbar-thin"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
@@ -174,7 +178,7 @@ export function DoomsdayModal({ isOpen, onClose, isDark }: DoomsdayModalProps) {
           {/* Primary Readout */}
           <div className="flex flex-col items-center mt-2 mb-5">
             <div className="flex items-baseline gap-2 font-mono">
-              <span className="text-5xl sm:text-6xl font-black text-red-500 tracking-tight drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]">
+              <span className="text-4xl sm:text-6xl font-black text-red-500 tracking-tight drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]">
                 90 SECONDS
               </span>
             </div>
@@ -219,11 +223,13 @@ export function DoomsdayModal({ isOpen, onClose, isDark }: DoomsdayModalProps) {
             </div>
             <div className="space-y-1.5 font-mono text-xs bg-[var(--bg)] p-3.5 rounded-xl border border-[var(--border)]">
               {timeline.map((item, idx) => (
-                <div key={idx} className="flex items-start justify-between py-1 border-b border-[var(--border)] last:border-none">
-                  <span className="font-bold text-[var(--ink)] shrink-0 w-20">{item.year}:</span>
-                  <span className={`font-bold shrink-0 w-24 text-right mr-3 ${item.year === 'PRESENT' ? 'text-red-500' : 'text-[var(--accent)]'}`}>
-                    {item.setting}
-                  </span>
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 sm:gap-3 py-1.5 border-b border-[var(--border)] last:border-none">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-bold text-[var(--ink)] sm:w-16">{item.year}:</span>
+                    <span className={`font-bold sm:w-16 sm:text-right ${item.year === 'PRESENT' ? 'text-red-500' : 'text-[var(--accent)]'}`}>
+                      {item.setting}
+                    </span>
+                  </div>
                   <span className="text-[11px] text-[var(--ink-muted)] text-left flex-1 font-sans">
                     {item.desc}
                   </span>
