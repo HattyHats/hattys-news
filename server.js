@@ -159,7 +159,7 @@ const newsFeedCache = new Map();
 async function fetchMarketQuotes() {
   const symbols = [
     'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'DOGE-USD',
-    'BNB-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD',
+    'BNB-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD', 'NEAR-USD',
     'CL=F', 'BZ=F', 'GC=F', 'SI=F', 'NG=F', 'HG=F',
     'SPY', 'QQQ', 'DIA', 'IWM', 'EWU', 'EWG', 'FEZ', 'EWJ',
     'NVDA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'TSLA', 'META'
@@ -249,6 +249,13 @@ async function fetchMarketQuotes() {
         price: results['LINK-USD']?.price ?? 14.65,
         change24h: results['LINK-USD']?.change ?? 2.10,
         formatted: `$${(results['LINK-USD']?.price ?? 14.65).toFixed(2)}`
+      },
+      NEAR: {
+        symbol: 'NEAR',
+        name: 'NEAR Protocol',
+        price: results['NEAR-USD']?.price ?? 3.11,
+        change24h: results['NEAR-USD']?.change ?? -11.09,
+        formatted: `$${(results['NEAR-USD']?.price ?? 3.11).toFixed(2)}`
       }
     },
     commodities: {

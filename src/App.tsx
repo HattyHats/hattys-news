@@ -318,6 +318,7 @@ export default function App() {
     ADA: { price: 0.4210, change24h: 0.85, formatted: '$0.4210' },
     AVAX: { price: 24.80, change24h: 1.42, formatted: '$24.80' },
     LINK: { price: 14.65, change24h: 2.10, formatted: '$14.65' },
+    NEAR: { price: 3.11, change24h: -11.09, formatted: '$3.11' },
     SUI: { price: 2.18, change24h: 3.40, formatted: '$2.18' },
     OIL_CRUDE: { price: 103.27, change24h: 3.82, formatted: '$103.27' },
     OIL_BRENT: { price: 111.70, change24h: 2.80, formatted: '$111.70' },
@@ -1113,11 +1114,10 @@ export default function App() {
               )}
             </div>
 
-            {/* Feature 5: Prominent Macro Catalyst Countdown Ticker Pill (Desktop Only - isolated 1s timer) */}
+            {/* Feature 5: Compact Macro Catalyst Countdown Pill (Crypto + World - isolated 1s timer) */}
             {nearestCatalyst && (
               <CatalystCountdownPill
-                title={nearestCatalyst.title.split('(')[0].trim()}
-                targetDate={nearestCatalyst.date}
+                catalyst={nearestCatalyst}
                 mode={mode}
                 onOpenCatalysts={handleOpenCatalysts}
               />

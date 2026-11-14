@@ -2,6 +2,8 @@ import React, { memo, useState, useEffect, useRef } from 'react';
 import { TickerToken } from '../../types';
 import { DEFAULT_TOKENS } from '../../config/assets';
 
+const PRODUCT_IDS = Object.keys(DEFAULT_TOKENS);
+
 interface LiveTickerProps {
   onBatchPriceTick?: (updates: Record<string, { price: number; change: number; formatted: string }>) => void;
 }
@@ -16,7 +18,6 @@ function formatCryptoPrice(rawPrice: number): string {
 
 export const LiveTicker = memo(function LiveTicker({ onBatchPriceTick }: LiveTickerProps) {
   const [tokens, setTokens] = useState<Record<string, TickerToken>>(DEFAULT_TOKENS);
-  const [isConnected, setIsConnected] = useState(false);
   const onBatchRef = useRef(onBatchPriceTick);
   onBatchRef.current = onBatchPriceTick;
 
@@ -29,7 +30,7 @@ export const LiveTicker = memo(function LiveTicker({ onBatchPriceTick }: LiveTic
     let cancelled = false;
     const fetchInitial = async () => {
       try {
-        const cgRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,dogecoin,ripple&vs_currencies=usd&include_24hr_change=true');
+        const cgRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,dogecoin,ripple,near,cardano&vs_currencies=usd&include_24hr_change=true');
         if (cgRes.ok && !cancelled) {
           const cg = await cgRes.json();
           const map: Record<string, { price: number; change: number }> = {
@@ -38,6 +39,8 @@ export const LiveTicker = memo(function LiveTicker({ onBatchPriceTick }: LiveTic
             'SOL-USD': { price: cg.solana?.usd, change: cg.solana?.usd_24h_change || 0 },
             'DOGE-USD': { price: cg.dogecoin?.usd, change: cg.dogecoin?.usd_24h_change || 0 },
             'XRP-USD': { price: cg.ripple?.usd, change: cg.ripple?.usd_24h_change || 0 },
+            'NEAR-USD': { price: cg.near?.usd, change: cg.near?.usd_24h_change || 0 },
+            'ADA-USD': { price: cg.cardano?.usd, change: cg.cardano?.usd_24h_change || 0 },
           };
 
           setTokens(prev => {
@@ -57,9 +60,8 @@ export const LiveTicker = memo(function LiveTicker({ onBatchPriceTick }: LiveTic
         }
       } catch {}
 
-      const productIds = ['BTC-USD', 'ETH-USD', 'SOL-USD', 'DOGE-USD', 'XRP-USD'];
       await Promise.allSettled(
-        productIds.map(async (id) => {
+        PRODUCT_IDS.map(async (id) => {
           try {
             const res = await fetch(`https://api.exchange.coinbase.com/products/${id}/ticker`);
             if (!res.ok || cancelled) return;
@@ -104,10 +106,9 @@ export const LiveTicker = memo(function LiveTicker({ onBatchPriceTick }: LiveTic
         ws = new WebSocket('wss://ws-feed.exchange.coinbase.com');
 
         ws.onopen = () => {
-          setIsConnected(true);
           ws?.send(JSON.stringify({
             type: 'subscribe',
-            product_ids: ['BTC-USD', 'ETH-USD', 'SOL-USD', 'DOGE-USD', 'XRP-USD'],
+            product_ids: PRODUCT_IDS,
             channels: ['ticker']
           }));
         };
@@ -130,7 +131,6 @@ export const LiveTicker = memo(function LiveTicker({ onBatchPriceTick }: LiveTic
         };
 
         ws.onclose = () => {
-          setIsConnected(false);
           if (!isDisposed) {
             reconnectTimeout = window.setTimeout(connect, 3000);
           }
@@ -223,19 +223,13 @@ export const LiveTicker = memo(function LiveTicker({ onBatchPriceTick }: LiveTic
   }, []);
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 px-1">
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--surface)] border border-[var(--border)] text-[10px] font-mono shrink-0">
-        <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-        <span className="font-bold text-[var(--ink)]">COINBASE PRO</span>
-        <span className="text-[var(--ink-muted)] hidden sm:inline">TICKER</span>
-      </div>
-
+    <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1">
       {(Object.values(tokens) as TickerToken[]).map((t) => {
         const isUp = t.change24h >= 0;
         return (
           <div
-            key={t.name}
-            className={`flex items-center gap-2 px-3 py-1 rounded-md border text-xs font-mono shrink-0 transition-colors ${
+            key={t.symbol}
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-md border text-xs font-mono shrink-0 transition-colors ${
               t.flash === 'up'
                 ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
                 : t.flash === 'down'

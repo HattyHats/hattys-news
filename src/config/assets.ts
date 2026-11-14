@@ -11,6 +11,7 @@ export const ASSET_DEFINITIONS: AssetDefinition[] = [
   { id: 'BNB', symbol: 'BNB', name: 'BNB', type: 'crypto', regex: /\b(\$?BNB|Binance Coin)\b/i, color: '#facc15', marketKey: 'BNB' },
   { id: 'AVAX', symbol: 'AVAX', name: 'Avalanche', type: 'crypto', regex: /\b(\$?AVAX|Avalanche)\b/i, color: '#ef4444', marketKey: 'AVAX' },
   { id: 'LINK', symbol: 'LINK', name: 'Chainlink', type: 'crypto', regex: /(?:\$LINK\b|\bChainlink\b|\bLINK\s+(?:token|price|crypto|etf|oracle)\b)/i, color: '#2563eb', marketKey: 'LINK' },
+  { id: 'NEAR', symbol: 'NEAR', name: 'NEAR Protocol', type: 'crypto', regex: /(?:\$NEAR\b|\bNEAR\s+Protocol\b|\bNEAR\s+(?:token|price|crypto|coin|network)\b)/i, color: '#00ec97', marketKey: 'NEAR' },
   { id: 'SUI', symbol: 'SUI', name: 'Sui', type: 'crypto', regex: /\b(\$?SUI|Sui Network)\b/i, color: '#0284c7', marketKey: 'SUI' },
   { id: 'PEPE', symbol: 'PEPE', name: 'Pepe', type: 'crypto', regex: /\b(\$?PEPE|Pepe Coin)\b/i, color: '#22c55e', marketKey: 'PEPE' },
   { id: 'SHIB', symbol: 'SHIB', name: 'Shiba Inu', type: 'crypto', regex: /\b(\$?SHIB|Shiba Inu)\b/i, color: '#f97316', marketKey: 'SHIB' },
@@ -44,6 +45,8 @@ export const DEFAULT_TOKENS: Record<string, TickerToken> = {
   'SOL-USD': { symbol: 'SOL', name: 'Solana', price: 102.26, open24h: 102.17, change24h: 0.09, flash: null, formatted: '$102.26' },
   'DOGE-USD': { symbol: 'DOGE', name: 'Dogecoin', price: 0.0778, open24h: 0.0785, change24h: -0.87, flash: null, formatted: '$0.0778' },
   'XRP-USD': { symbol: 'XRP', name: 'XRP', price: 1.3020, open24h: 1.2890, change24h: 1.01, flash: null, formatted: '$1.3020' },
+  'NEAR-USD': { symbol: 'NEAR', name: 'NEAR Protocol', price: 3.11, open24h: 3.50, change24h: -11.09, flash: null, formatted: '$3.11' },
+  'ADA-USD': { symbol: 'ADA', name: 'Cardano', price: 0.1551, open24h: 0.1707, change24h: -9.12, flash: null, formatted: '$0.1551' },
 };
 
 export const INITIAL_TAPE_QUOTES: TapeQuote[] = [
