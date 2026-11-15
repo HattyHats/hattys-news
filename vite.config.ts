@@ -104,7 +104,7 @@ export default defineConfig(({mode}) => {
           skipWaiting: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
           navigateFallback: 'index.html',
-          navigateFallbackDenylist: [/^\/api\//],
+          navigateFallbackDenylist: [/^\/api\//, /^\/robots\.txt$/i, /^\/sitemap\.xml$/i],
           runtimeCaching: [
             {
               // Navigation requests (opening the web app, Chrome app, or website)
@@ -112,7 +112,7 @@ export default defineConfig(({mode}) => {
               urlPattern: ({ request }) => request.mode === 'navigate',
               handler: 'NetworkFirst',
               options: {
-                cacheName: 'hatty-html-cache',
+                cacheName: 'hatty-html-cache-v2',
                 networkTimeoutSeconds: 2.5,
                 expiration: {
                   maxEntries: 10,
