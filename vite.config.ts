@@ -46,7 +46,7 @@ function apiNewsPlugin() {
       'Accept-Language': 'en-US,en;q=0.9',
       'Referer': 'https://www.google.com/',
     },
-    timeout: 10000,
+    timeout: 6500,
   });
 
   return {

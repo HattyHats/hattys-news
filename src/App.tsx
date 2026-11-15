@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Radio, ShieldAlert, BellRing, Zap, Calendar, Clock, Gauge } from 'lucide-react';
+import { Radio, ShieldAlert, BellRing, Zap, Calendar, Clock, Gauge, Flame, CheckCircle2, Keyboard } from 'lucide-react';
 
 import { AppMode, Article, FearGreedData, FeedConfig, ViewLayoutMode } from './types';
 import { CRYPTO_FEEDS, WORLD_FEEDS, CRYPTO_CATEGORIES, WORLD_CATEGORIES, DEFAULT_DASHBOARD_SETTINGS } from './config/feeds';
@@ -16,6 +16,18 @@ import { classifyArticle } from './utils/classifier';
 import { computeArticleClusters } from './utils/clustering';
 import { loadCachedArticlesForMode, saveArticlesCache } from './utils/storage';
 import { getUpcomingCatalysts } from './utils/formatters';
+import {
+  loadAndSyncDailyStreak,
+  markDailyStreakCaughtUp,
+  loadLastCaughtUpTimestamp,
+  saveCaughtUpTimestamp,
+  DailyStreakState,
+} from './utils/dailyHabit';
+import {
+  loadUserPulseVotes,
+  saveUserPulseVote,
+  PulseVote,
+} from './utils/communityPulse';
 
 const EMPTY_RELATED: Article[] = [];
 
@@ -83,6 +95,8 @@ import { FearGreedModal } from './components/modals/FearGreedModal';
 import { PwaInstallModal } from './components/modals/PwaInstallModal';
 import { PerspectiveModal } from './components/modals/PerspectiveModal';
 import { ArticleReaderDrawer } from './components/modals/ArticleReaderDrawer';
+import { ShareSnapshotModal } from './components/modals/ShareSnapshotModal';
+import { KeyboardShortcutsModal } from './components/modals/KeyboardShortcutsModal';
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>('crypto');
@@ -93,7 +107,15 @@ export default function App() {
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState<boolean>(initialCached.length === 0);
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('hattys_theme') !== 'light';
+    } catch {
+      return true;
+    }
+  });
+  const refreshToastTimerRef = useRef<number | null>(null);
+  const notifToastTimerRef = useRef<number | null>(null);
 
   // Feature 2: Terminal Pro View Mode Toggle (Grid vs. Dense Wire)
   const [viewMode, setViewMode] = useState<ViewLayoutMode>(() => {
@@ -128,13 +150,38 @@ export default function App() {
   const [refreshToast, setRefreshToast] = useState<{ message: string; active: boolean } | null>(null);
   const fetchSeqRef = useRef(0);
 
-  // Perspective Comparator Modal State
+  // Perspective Comparator & Story Timeline Modal State
   const [perspectiveModalOpen, setPerspectiveModalOpen] = useState(false);
   const [perspectivePrimary, setPerspectivePrimary] = useState<Article | null>(null);
   const [perspectiveRelated, setPerspectiveRelated] = useState<Article[]>([]);
+  const [perspectiveInitialTab, setPerspectiveInitialTab] = useState<'compare' | 'timeline'>('compare');
 
   // In-App Terminal Reader Drawer State
   const [readerArticle, setReaderArticle] = useState<Article | null>(null);
+
+  // Feature 5: Terminal Snapshot Share Card Modal State
+  const [snapshotArticle, setSnapshotArticle] = useState<Article | null>(null);
+
+  // Feature 6: Keyboard Navigation & Shortcuts Cheat Sheet Modal State
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [focusedIdx, setFocusedIdx] = useState<number | null>(null);
+
+  // Feature 1: Daily Terminal Streak State
+  const [dailyStreak, setDailyStreak] = useState<DailyStreakState>(() => loadAndSyncDailyStreak());
+
+  // Feature 3: Community Sentiment Pulse Votes
+  const [pulseVotes, setPulseVotes] = useState<Record<string, PulseVote>>(() => loadUserPulseVotes());
+
+  const handleVotePulse = useCallback((articleId: string, vote: PulseVote) => {
+    setPulseVotes(prev => {
+      const nextVote = prev[articleId] === vote ? null : vote;
+      return saveUserPulseVote(articleId, nextVote, prev);
+    });
+  }, []);
+
+  const handleOpenSnapshot = useCallback((article: Article) => {
+    setSnapshotArticle(article);
+  }, []);
 
   // Notifications State
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
@@ -212,23 +259,22 @@ export default function App() {
     });
   }, []);
 
-  // Track Last Visit Timestamp per Mode for "NEW" Story Badges
-  const [lastVisitTime, setLastVisitTime] = useState<number>(() => Date.now() - 3 * 3600 * 1000);
+  // Feature 1: Track "Since You Last Checked" Watermark Timestamp per Mode
+  const [lastVisitTime, setLastVisitTime] = useState<number>(() => loadLastCaughtUpTimestamp('crypto'));
 
   useEffect(() => {
-    try {
-      const visitKey = `hattys_last_visit_${mode}`;
-      const prev = localStorage.getItem(visitKey);
-      const now = Date.now();
-      if (prev) {
-        const parsed = parseInt(prev, 10);
-        const threshold = now - parsed < 5 * 60 * 1000 ? now - 2 * 3600 * 1000 : parsed;
-        setLastVisitTime(threshold);
-      } else {
-        setLastVisitTime(now - 3 * 3600 * 1000);
-      }
-      localStorage.setItem(visitKey, String(now));
-    } catch {}
+    setLastVisitTime(loadLastCaughtUpTimestamp(mode));
+  }, [mode]);
+
+  const handleMarkCaughtUp = useCallback(() => {
+    const now = Date.now();
+    saveCaughtUpTimestamp(mode, now);
+    setLastVisitTime(now);
+    setDailyStreak(markDailyStreakCaughtUp());
+    setFilter(prev => (prev === 'new' ? 'all' : prev));
+    setRefreshToast({ message: '✓ All caught up! Watermark synced to latest wire.', active: false });
+    if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
+    refreshToastTimerRef.current = window.setTimeout(() => setRefreshToast(null), 2600);
   }, [mode]);
 
   // PWA Standalone App State
@@ -559,12 +605,14 @@ export default function App() {
       }
       await loadNews(true);
       setRefreshToast({ message: `Feed updated with latest ${mode === 'world' ? 'global' : 'crypto'} dispatches`, active: false });
-      setTimeout(() => {
+      if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
+      refreshToastTimerRef.current = window.setTimeout(() => {
         setRefreshToast(null);
       }, 2500);
     } catch {
       setRefreshToast({ message: 'Sync failed. Re-trying...', active: false });
-      setTimeout(() => setRefreshToast(null), 2500);
+      if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
+      refreshToastTimerRef.current = window.setTimeout(() => setRefreshToast(null), 2500);
     }
   };
 
@@ -623,7 +671,8 @@ export default function App() {
           window.location.href,
           'hattys-activated'
         );
-        setTimeout(() => setNotificationSuccessToast(null), 4000);
+        if (notifToastTimerRef.current) window.clearTimeout(notifToastTimerRef.current);
+        notifToastTimerRef.current = window.setTimeout(() => setNotificationSuccessToast(null), 4000);
       } else if (perm === 'denied') {
         setNotificationsEnabled(false);
         localStorage.setItem('hattys_notifications_enabled', '0');
@@ -640,7 +689,8 @@ export default function App() {
       setNotificationsEnabled(false);
       localStorage.setItem('hattys_notifications_enabled', '0');
       setNotificationSuccessToast('🔕 Breaking news alerts turned off.');
-      setTimeout(() => setNotificationSuccessToast(null), 3000);
+      if (notifToastTimerRef.current) window.clearTimeout(notifToastTimerRef.current);
+      notifToastTimerRef.current = window.setTimeout(() => setNotificationSuccessToast(null), 3000);
     }
   };
 
@@ -656,7 +706,8 @@ export default function App() {
 
     await triggerNativeNotification(testTitle, testBody, testUrl, 'test-alert-' + Date.now());
     setNotificationSuccessToast('Test alert dispatched to your device!');
-    setTimeout(() => setNotificationSuccessToast(null), 3000);
+    if (notifToastTimerRef.current) window.clearTimeout(notifToastTimerRef.current);
+    notifToastTimerRef.current = window.setTimeout(() => setNotificationSuccessToast(null), 3000);
   };
 
   // Monitor breaking articles for notifications
@@ -697,12 +748,7 @@ export default function App() {
     if (document.documentElement) document.documentElement.scrollTop = 0;
     if (document.body) document.body.scrollTop = 0;
 
-    const restored = loadCachedArticlesForMode(mode);
-    if (restored.length > 0) {
-      setArticles(restored);
-      setLoading(false);
-    }
-    loadNews(true);
+    loadNews(false);
 
     if (mode === 'crypto') {
       fetchFearGreed();
@@ -714,6 +760,9 @@ export default function App() {
   // Theme & App Mode Sync (dark/light + crypto red vs world blue accent theme)
   useEffect(() => {
     document.body.classList.toggle('world-mode', mode === 'world');
+    try {
+      localStorage.setItem('hattys_theme', isDark ? 'dark' : 'light');
+    } catch {}
     if (isDark) {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
@@ -909,6 +958,7 @@ export default function App() {
 
   useEffect(() => {
     setDisplayLimit(24);
+    setFocusedIdx(null);
   }, [mode, filter, query]);
 
   const visibleArticles = useMemo(() => {
@@ -939,12 +989,16 @@ export default function App() {
     copyTimerRef.current = window.setTimeout(() => setCopiedId(null), 2000);
   }, []);
 
-  // Open Perspective Comparator Modal
-  const handleOpenPerspective = useCallback((primary: Article, related: Article[]) => {
-    setPerspectivePrimary(primary);
-    setPerspectiveRelated(related);
-    setPerspectiveModalOpen(true);
-  }, []);
+  // Open Perspective Comparator / Story Timeline Modal
+  const handleOpenPerspective = useCallback(
+    (primary: Article, related: Article[], initialTab: 'compare' | 'timeline' = 'compare') => {
+      setPerspectivePrimary(primary);
+      setPerspectiveRelated(related);
+      setPerspectiveInitialTab(initialTab);
+      setPerspectiveModalOpen(true);
+    },
+    []
+  );
 
   // In-App Reader Drawer Helpers
   useEffect(() => {
@@ -984,6 +1038,192 @@ export default function App() {
       setReaderArticle(filtered[readerIndex + 1]);
     }
   }, [readerIndex, filtered]);
+
+  // Feature 6: Global Power-User Keyboard Navigation
+  const kbStateRef = useRef({
+    visibleArticles,
+    focusedIdx,
+    readerArticle,
+    snapshotArticle,
+    perspectiveModalOpen,
+    showShortcutsModal,
+    showFearGreed,
+    showDoomsday,
+    showCatalysts,
+    showNotificationModal,
+    showDashboardModal,
+    showInstallModal,
+    mode,
+    savedIds,
+    toggleSaveArticle,
+    handleMarkCaughtUp,
+    handleModeSwitch: (m: AppMode) => {},
+    toggleViewMode,
+  });
+  kbStateRef.current = {
+    visibleArticles,
+    focusedIdx,
+    readerArticle,
+    snapshotArticle,
+    perspectiveModalOpen,
+    showShortcutsModal,
+    showFearGreed,
+    showDoomsday,
+    showCatalysts,
+    showNotificationModal,
+    showDashboardModal,
+    showInstallModal,
+    mode,
+    savedIds,
+    toggleSaveArticle,
+    handleMarkCaughtUp,
+    handleModeSwitch,
+    toggleViewMode,
+  };
+
+  useEffect(() => {
+    const onGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const target = e.target as HTMLElement | null;
+      const isInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable);
+
+      if (isInput) {
+        if (e.key === 'Escape') {
+          target.blur();
+        }
+        return;
+      }
+
+      const st = kbStateRef.current;
+      const anyModalOpen =
+        Boolean(st.snapshotArticle) ||
+        st.perspectiveModalOpen ||
+        st.showShortcutsModal ||
+        st.showFearGreed ||
+        st.showDoomsday ||
+        st.showCatalysts ||
+        st.showNotificationModal ||
+        st.showDashboardModal ||
+        st.showInstallModal;
+
+      if (e.key === '?') {
+        e.preventDefault();
+        setShowShortcutsModal(prev => !prev);
+        return;
+      }
+
+      if (anyModalOpen) return;
+
+      if (e.key === '/') {
+        e.preventDefault();
+        const searchEl = document.getElementById('terminal-search-input') as HTMLInputElement | null;
+        if (searchEl) {
+          searchEl.focus();
+          searchEl.select();
+        }
+        return;
+      }
+
+      const keyLower = e.key.toLowerCase();
+
+      // When Reader Drawer is open, support S (save), L (listen), P (snapshot)
+      if (st.readerArticle) {
+        if (keyLower === 's') {
+          e.preventDefault();
+          const willSave = !st.savedIds.has(st.readerArticle.id);
+          st.toggleSaveArticle(st.readerArticle);
+          setRefreshToast({
+            message: willSave ? '★ Dispatch saved to Read-Later Queue' : 'Removed from Saved Queue',
+            active: false,
+          });
+          if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
+          refreshToastTimerRef.current = window.setTimeout(() => setRefreshToast(null), 2200);
+        } else if (keyLower === 'l') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('hattys-toggle-reader-speech'));
+        } else if (keyLower === 'p') {
+          e.preventDefault();
+          setSnapshotArticle(st.readerArticle);
+        }
+        return;
+      }
+
+      if (keyLower === 'j') {
+        e.preventDefault();
+        const maxIdx = st.visibleArticles.length - 1;
+        if (maxIdx < 0) return;
+        const nextIdx = st.focusedIdx === null ? 0 : Math.min(maxIdx, st.focusedIdx + 1);
+        setFocusedIdx(nextIdx);
+        requestAnimationFrame(() => {
+          const el = document.querySelector(`[data-article-idx="${nextIdx}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      } else if (keyLower === 'k') {
+        e.preventDefault();
+        const maxIdx = st.visibleArticles.length - 1;
+        if (maxIdx < 0) return;
+        const prevIdx = st.focusedIdx === null ? 0 : Math.max(0, st.focusedIdx - 1);
+        setFocusedIdx(prevIdx);
+        requestAnimationFrame(() => {
+          const el = document.querySelector(`[data-article-idx="${prevIdx}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      } else if (e.key === 'Enter' || keyLower === 'o') {
+        if (st.focusedIdx !== null && st.visibleArticles[st.focusedIdx]) {
+          e.preventDefault();
+          setReaderArticle(st.visibleArticles[st.focusedIdx]);
+        }
+      } else if (keyLower === 's') {
+        const targetArt = st.focusedIdx !== null ? st.visibleArticles[st.focusedIdx] : st.visibleArticles[0];
+        if (targetArt) {
+          e.preventDefault();
+          const willSave = !st.savedIds.has(targetArt.id);
+          st.toggleSaveArticle(targetArt);
+          setRefreshToast({
+            message: willSave ? '★ Dispatch saved to Read-Later Queue' : 'Removed from Saved Queue',
+            active: false,
+          });
+          if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
+          refreshToastTimerRef.current = window.setTimeout(() => setRefreshToast(null), 2200);
+        }
+      } else if (keyLower === 'l') {
+        const targetArt = st.focusedIdx !== null ? st.visibleArticles[st.focusedIdx] : st.visibleArticles[0];
+        if (targetArt) {
+          e.preventDefault();
+          setReaderArticle(targetArt);
+          window.setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('hattys-toggle-reader-speech'));
+          }, 260);
+        }
+      } else if (keyLower === 'p') {
+        const targetArt = st.focusedIdx !== null ? st.visibleArticles[st.focusedIdx] : st.visibleArticles[0];
+        if (targetArt) {
+          e.preventDefault();
+          setSnapshotArticle(targetArt);
+        }
+      } else if (keyLower === 'c') {
+        e.preventDefault();
+        st.handleMarkCaughtUp();
+      } else if (keyLower === 'm') {
+        e.preventDefault();
+        st.handleModeSwitch(st.mode === 'crypto' ? 'world' : 'crypto');
+      } else if (keyLower === 'w') {
+        e.preventDefault();
+        st.toggleViewMode();
+      } else if (e.key === 'Escape' && st.focusedIdx !== null) {
+        setFocusedIdx(null);
+      }
+    };
+
+    window.addEventListener('keydown', onGlobalKeyDown);
+    return () => window.removeEventListener('keydown', onGlobalKeyDown);
+  }, []);
 
   // LiveCoinWatch bottom widget loader
   useEffect(() => {
@@ -1046,10 +1286,29 @@ export default function App() {
         onInstalled={() => setIsInstalled(true)}
       />
 
+      {/* Feature 5: Terminal Snapshot Share Card Generator Modal */}
+      <ShareSnapshotModal
+        isOpen={Boolean(snapshotArticle)}
+        article={snapshotArticle}
+        mode={mode}
+        marketQuotes={marketQuotes}
+        userVote={snapshotArticle ? pulseVotes[snapshotArticle.id] || null : null}
+        relatedCount={snapshotArticle ? (articleClusters.get(snapshotArticle.id)?.length || 0) : 0}
+        onClose={() => setSnapshotArticle(null)}
+      />
+
+      {/* Feature 6: Keyboard Shortcuts Cheat Sheet Modal */}
+      <KeyboardShortcutsModal
+        isOpen={showShortcutsModal}
+        mode={mode}
+        onClose={() => setShowShortcutsModal(false)}
+      />
+
       {/* In-App Slide-Over Terminal Reader Drawer */}
       <ArticleReaderDrawer
         article={readerArticle}
         relatedArticles={readerRelated}
+        allModeArticles={currentModeArticles}
         mode={mode}
         isDark={isDark}
         isSaved={readerArticle ? savedIds.has(readerArticle.id) : false}
@@ -1057,6 +1316,9 @@ export default function App() {
         marketQuotes={marketQuotes}
         articleIndex={readerIndex}
         totalCount={filtered.length}
+        userVote={readerArticle ? pulseVotes[readerArticle.id] || null : null}
+        onVotePulse={handleVotePulse}
+        onOpenSnapshot={handleOpenSnapshot}
         onClose={handleCloseReader}
         onPrevArticle={handlePrevReader}
         onNextArticle={handleNextReader}
@@ -1067,12 +1329,15 @@ export default function App() {
         onFilterBySymbol={setQuery}
       />
 
-      {/* Perspective Comparator Modal (Side-by-Side Coverage Analysis) */}
+      {/* Perspective Comparator & Developing Story Timeline Modal */}
       <PerspectiveModal
         isOpen={perspectiveModalOpen}
         onClose={() => setPerspectiveModalOpen(false)}
         primaryArticle={perspectivePrimary}
         relatedArticles={perspectiveRelated}
+        allModeArticles={currentModeArticles}
+        initialTab={perspectiveInitialTab}
+        onSelectArticle={handleOpenReader}
         mode={mode}
         isDark={isDark}
       />
@@ -1190,6 +1455,51 @@ export default function App() {
               </span>
             </div>
 
+            {/* Feature 1: Daily Terminal Streak Badge */}
+            <div
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-500/35 bg-amber-500/10 text-amber-500 dark:text-amber-400 text-[10px] sm:text-[11px] font-mono font-bold cursor-default"
+              title={`Daily Terminal Streak: ${dailyStreak.count} Day${dailyStreak.count === 1 ? '' : 's'} (Best: ${dailyStreak.bestStreak}d) • ${dailyStreak.caughtUpToday ? 'Caught up today!' : 'Click Mark Caught Up when finished reading'}`}
+            >
+              <Flame className="w-3 h-3 fill-amber-400 text-amber-400" />
+              <span>{dailyStreak.count}D STREAK</span>
+            </div>
+
+            {/* Feature 1: "Since You Last Checked" Catch-Up Bar & Mark Caught Up Action */}
+            {newArticlesCount > 0 ? (
+              <div className="inline-flex items-center rounded-md border border-emerald-500/35 bg-emerald-500/10 overflow-hidden text-[10px] sm:text-[11px] font-mono font-bold">
+                <button
+                  type="button"
+                  onClick={() => setFilter(filter === 'new' ? 'all' : 'new')}
+                  className={`px-2 py-0.5 flex items-center gap-1 transition-colors cursor-pointer ${
+                    filter === 'new'
+                      ? 'bg-emerald-500 text-black font-black'
+                      : 'text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/20'
+                  }`}
+                  title="Filter feed to dispatches published since your last check-in"
+                >
+                  <Zap className="w-3 h-3 fill-current" />
+                  <span>{newArticlesCount} NEW SINCE LAST CHECK</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleMarkCaughtUp}
+                  className="px-2 py-0.5 border-l border-emerald-500/35 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500 hover:text-black transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Mark all dispatches as Caught Up (Shortcut: C)"
+                >
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>MARK CAUGHT UP</span>
+                </button>
+              </div>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 text-[10px] sm:text-[11px] font-mono font-bold"
+                title="You are completely caught up with the latest wire dispatches"
+              >
+                <CheckCircle2 className="w-3 h-3" />
+                <span>ALL CAUGHT UP</span>
+              </span>
+            )}
+
             {refreshToast && (
               <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono border ${
                 refreshToast.active 
@@ -1214,6 +1524,15 @@ export default function App() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowShortcutsModal(true)}
+              className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[var(--border)] bg-[var(--surface-solid)] hover:border-[var(--accent)] text-[10px] font-mono font-bold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+              title="Open Keyboard Shortcuts Guide (?)"
+            >
+              <Keyboard className="w-3 h-3 text-[var(--accent)]" />
+              <span>SHORTCUTS [?]</span>
+            </button>
             <Radio className={`w-3.5 h-3.5 animate-pulse ${mode === 'world' ? 'text-blue-400' : 'text-[var(--red)]'}`} />
             <span>{mode === 'world' ? 'VERIFIED NON-PARTISAN WIRE SERVICES' : 'ENCRYPTED RSS FEED PROTOCOL'}</span>
           </div>
@@ -1276,9 +1595,13 @@ export default function App() {
               isDark={isDark}
               savedIds={savedIds}
               copiedId={copiedId}
+              focusedIdx={focusedIdx}
+              pulseVotes={pulseVotes}
               articleClusters={articleClusters}
               dashboardSettings={dashboardSettings}
               marketQuotes={marketQuotes}
+              onVotePulse={handleVotePulse}
+              onOpenSnapshot={handleOpenSnapshot}
               onToggleSave={toggleSaveArticle}
               onCopyLink={handleCopyLink}
               onOpenPerspective={handleOpenPerspective}
@@ -1324,11 +1647,15 @@ export default function App() {
                           isSaved={isSaved}
                           isNew={isNew}
                           isHero={isHero}
+                          isFocused={focusedIdx === idx}
                           copiedId={copiedId}
                           dashboardSettings={dashboardSettings}
                           marketQuotes={marketQuotes}
                           relatedSources={relatedSources}
                           searchQuery={query}
+                          userVote={pulseVotes[a.id] || null}
+                          onVotePulse={handleVotePulse}
+                          onOpenSnapshot={handleOpenSnapshot}
                           onToggleSave={toggleSaveArticle}
                           onCopyLink={handleCopyLink}
                           onSetQuery={setQuery}

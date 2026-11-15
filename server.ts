@@ -29,7 +29,7 @@ const parser = new RSSParser({
     'Sec-Fetch-User': '?1',
     'Upgrade-Insecure-Requests': '1',
   },
-  timeout: 15000,
+  timeout: 6500,
 });
 
 const ALLOWED_FEED_DOMAINS = [
@@ -76,7 +76,7 @@ async function startServer() {
 
     const symbols = [
       'BTC-USD', 'ETH-USD', 'SOL-USD', 'XRP-USD', 'DOGE-USD',
-      'BNB-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD',
+      'BNB-USD', 'ADA-USD', 'AVAX-USD', 'LINK-USD', 'NEAR-USD',
       'CL=F', 'BZ=F', 'GC=F', 'SI=F', 'NG=F', 'HG=F',
       'SPY', 'QQQ', 'DIA', 'IWM', 'EWU', 'EWG', 'FEZ', 'EWJ',
       'NVDA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'TSLA', 'META'
@@ -89,7 +89,8 @@ async function startServer() {
           const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d`, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
+            },
+            signal: AbortSignal.timeout(4500)
           });
           if (!r.ok) return;
           const json = await r.json();
@@ -167,6 +168,13 @@ async function startServer() {
             price: results['LINK-USD']?.price ?? 14.65,
             change24h: results['LINK-USD']?.change ?? 2.10,
             formatted: `$${(results['LINK-USD']?.price ?? 14.65).toFixed(2)}`
+          },
+          NEAR: {
+            symbol: 'NEAR',
+            name: 'NEAR Protocol',
+            price: results['NEAR-USD']?.price ?? 4.85,
+            change24h: results['NEAR-USD']?.change ?? 1.65,
+            formatted: `$${(results['NEAR-USD']?.price ?? 4.85).toFixed(2)}`
           }
         },
         commodities: {

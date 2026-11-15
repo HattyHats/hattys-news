@@ -1,10 +1,25 @@
 import React, { memo, useMemo } from 'react';
-import { Clock, Bookmark, Share2, Check, ExternalLink, Zap, ShieldCheck, Flame, BookOpen } from 'lucide-react';
+import {
+  Clock,
+  Bookmark,
+  Share2,
+  Check,
+  ExternalLink,
+  Zap,
+  ShieldCheck,
+  Flame,
+  BookOpen,
+  Camera,
+  TrendingUp,
+  TrendingDown,
+  GitCommitHorizontal,
+} from 'lucide-react';
 import { Article, AppMode, DashboardSettings } from '../../types';
 import { CardImage } from './CardImage';
 import { detectAssetsInArticle, detectStoryImpact, getOutletBadge } from '../../utils/classifier';
 import { formatTimeAgo } from '../../utils/formatters';
 import { CRYPTO_CATEGORIES, WORLD_CATEGORIES } from '../../config/feeds';
+import { computeStoryPulse, PulseVote } from '../../utils/communityPulse';
 
 interface ArticleCardProps {
   article: Article;
@@ -14,15 +29,19 @@ interface ArticleCardProps {
   isSaved: boolean;
   isNew: boolean;
   isHero?: boolean;
+  isFocused?: boolean;
   copiedId: string | null;
   dashboardSettings: DashboardSettings;
   marketQuotes: Record<string, { price: number; change24h: number; formatted: string }>;
   relatedSources: Article[];
   searchQuery: string;
+  userVote: PulseVote | null;
+  onVotePulse: (articleId: string, vote: PulseVote) => void;
+  onOpenSnapshot: (article: Article) => void;
   onToggleSave: (article: Article) => void;
   onCopyLink: (id: string, link: string) => void;
   onSetQuery: (q: string | ((prev: string) => string)) => void;
-  onOpenPerspective: (article: Article, related: Article[]) => void;
+  onOpenPerspective: (article: Article, related: Article[], initialTab?: 'compare' | 'timeline') => void;
   onOpenArticle: (article: Article) => void;
 }
 
@@ -34,11 +53,15 @@ export const ArticleCard = memo(function ArticleCard({
   isSaved,
   isNew,
   isHero = false,
+  isFocused = false,
   copiedId,
   dashboardSettings,
   marketQuotes,
   relatedSources,
   searchQuery,
+  userVote,
+  onVotePulse,
+  onOpenSnapshot,
   onToggleSave,
   onCopyLink,
   onSetQuery,
@@ -62,9 +85,22 @@ export const ArticleCard = memo(function ArticleCard({
     [dashboardSettings.showAssetTags, article.title, article.snippet, marketQuotes]
   );
 
+  // Feature 3: Community Sentiment Pulse
+  const pulse = useMemo(
+    () => computeStoryPulse(article, cardMode, userVote, relatedSources.length),
+    [article, cardMode, userVote, relatedSources.length]
+  );
+
   return (
     <article
-      className={`card group ${isHero ? 'lg:col-span-2 sm:col-span-2 shadow-2xl border-[var(--accent)]/35' : 'col-span-1'}`}
+      data-article-idx={idx}
+      className={`card group transition-all ${
+        isHero ? 'lg:col-span-2 sm:col-span-2 shadow-2xl border-[var(--accent)]/35' : 'col-span-1'
+      } ${
+        isFocused
+          ? 'ring-2 ring-[var(--accent)] border-[var(--accent)] shadow-[0_0_24px_rgba(239,68,68,0.22)]'
+          : ''
+      }`}
     >
       <div
         onClick={() => onOpenArticle(article)}
@@ -73,7 +109,7 @@ export const ArticleCard = memo(function ArticleCard({
         <CardImage article={article} mode={cardMode} priority={idx < 4} />
         
         {/* Category + Hero + NEW Overlay Badges */}
-        <div className="absolute top-2.5 left-2.5 right-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
+        <div className="absolute top-2.5 left-2.5 right-24 flex items-center gap-1.5 flex-wrap pointer-events-none">
           {isHero && (
             <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black tracking-wider uppercase bg-[var(--accent)] text-white shadow-lg flex items-center gap-1">
               <Flame className="w-3 h-3 fill-white" />
@@ -94,14 +130,28 @@ export const ArticleCard = memo(function ArticleCard({
               {storyImpact.label}
             </span>
           )}
+          {isFocused && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase bg-[var(--accent)] text-white shadow-md">
+              ⏎ ENTER TO READ
+            </span>
+          )}
         </div>
 
-        {/* Top-right Action Buttons (Bookmark & Copy Link) */}
+        {/* Top-right Action Buttons (Snapshot, Bookmark & Copy Link) */}
         <div
           className="absolute top-2.5 right-2.5 flex items-center gap-1.5"
           onClick={(e) => e.stopPropagation()}
         >
           <button
+            type="button"
+            onClick={() => onOpenSnapshot(article)}
+            className="w-7 h-7 rounded-full bg-black/80 hover:bg-black text-gray-200 hover:text-white flex items-center justify-center transition-opacity opacity-90 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+            title="Generate HD Share Snapshot Card (P)"
+          >
+            <Camera className="w-3.5 h-3.5 text-[var(--accent)]" />
+          </button>
+          <button
+            type="button"
             onClick={() => onToggleSave(article)}
             className={`w-7 h-7 rounded-full flex items-center justify-center transition-opacity cursor-pointer ${
               isSaved
@@ -112,7 +162,8 @@ export const ArticleCard = memo(function ArticleCard({
           >
             <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-black' : ''}`} />
           </button>
-          <button 
+          <button
+            type="button"
             onClick={() => onCopyLink(article.id, article.link)}
             className="w-7 h-7 rounded-full bg-black/80 hover:bg-black text-gray-200 hover:text-white flex items-center justify-center transition-opacity opacity-90 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
             title="Copy Article Link"
@@ -160,6 +211,7 @@ export const ArticleCard = memo(function ArticleCard({
                 return (
                   <button
                     key={asset.id}
+                    type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -197,31 +249,42 @@ export const ArticleCard = memo(function ArticleCard({
         </div>
 
         <div className="mt-auto">
-          {/* Feature 2: Harmonized Consensus & Wire Verification Bar (Equalized Height) */}
+          {/* Feature 2 & 4: Harmonized Consensus, Developing Timeline & Wire Verification Bar */}
           {relatedSources.length > 0 ? (
-            <div className={`p-2 rounded-lg border mb-3 transition-all ${
+            <div className={`p-2 rounded-lg border mb-2.5 transition-all ${
               isDark ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-emerald-50/80 border-emerald-300'
             }`}>
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span className="text-[10px] font-mono font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider truncate">
-                    {relatedSources.length >= 3 ? '100% CONSENSUS' : `${relatedSources.length + 1}-OUTLET CONSENSUS`}
+                    {relatedSources.length >= 3 ? '100% CONSENSUS' : `${relatedSources.length + 1}-OUTLET WIRE`}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onOpenPerspective(article, relatedSources)}
-                  className={`shrink-0 text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all cursor-pointer flex items-center gap-1 active:scale-95 touch-manipulation ${
-                    cardMode === 'world'
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20'
-                      : 'bg-red-600 hover:bg-red-500 text-white shadow-sm shadow-red-500/20'
-                  }`}
-                  title="Compare coverage and headline framing across outlets side-by-side"
-                >
-                  <span>COMPARE</span>
-                  <span className="font-sans text-[10px]">⇄</span>
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => onOpenPerspective(article, relatedSources, 'timeline')}
+                    className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/15 dark:bg-white/10 hover:bg-black/25 dark:hover:bg-white/20 text-[var(--ink)] transition-all cursor-pointer flex items-center gap-0.5"
+                    title="View chronological Developing Story Timeline"
+                  >
+                    <GitCommitHorizontal className="w-2.5 h-2.5 text-emerald-400" />
+                    <span>TIMELINE</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onOpenPerspective(article, relatedSources, 'compare')}
+                    className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded transition-all cursor-pointer flex items-center gap-0.5 active:scale-95 touch-manipulation ${
+                      cardMode === 'world'
+                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-500/20'
+                        : 'bg-red-600 hover:bg-red-500 text-white shadow-sm shadow-red-500/20'
+                    }`}
+                    title="Compare coverage and headline framing across outlets side-by-side"
+                  >
+                    <span>COMPARE</span>
+                    <span className="font-sans text-[10px]">⇄</span>
+                  </button>
+                </div>
               </div>
               <div className="flex items-center gap-1 mt-1 text-[9px] font-mono text-[var(--ink-muted)] truncate">
                 <span className="opacity-70">ALSO ON:</span>
@@ -232,7 +295,7 @@ export const ArticleCard = memo(function ArticleCard({
               </div>
             </div>
           ) : (
-            <div className="p-2 rounded-lg border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.015] mb-3">
+            <div className="p-2 rounded-lg border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.015] mb-2.5">
               <div className="flex items-center justify-between gap-1.5 text-[10px] font-mono text-[var(--ink-muted)]">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 shrink-0" />
@@ -250,7 +313,58 @@ export const ArticleCard = memo(function ArticleCard({
             </div>
           )}
 
-          <div className="flex items-center gap-2 pt-2.5 border-t border-[var(--border)]">
+          {/* Feature 3: Compact 1-Click Community Sentiment Pulse Bar */}
+          <div className="mb-2.5 px-2 py-1.5 rounded-lg border border-[var(--border)] bg-black/[0.025] dark:bg-white/[0.015]">
+            <div className="flex items-center justify-between gap-1 text-[10px] font-mono mb-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVotePulse(article.id, 'up');
+                }}
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                  pulse.userVote === 'up'
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                    : 'text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/10'
+                }`}
+                title={`Vote ${pulse.upLabel} (${pulse.upVotes} votes)`}
+              >
+                <TrendingUp className="w-3 h-3" />
+                <span>{pulse.upShortLabel}</span>
+                <span className="font-black">{pulse.upPct}%</span>
+              </button>
+
+              <span className="text-[9px] text-[var(--ink-muted)] opacity-70">
+                {pulse.totalVotes} VOTES
+              </span>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVotePulse(article.id, 'down');
+                }}
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                  pulse.userVote === 'down'
+                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                    : 'text-rose-500 dark:text-rose-400 hover:bg-rose-500/10'
+                }`}
+                title={`Vote ${pulse.downLabel} (${pulse.downVotes} votes)`}
+              >
+                <span>{pulse.downPct}%</span>
+                <span>{pulse.downShortLabel}</span>
+                <TrendingDown className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="w-full h-1 rounded-full bg-rose-500/35 overflow-hidden flex">
+              <div
+                className="h-full bg-emerald-500 transition-all duration-300"
+                style={{ width: `${pulse.upPct}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 pt-2.5 border-t border-[var(--border)]">
             <button
               type="button"
               onClick={() => onOpenArticle(article)}
@@ -258,6 +372,14 @@ export const ArticleCard = memo(function ArticleCard({
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>READ DISPATCH</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpenSnapshot(article)}
+              className="px-2.5 py-2 rounded-lg border border-[var(--border)] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--accent)]/40 transition-colors flex items-center justify-center cursor-pointer"
+              title="Generate Shareable Terminal Snapshot Card (P)"
+            >
+              <Camera className="w-3.5 h-3.5" />
             </button>
             <a
               href={article.link}

@@ -172,7 +172,8 @@ async function fetchMarketQuotes() {
       const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d`, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        },
+        signal: AbortSignal.timeout(4500)
       });
       if (!r.ok) return;
       const json = await r.json();
@@ -478,6 +479,10 @@ const server = http.createServer(async (req, res) => {
       const parsed = parseXmlFeed(xmlText);
       const bodyStr = JSON.stringify(parsed);
 
+      if (newsFeedCache.size >= 80 && !newsFeedCache.has(feedUrl)) {
+        const oldestKey = newsFeedCache.keys().next().value;
+        if (oldestKey) newsFeedCache.delete(oldestKey);
+      }
       newsFeedCache.set(feedUrl, { body: bodyStr, timestamp: Date.now() });
 
       res.writeHead(200, {

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -14,6 +14,10 @@ import {
   Volume2,
   Square,
   Layers,
+  Camera,
+  TrendingUp,
+  TrendingDown,
+  GitCommitHorizontal,
 } from 'lucide-react';
 import { Article, AppMode } from '../../types';
 import { CardImage } from '../cards/CardImage';
@@ -26,10 +30,13 @@ import {
   loadSavedVoiceUri,
   SpeechQueueController,
 } from '../../utils/speech';
+import { computeStoryPulse, PulseVote } from '../../utils/communityPulse';
+import { buildStoryTimeline } from '../../utils/storyTimeline';
 
 interface ArticleReaderDrawerProps {
   article: Article | null;
   relatedArticles: Article[];
+  allModeArticles?: Article[];
   mode: AppMode;
   isDark: boolean;
   isSaved: boolean;
@@ -37,19 +44,23 @@ interface ArticleReaderDrawerProps {
   marketQuotes: Record<string, { price: number; change24h: number; formatted: string }>;
   articleIndex: number;
   totalCount: number;
+  userVote: PulseVote | null;
+  onVotePulse: (articleId: string, vote: PulseVote) => void;
+  onOpenSnapshot: (article: Article) => void;
   onClose: () => void;
   onPrevArticle: () => void;
   onNextArticle: () => void;
   onSelectArticle: (article: Article) => void;
   onToggleSave: (article: Article) => void;
   onCopyLink: (id: string, link: string) => void;
-  onOpenPerspective: (article: Article, related: Article[]) => void;
+  onOpenPerspective: (article: Article, related: Article[], initialTab?: 'compare' | 'timeline') => void;
   onFilterBySymbol: (symbol: string) => void;
 }
 
 export function ArticleReaderDrawer({
   article,
   relatedArticles,
+  allModeArticles = [],
   mode,
   isDark,
   isSaved,
@@ -57,6 +68,9 @@ export function ArticleReaderDrawer({
   marketQuotes,
   articleIndex,
   totalCount,
+  userVote,
+  onVotePulse,
+  onOpenSnapshot,
   onClose,
   onPrevArticle,
   onNextArticle,
@@ -92,49 +106,6 @@ export function ArticleReaderDrawer({
     setIsSpeaking(false);
   };
 
-  // Scroll lock + Escape / Left-Right navigation (only bound to drawer open/close, never parent callback identity)
-  useEffect(() => {
-    if (!article) {
-      stopReadingAloud();
-      setAudioError(null);
-      return;
-    }
-
-    const originalOverflow = document.body.style.overflow;
-    const originalTouchAction = document.body.style.touchAction;
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const nav = navStateRef.current;
-      if (e.key === 'Escape') {
-        nav.onClose();
-      } else if (e.key === 'ArrowLeft' && nav.articleIndex > 0) {
-        nav.onPrevArticle();
-      } else if (e.key === 'ArrowRight' && nav.articleIndex >= 0 && nav.articleIndex < nav.totalCount - 1) {
-        nav.onNextArticle();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      document.body.style.touchAction = originalTouchAction;
-      window.removeEventListener('keydown', handleKeyDown);
-      stopReadingAloud();
-    };
-  }, [Boolean(article)]);
-
-  // Reset scroll position & speech whenever switched to another dispatch
-  useEffect(() => {
-    stopReadingAloud();
-    setAudioError(null);
-    if (scrollBodyRef.current) {
-      scrollBodyRef.current.scrollTop = 0;
-    }
-  }, [article?.id]);
-
   const handleToggleSpeech = () => {
     if (!article) return;
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -153,6 +124,66 @@ export function ArticleReaderDrawer({
     speechControllerRef.current?.start([spokenText], 0);
   };
 
+  const speechToggleRef = useRef(handleToggleSpeech);
+  speechToggleRef.current = handleToggleSpeech;
+
+  // Scroll lock + Escape / Left-Right navigation + custom speech toggle event
+  useEffect(() => {
+    if (!article) {
+      stopReadingAloud();
+      setAudioError(null);
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+
+      const nav = navStateRef.current;
+      if (e.key === 'Escape') {
+        nav.onClose();
+      } else if (e.key === 'ArrowLeft' && nav.articleIndex > 0) {
+        nav.onPrevArticle();
+      } else if (e.key === 'ArrowRight' && nav.articleIndex >= 0 && nav.articleIndex < nav.totalCount - 1) {
+        nav.onNextArticle();
+      }
+    };
+
+    const handleCustomSpeechEvent = () => {
+      speechToggleRef.current();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('hattys-toggle-reader-speech', handleCustomSpeechEvent);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('hattys-toggle-reader-speech', handleCustomSpeechEvent);
+      stopReadingAloud();
+    };
+  }, [Boolean(article)]);
+
+  // Reset scroll position & speech whenever switched to another dispatch
+  useEffect(() => {
+    stopReadingAloud();
+    setAudioError(null);
+    if (scrollBodyRef.current) {
+      scrollBodyRef.current.scrollTop = 0;
+    }
+  }, [article?.id]);
+
+  const timelineNodes = useMemo(() => {
+    if (!article) return [];
+    return buildStoryTimeline(article, relatedArticles, allModeArticles);
+  }, [article, relatedArticles, allModeArticles]);
+
   return (
     <AnimatePresence>
       {article && (() => {
@@ -162,6 +193,7 @@ export function ArticleReaderDrawer({
         const badgeClass = categoryConfig.badgeClass || (cardMode === 'world' ? 'badge-world-top' : 'badge-all');
         const outlet = getOutletBadge(article.src);
         const storyImpact = detectStoryImpact(article.title, article.snippet);
+        const pulse = computeStoryPulse(article, cardMode, userVote, relatedArticles.length);
 
         const rawBody = (article.fullText || article.snippet || '').trim();
         const paragraphs = rawBody
@@ -239,10 +271,21 @@ export function ArticleReaderDrawer({
                         ? 'bg-emerald-500 text-black border-emerald-400 shadow-sm'
                         : 'bg-[var(--bg)] border-[var(--border)] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-emerald-500/40'
                     }`}
-                    title={isSpeaking ? 'Stop audio reader' : 'Read article aloud'}
+                    title={isSpeaking ? 'Stop audio reader (L)' : 'Read article aloud (L)'}
                   >
                     {isSpeaking ? <Square className="w-3 h-3 fill-current" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-500" />}
                     <span className="hidden sm:inline">{isSpeaking ? 'STOP' : 'LISTEN'}</span>
+                  </button>
+
+                  {/* Feature 5: One-Click Terminal Snapshot Card Button */}
+                  <button
+                    type="button"
+                    onClick={() => onOpenSnapshot(article)}
+                    className="px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--accent)]/50 font-mono text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                    title="Generate HD Terminal Snapshot Share Card (P)"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-[var(--accent)]" />
+                    <span className="hidden sm:inline">SNAPSHOT</span>
                   </button>
 
                   <button
@@ -262,7 +305,7 @@ export function ArticleReaderDrawer({
                         ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 dark:text-amber-400'
                         : 'border-[var(--border)] bg-[var(--bg)] text-[var(--ink-muted)] hover:text-[var(--ink)]'
                     }`}
-                    title={isSaved ? 'Remove from Read-Later Queue' : 'Save for Later'}
+                    title={isSaved ? 'Remove from Read-Later Queue (S)' : 'Save for Later (S)'}
                   >
                     <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-amber-400' : ''}`} />
                   </button>
@@ -367,6 +410,62 @@ export function ArticleReaderDrawer({
                   </div>
                 )}
 
+                {/* Feature 3: Interactive Community Sentiment Pulse Bar */}
+                <div className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-[10px] font-mono font-black uppercase tracking-wider text-[var(--ink-muted)]">
+                      COMMUNITY SENTIMENT PULSE • {pulse.totalVotes} VOTES
+                    </span>
+                    {pulse.userVote && (
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">
+                        ✓ YOUR VOTE RECORDED
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => onVotePulse(article.id, 'up')}
+                      className={`py-2 px-3 rounded-lg border font-mono text-xs font-bold flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                        pulse.userVote === 'up'
+                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-sm'
+                          : 'bg-[var(--surface-solid)] border-[var(--border)] hover:border-emerald-500/50 text-[var(--ink)]'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>{pulse.upLabel}</span>
+                      </span>
+                      <span className="text-emerald-400 font-black">{pulse.upPct}%</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onVotePulse(article.id, 'down')}
+                      className={`py-2 px-3 rounded-lg border font-mono text-xs font-bold flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                        pulse.userVote === 'down'
+                          ? 'bg-rose-500/20 border-rose-500 text-rose-400 shadow-sm'
+                          : 'bg-[var(--surface-solid)] border-[var(--border)] hover:border-rose-500/50 text-[var(--ink)]'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <TrendingDown className="w-3.5 h-3.5 text-rose-400" />
+                        <span>{pulse.downLabel}</span>
+                      </span>
+                      <span className="text-rose-400 font-black">{pulse.downPct}%</span>
+                    </button>
+                  </div>
+
+                  {/* Dual Split Meter */}
+                  <div className="w-full h-1.5 rounded-full bg-rose-500/35 overflow-hidden flex">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${pulse.upPct}%` }}
+                    />
+                  </div>
+                </div>
+
                 {/* Cleaned Article Paragraphs */}
                 <div className="space-y-4 text-[15px] sm:text-base leading-relaxed font-sans text-[var(--ink)]/90">
                   {paragraphs.map((para, idx) => (
@@ -383,52 +482,92 @@ export function ArticleReaderDrawer({
                   </div>
                 )}
 
-                {/* Corroborating Consensus Wires Section */}
-                {relatedArticles.length > 0 && (
+                {/* Feature 4: Developing Story Timeline & Multi-Outlet Corroboration */}
+                {timelineNodes.length > 1 && (
                   <div className={`p-4 rounded-2xl border ${
                     isDark ? 'bg-emerald-950/15 border-emerald-500/30' : 'bg-emerald-50/70 border-emerald-300'
                   }`}>
-                    <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-3.5">
                       <div className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <GitCommitHorizontal className="w-4 h-4 text-emerald-500 shrink-0" />
                         <span className="font-mono text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                          CORROBORATED BY {relatedArticles.length + 1} OUTLETS
+                          DEVELOPING STORY TIMELINE ({timelineNodes.length} DISPATCHES)
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => onOpenPerspective(article, relatedArticles)}
-                        className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 text-white transition-all cursor-pointer ${
-                          cardMode === 'world' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-red-600 hover:bg-red-500'
-                        }`}
-                      >
-                        <Layers className="w-3 h-3" />
-                        <span>COMPARE SIDE-BY-SIDE ⇄</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {relatedArticles.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => onOpenPerspective(article, relatedArticles, 'compare')}
+                            className="px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 bg-[var(--surface-solid)] border border-[var(--border)] hover:border-emerald-500/50 text-[var(--ink)] transition-all cursor-pointer"
+                          >
+                            <Layers className="w-3 h-3 text-emerald-500" />
+                            <span>COMPARE ⇄</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => onOpenPerspective(
+                            article,
+                            relatedArticles.length > 0
+                              ? relatedArticles
+                              : timelineNodes.filter(n => !n.isCurrent).map(n => n.article),
+                            'timeline'
+                          )}
+                          className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 text-white transition-all cursor-pointer ${
+                            cardMode === 'world' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-red-600 hover:bg-red-500'
+                          }`}
+                        >
+                          <GitCommitHorizontal className="w-3 h-3" />
+                          <span>FULL TIMELINE</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      {relatedArticles.map(rel => {
-                        const relOutlet = getOutletBadge(rel.src);
+                    <div className="relative pl-4 space-y-2.5 before:content-[''] before:absolute before:left-[5px] before:top-2 before:bottom-2 before:w-0.5 before:bg-emerald-500/35">
+                      {timelineNodes.map(node => {
+                        const relOutlet = getOutletBadge(node.article.src);
                         return (
                           <button
-                            key={rel.id}
+                            key={node.article.id}
                             type="button"
-                            onClick={() => onSelectArticle(rel)}
-                            className="w-full text-left p-2.5 rounded-xl bg-[var(--surface-solid)] border border-[var(--border)] hover:border-emerald-500/40 transition-all flex items-start justify-between gap-2.5 cursor-pointer group"
+                            onClick={() => onSelectArticle(node.article)}
+                            className={`relative w-full text-left p-2.5 rounded-xl border transition-all flex items-start justify-between gap-2.5 cursor-pointer group ${
+                              node.isCurrent
+                                ? 'bg-emerald-500/10 border-emerald-500/50'
+                                : 'bg-[var(--surface-solid)] border-[var(--border)] hover:border-emerald-500/40'
+                            }`}
                           >
+                            <span
+                              className={`absolute -left-[15px] top-3.5 w-2.5 h-2.5 rounded-full border border-[var(--surface-solid)] ${
+                                node.isOrigin
+                                  ? 'bg-emerald-400'
+                                  : node.isLatest
+                                    ? 'bg-[var(--accent)]'
+                                    : 'bg-amber-400'
+                              }`}
+                            />
                             <div className="min-w-0">
-                              <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
+                              <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
+                                <span className="px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10 text-[9px] uppercase">
+                                  {node.stageLabel}
+                                </span>
+                                {node.deltaFromPrev && (
+                                  <span className="text-[9px] text-[var(--ink-muted)] font-normal">
+                                    ({node.deltaFromPrev})
+                                  </span>
+                                )}
+                                <span>•</span>
                                 <span>{relOutlet.flag}</span>
                                 <span>{relOutlet.name.toUpperCase()}</span>
-                                <span className="text-[var(--ink-muted)] font-normal">• {formatTimeAgo(rel.date)}</span>
+                                <span className="text-[var(--ink-muted)] font-normal">• {formatTimeAgo(node.article.date)}</span>
                               </div>
                               <p className="text-xs font-semibold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors line-clamp-2">
-                                {rel.title}
+                                {node.article.title}
                               </p>
                             </div>
                             <span className="text-[10px] font-mono text-[var(--ink-muted)] group-hover:text-[var(--accent)] shrink-0 mt-1">
-                              READ →
+                              {node.isCurrent ? 'ACTIVE' : 'VIEW →'}
                             </span>
                           </button>
                         );
@@ -449,6 +588,15 @@ export function ArticleReaderDrawer({
                   <span className="truncate">READ FULL COVERAGE ON {outlet.name.toUpperCase()}</span>
                   <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                 </a>
+                <button
+                  type="button"
+                  onClick={() => onOpenSnapshot(article)}
+                  className="px-3.5 py-2.5 sm:py-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--accent)] text-xs font-mono font-bold text-[var(--ink)] flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+                  title="Generate Shareable Snapshot Card"
+                >
+                  <Camera className="w-3.5 h-3.5 text-[var(--accent)]" />
+                  <span className="hidden xs:inline">SHARE CARD</span>
+                </button>
               </div>
             </motion.aside>
           </div>

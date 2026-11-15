@@ -339,20 +339,25 @@ export function Header({
           {/* Search Box */}
           <div className="flex-1 min-w-[110px] max-w-[200px] xl:max-w-[250px] 2xl:max-w-[310px] relative">
             <input
+              id="terminal-search-input"
               type="text"
-              placeholder={mode === 'world' ? "Search world..." : "Search crypto..."}
+              placeholder={mode === 'world' ? "Search world... (/)" : "Search crypto... (/)"}
               className="w-full bg-[var(--surface-solid)] border border-[var(--border)] focus:border-[var(--accent)] text-[var(--ink)] text-xs rounded-xl py-1.5 pl-8 pr-7 outline-none font-sans placeholder:text-[var(--ink-muted)] transition-all"
               value={query}
               onChange={(e) => onSetQuery(e.target.value)}
             />
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ink-muted)]" />
-            {query && (
+            {query ? (
               <button 
                 onClick={() => onSetQuery('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer"
               >
                 <X className="w-3 h-3" />
               </button>
+            ) : (
+              <kbd className="hidden xl:inline-flex absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 text-[9px] font-mono font-bold text-[var(--ink-muted)] pointer-events-none">
+                /
+              </kbd>
             )}
           </div>
 
@@ -378,7 +383,7 @@ export function Header({
                 <Gauge className="w-3.5 h-3.5 text-[var(--accent)] shrink-0" />
                 {fearGreed && (
                   <span className="font-bold text-[11px]" style={{ 
-                    color: parseInt(fearGreed.value) > 50 ? '#22c55e' : '#ef4444' 
+                    color: parseInt(fearGreed.value) > 75 ? '#22c55e' : parseInt(fearGreed.value) > 50 ? '#84cc16' : parseInt(fearGreed.value) > 25 ? '#eab308' : '#ef4444' 
                   }}>
                     {fearGreed.value}
                     <span className="hidden 2xl:inline ml-1 font-normal text-[10px] opacity-80">

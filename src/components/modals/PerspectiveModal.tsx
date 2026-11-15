@@ -1,14 +1,19 @@
-import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, ExternalLink, Clock, Layers, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
+import { X, ExternalLink, Clock, Layers, ShieldCheck, CheckCircle2, GitCommitHorizontal, BookOpen } from 'lucide-react';
 import { Article, AppMode } from '../../types';
 import { formatTimeAgo } from '../../utils/formatters';
+import { buildStoryTimeline } from '../../utils/storyTimeline';
+import { getOutletBadge } from '../../utils/classifier';
 
 interface PerspectiveModalProps {
   isOpen: boolean;
   onClose: () => void;
   primaryArticle: Article | null;
   relatedArticles: Article[];
+  allModeArticles?: Article[];
+  initialTab?: 'compare' | 'timeline';
+  onSelectArticle?: (article: Article) => void;
   mode: AppMode;
   isDark: boolean;
 }
@@ -18,8 +23,19 @@ export function PerspectiveModal({
   onClose,
   primaryArticle,
   relatedArticles,
+  allModeArticles = [],
+  initialTab = 'compare',
+  onSelectArticle,
   mode,
 }: PerspectiveModalProps) {
+  const [activeTab, setActiveTab] = useState<'compare' | 'timeline'>(initialTab);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab, primaryArticle?.id]);
+
   // Mobile Background Scroll Lock + Escape key close
   useEffect(() => {
     if (!isOpen) return;
@@ -38,6 +54,11 @@ export function PerspectiveModal({
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [isOpen, onClose]);
+
+  const timelineNodes = useMemo(() => {
+    if (!primaryArticle) return [];
+    return buildStoryTimeline(primaryArticle, relatedArticles, allModeArticles);
+  }, [primaryArticle, relatedArticles, allModeArticles]);
 
   if (!isOpen || !primaryArticle) return null;
 
@@ -63,49 +84,81 @@ export function PerspectiveModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky Header with Unmissable Touch-Friendly Close Button */}
-        <div className="flex items-start justify-between gap-3 p-4 sm:p-6 pb-3 border-b border-[var(--border)] bg-[var(--surface-solid)] shrink-0 z-20">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap mb-1.5">
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono text-[10px] sm:text-[11px] font-bold tracking-widest uppercase ${
-                mode === 'world'
-                  ? 'bg-blue-500/15 border border-blue-500/35 text-blue-400'
-                  : 'bg-red-500/15 border border-red-500/35 text-red-500'
-              }`}>
-                <Layers className="w-3.5 h-3.5 animate-pulse" />
-                <span>PERSPECTIVE COMPARATOR</span>
-              </span>
+        <div className="flex flex-col gap-3 p-4 sm:p-6 pb-3.5 border-b border-[var(--border)] bg-[var(--surface-solid)] shrink-0 z-20">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono text-[10px] sm:text-[11px] font-bold tracking-widest uppercase ${
+                  mode === 'world'
+                    ? 'bg-blue-500/15 border border-blue-500/35 text-blue-400'
+                    : 'bg-red-500/15 border border-red-500/35 text-red-500'
+                }`}>
+                  <Layers className="w-3.5 h-3.5 animate-pulse" />
+                  <span>MULTI-WIRE INTELLIGENCE</span>
+                </span>
 
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 font-mono text-[10px] font-bold">
-                <CheckCircle2 className="w-3 h-3" />
-                <span>{allPerspectives.length} INDEPENDENT OUTLETS</span>
-              </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 font-mono text-[10px] font-bold">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>{allPerspectives.length} CORROBORATING OUTLETS</span>
+                </span>
+              </div>
+
+              <h2 className="font-display text-xl sm:text-2xl lg:text-3xl text-[var(--ink)] tracking-tight truncate">
+                {activeTab === 'timeline' ? 'DEVELOPING STORY TIMELINE' : 'COMPARE COVERAGE & FRAMING'}
+              </h2>
             </div>
 
-            <h2 className="font-display text-xl sm:text-2xl lg:text-3xl text-[var(--ink)] tracking-tight truncate">
-              COMPARE COVERAGE & FRAMING
-            </h2>
-            <p className="hidden sm:block text-xs text-[var(--ink-muted)] mt-1 leading-relaxed font-sans line-clamp-1">
-              Cross-examine how different reporting desks, regional wire services, and newsrooms cover this story side-by-side to detect nuances and framing differences.
-            </p>
+            {/* Large 44x44px Touch Hitbox Close Button for Phones & Tablets */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              aria-label="Close Comparison Modal"
+              className="shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 active:scale-95 text-[var(--ink)] flex items-center justify-center transition-all cursor-pointer border border-[var(--border)] shadow-sm touch-manipulation z-30"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
-          {/* Large 44x44px Touch Hitbox Close Button for Phones & Tablets */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            aria-label="Close Comparison Modal"
-            className="shrink-0 w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 active:scale-95 text-[var(--ink)] flex items-center justify-center transition-all cursor-pointer border border-[var(--border)] shadow-sm touch-manipulation z-30"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          {/* Interactive View Switcher: Side-by-Side Outlets vs. Developing Story Timeline */}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('compare')}
+              className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                activeTab === 'compare'
+                  ? mode === 'world'
+                    ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                    : 'bg-[var(--accent)] text-white border-red-500 shadow-sm'
+                  : 'bg-[var(--bg)] text-[var(--ink-muted)] hover:text-[var(--ink)] border-[var(--border)]'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>SIDE-BY-SIDE OUTLETS ({allPerspectives.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('timeline')}
+              className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                activeTab === 'timeline'
+                  ? mode === 'world'
+                    ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                    : 'bg-[var(--accent)] text-white border-red-500 shadow-sm'
+                  : 'bg-[var(--bg)] text-[var(--ink-muted)] hover:text-[var(--ink)] border-[var(--border)]'
+              }`}
+            >
+              <GitCommitHorizontal className="w-3.5 h-3.5" />
+              <span>CHRONOLOGICAL TIMELINE ({timelineNodes.length})</span>
+            </button>
+          </div>
         </div>
 
-        {/* Scrollable Comparison Content Area (Smooth Mobile Touch-Pan) */}
+        {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 touch-pan-y touch-scroll scrollbar-thin">
-          {/* Feature 2: Consensus Verification Matrix */}
+          {/* Consensus Verification Matrix */}
           <div className="p-4 rounded-xl border border-[var(--border)] bg-black/15 dark:bg-white/[0.02]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border)]">
               <div className="flex items-start gap-2.5">
@@ -119,14 +172,16 @@ export function PerspectiveModal({
                         ? '🟢 100% CROSS-WIRE CONSENSUS'
                         : allPerspectives.length === 3
                           ? '🔵 3-OUTLET WIRE CONSENSUS'
-                          : '🟡 DUAL-SOURCE VERIFICATION'}
+                          : '🟡 MULTI-SOURCE VERIFICATION'}
                     </span>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/20 dark:bg-white/10 text-[var(--ink-muted)] border border-[var(--border)]">
-                      {allPerspectives.length} INDEPENDENT WIRE DESKS
+                      {timelineNodes.length} TIMELINE EVENTS TRACKED
                     </span>
                   </div>
                   <p className="text-[11px] text-[var(--ink-muted)] mt-1 font-sans">
-                    Multi-outlet factual corroboration: Core facts confirmed across distinct editorial desks with no conflicting retractions.
+                    {activeTab === 'timeline'
+                      ? 'Chronological narrative chain: Track how this developing story broke and evolved across independent reporting desks.'
+                      : 'Multi-outlet factual corroboration: Core facts confirmed across distinct editorial desks with no conflicting retractions.'}
                   </p>
                 </div>
               </div>
@@ -144,12 +199,12 @@ export function PerspectiveModal({
                           ? 'w-full bg-emerald-500'
                           : allPerspectives.length === 3
                             ? 'w-3/4 bg-cyan-500'
-                            : 'w-1/2 bg-amber-500'
+                            : 'w-2/3 bg-emerald-400'
                       }`}
                     />
                   </div>
                   <span className="font-mono text-xs font-bold text-[var(--ink)]">
-                    {allPerspectives.length >= 4 ? '100%' : allPerspectives.length === 3 ? '92%' : '80%'}
+                    {allPerspectives.length >= 4 ? '100%' : allPerspectives.length === 3 ? '92%' : '85%'}
                   </span>
                 </div>
               </div>
@@ -158,104 +213,210 @@ export function PerspectiveModal({
             {/* Quick Outlets Verified Strip */}
             <div className="flex items-center gap-1.5 pt-2.5 flex-wrap">
               <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider">
-                CORROBORATING OUTLETS:
+                REPORTING DESKS:
               </span>
-              {allPerspectives.map((art) => (
+              {Array.from(new Set(timelineNodes.map(n => n.article.src))).map((srcName) => (
                 <span
-                  key={art.id}
+                  key={srcName}
                   className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/10 dark:bg-white/10 border border-[var(--border)] text-[var(--ink)]"
                 >
-                  {art.src}
+                  {srcName}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className={`grid grid-cols-1 ${
-            allPerspectives.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'
-          } gap-4`}>
-            {allPerspectives.map((art, index) => {
-              const isPrimary = index === 0;
+          {activeTab === 'timeline' ? (
+            /* Feature 4: Chronological Developing Story Timeline View */
+            <div className="relative pl-5 sm:pl-7 space-y-4 before:content-[''] before:absolute before:left-[9px] sm:before:left-[13px] before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-emerald-500 before:via-amber-500 before:to-[var(--accent)]">
+              {timelineNodes.map((node, idx) => {
+                const outlet = getOutletBadge(node.article.src);
+                return (
+                  <div
+                    key={node.article.id || idx}
+                    className={`relative p-4 sm:p-5 rounded-xl border transition-all ${
+                      node.isCurrent
+                        ? mode === 'world'
+                          ? 'bg-blue-950/20 border-blue-500/45 shadow-lg'
+                          : 'bg-red-950/20 border-red-500/45 shadow-lg'
+                        : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--border-hover)]'
+                    }`}
+                  >
+                    {/* Timeline Node Dot */}
+                    <span
+                      className={`absolute -left-[25px] sm:-left-[29px] top-5 w-3.5 h-3.5 rounded-full border-2 border-[var(--surface-solid)] ${
+                        node.isOrigin
+                          ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'
+                          : node.isLatest
+                            ? 'bg-[var(--accent)] shadow-[0_0_8px_rgba(239,68,68,0.6)]'
+                            : 'bg-amber-400'
+                      }`}
+                    />
 
-              return (
-                <div
-                  key={art.id || index}
-                  className={`flex flex-col justify-between p-4 sm:p-5 rounded-xl border transition-all ${
-                    isPrimary
-                      ? mode === 'world'
-                        ? 'bg-blue-950/20 border-blue-500/40 shadow-lg shadow-blue-500/5'
-                        : 'bg-red-950/20 border-red-500/40 shadow-lg shadow-red-500/5'
-                      : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--border-hover)]'
-                  }`}
-                >
-                  <div>
-                    {/* Outlet & Timestamp header */}
-                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--border)]">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-mono text-xs font-black tracking-wider uppercase px-2 py-0.5 rounded ${
-                          isPrimary
-                            ? mode === 'world' ? 'bg-blue-600 text-white' : 'bg-[var(--accent)] text-white'
-                            : 'bg-black/10 dark:bg-white/10 text-[var(--ink)]'
+                    {/* Top Meta Row */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap pb-2.5 mb-2.5 border-b border-[var(--border)]">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-black uppercase tracking-wider ${
+                          node.isOrigin
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : node.isLatest
+                              ? 'bg-[var(--accent)] text-white'
+                              : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                         }`}>
-                          {art.src}
+                          {node.stageLabel}
                         </span>
-                        {isPrimary && (
-                          <span className="text-[10px] font-mono text-amber-500 font-bold uppercase tracking-wider">
-                            ORIGINAL DISPATCH
+
+                        {node.deltaFromPrev && (
+                          <span className="px-2 py-0.5 rounded bg-black/15 dark:bg-white/10 font-mono text-[10px] font-bold text-[var(--ink-muted)]">
+                            ⏱ {node.deltaFromPrev}
                           </span>
                         )}
+
+                        <span className="font-mono text-xs font-bold text-[var(--ink)] flex items-center gap-1">
+                          <span>{outlet.flag}</span>
+                          <span>{outlet.name.toUpperCase()}</span>
+                        </span>
                       </div>
 
-                      <span className="flex items-center gap-1 text-[11px] font-mono text-[var(--ink-muted)]" title={art.date.toLocaleString()}>
-                        <Clock className="w-3 h-3 opacity-60" />
-                        {formatTimeAgo(art.date)}
-                      </span>
+                      <div className="flex items-center gap-2 text-[11px] font-mono text-[var(--ink-muted)]">
+                        <span className="px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/5 border border-[var(--border)]">
+                          {node.utcTimeStr}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 opacity-60" />
+                          {formatTimeAgo(node.article.date)}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Headline framing */}
-                    <h3 className="font-sans font-bold text-sm sm:text-base text-[var(--ink)] leading-snug mb-3">
-                      {art.title}
+                    {/* Headline */}
+                    <h3 className="font-sans font-bold text-sm sm:text-base text-[var(--ink)] leading-snug mb-2">
+                      {node.article.title}
                     </h3>
 
-                    {/* Excerpt / Lead */}
-                    {art.snippet ? (
-                      <p className="text-xs text-[var(--ink-muted)] leading-relaxed mb-4 font-sans line-clamp-4">
-                        "{art.snippet}"
-                      </p>
-                    ) : (
-                      <p className="text-xs italic text-[var(--ink-muted)] opacity-60 mb-4">
-                        No excerpt snippet provided in RSS dispatch.
+                    {node.article.snippet && (
+                      <p className="text-xs text-[var(--ink-muted)] leading-relaxed mb-3 font-sans line-clamp-2">
+                        {node.article.snippet}
                       </p>
                     )}
-                  </div>
 
-                  {/* Direct Action Link */}
-                  <div className="pt-3 border-t border-[var(--border)] mt-auto">
-                    <a
-                      href={art.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`w-full py-2.5 px-3 rounded-lg font-mono text-xs font-bold tracking-wider transition-all inline-flex items-center justify-center gap-1.5 ${
-                        isPrimary
-                          ? 'rbtn'
-                          : 'bg-[var(--surface-solid)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--ink)] hover:text-[var(--accent)]'
-                      }`}
-                    >
-                      <span>READ AT {art.src.toUpperCase()}</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-2">
+                      {onSelectArticle && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onSelectArticle(node.article);
+                            onClose();
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--accent)] text-[11px] font-mono font-bold text-[var(--ink)] flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <BookOpen className="w-3.5 h-3.5 text-[var(--accent)]" />
+                          <span>OPEN IN READER</span>
+                        </button>
+                      )}
+                      <a
+                        href={node.article.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] hover:border-[var(--accent)] text-[11px] font-mono font-bold text-[var(--ink-muted)] hover:text-[var(--ink)] flex items-center gap-1.5 transition-all"
+                      >
+                        <span>SOURCE WIRE</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Side-by-Side Outlets Grid */
+            <div className={`grid grid-cols-1 ${
+              allPerspectives.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'
+            } gap-4`}>
+              {allPerspectives.map((art, index) => {
+                const isPrimary = index === 0;
+
+                return (
+                  <div
+                    key={art.id || index}
+                    className={`flex flex-col justify-between p-4 sm:p-5 rounded-xl border transition-all ${
+                      isPrimary
+                        ? mode === 'world'
+                          ? 'bg-blue-950/20 border-blue-500/40 shadow-lg shadow-blue-500/5'
+                          : 'bg-red-950/20 border-red-500/40 shadow-lg shadow-red-500/5'
+                        : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--border-hover)]'
+                    }`}
+                  >
+                    <div>
+                      {/* Outlet & Timestamp header */}
+                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--border)]">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-mono text-xs font-black tracking-wider uppercase px-2 py-0.5 rounded ${
+                            isPrimary
+                              ? mode === 'world' ? 'bg-blue-600 text-white' : 'bg-[var(--accent)] text-white'
+                              : 'bg-black/10 dark:bg-white/10 text-[var(--ink)]'
+                          }`}>
+                            {art.src}
+                          </span>
+                          {isPrimary && (
+                            <span className="text-[10px] font-mono text-amber-500 font-bold uppercase tracking-wider">
+                              ORIGINAL DISPATCH
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="flex items-center gap-1 text-[11px] font-mono text-[var(--ink-muted)]" title={art.date.toLocaleString()}>
+                          <Clock className="w-3 h-3 opacity-60" />
+                          {formatTimeAgo(art.date)}
+                        </span>
+                      </div>
+
+                      {/* Headline framing */}
+                      <h3 className="font-sans font-bold text-sm sm:text-base text-[var(--ink)] leading-snug mb-3">
+                        {art.title}
+                      </h3>
+
+                      {/* Excerpt / Lead */}
+                      {art.snippet ? (
+                        <p className="text-xs text-[var(--ink-muted)] leading-relaxed mb-4 font-sans line-clamp-4">
+                          "{art.snippet}"
+                        </p>
+                      ) : (
+                        <p className="text-xs italic text-[var(--ink-muted)] opacity-60 mb-4">
+                          No excerpt snippet provided in RSS dispatch.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Direct Action Link */}
+                    <div className="pt-3 border-t border-[var(--border)] mt-auto">
+                      <a
+                        href={art.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`w-full py-2.5 px-3 rounded-lg font-mono text-xs font-bold tracking-wider transition-all inline-flex items-center justify-center gap-1.5 ${
+                          isPrimary
+                            ? 'rbtn'
+                            : 'bg-[var(--surface-solid)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--ink)] hover:text-[var(--accent)]'
+                        }`}
+                      >
+                        <span>READ AT {art.src.toUpperCase()}</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Sticky Footer Action Bar */}
         <div className="flex items-center justify-between gap-3 p-3 sm:p-4 border-t border-[var(--border)] bg-[var(--surface-solid)] shrink-0 z-20">
           <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono text-[var(--ink-muted)] truncate">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-            <span className="truncate">CROSS-OUTLET FACT CHECK VERIFICATION ACTIVE</span>
+            <span className="truncate">CROSS-OUTLET FACT CHECK & STORY THREADING ACTIVE</span>
           </div>
 
           <button

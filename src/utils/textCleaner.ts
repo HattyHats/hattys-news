@@ -71,6 +71,7 @@ export function getPublisherRoot(src: string): string {
   if (s.startsWith('upi')) return 'upi';
   if (s.startsWith('cna')) return 'cna';
   if (s.startsWith('reuters')) return 'reuters';
+  if (s.includes('guardian')) return 'guardian';
   if (s.includes('associated press') || s.startsWith('ap ')) return 'ap';
   return s;
 }
@@ -120,7 +121,8 @@ export function extractReadableBody(rawHtml: string, cleanedTitle: string): { fu
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
-  const normTitle = cleanedTitle.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 35);
+  const fullNormTitle = cleanedTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normTitle = fullNormTitle.slice(0, 35);
 
   const rawParagraphs = decoded
     .split(/\n{2,}/)
@@ -131,7 +133,11 @@ export function extractReadableBody(rawHtml: string, cleanedTitle: string): { fu
       if (/^(read more|continue reading|subscribe|sign up for|advertisement)/i.test(p)) return false;
       if (normTitle) {
         const normP = p.toLowerCase().replace(/[^a-z0-9]/g, '');
-        if (normP === normTitle || (normP.length < normTitle.length + 12 && normP.startsWith(normTitle))) {
+        if (
+          normP === normTitle ||
+          normP === fullNormTitle ||
+          (normP.length <= fullNormTitle.length + 25 && normP.startsWith( normTitle ))
+        ) {
           return false;
         }
       }

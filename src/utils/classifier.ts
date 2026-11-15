@@ -127,6 +127,8 @@ export function getOutletBadge(src: string): OutletMeta {
   if (s.includes('sciencedaily')) return { name: 'ScienceDaily', flag: '🧪', region: 'SCIENCE' };
   if (s.includes('ars technica')) return { name: 'Ars Technica', flag: '💻', region: 'TECH' };
   if (s.includes('verge')) return { name: 'The Verge', flag: '⚡', region: 'TECH' };
+  if (s.includes('techcrunch')) return { name: src, flag: '💻', region: 'TECH' };
+  if (s.includes('guardian')) return { name: 'The Guardian', flag: '🇬🇧', region: 'UK' };
   if (s.includes('bitcoin')) return { name: src, flag: '₿', region: 'CRYPTO' };
   return { name: src, flag: '⚡', region: 'CRYPTO' };
 }

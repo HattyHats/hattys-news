@@ -22,7 +22,7 @@ const parser = new RSSParser({
     'Sec-Fetch-User': '?1',
     'Upgrade-Insecure-Requests': '1',
   },
-  timeout: 15000,
+  timeout: 6500,
 });
 
 // Explicit domain allowlist to prevent Server-Side Request Forgery (SSRF)
@@ -142,6 +142,10 @@ export const handler: Handler = async (event) => {
   try {
     const feed = await parser.parseURL(url);
     const bodyStr = JSON.stringify(feed);
+    if (lambdaFeedCache.size >= 80 && !lambdaFeedCache.has(url)) {
+      const oldestKey = lambdaFeedCache.keys().next().value;
+      if (oldestKey) lambdaFeedCache.delete(oldestKey);
+    }
     lambdaFeedCache.set(url, { body: bodyStr, timestamp: Date.now() });
 
     return {
