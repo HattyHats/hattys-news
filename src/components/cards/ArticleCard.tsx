@@ -5,7 +5,6 @@ import {
   Share2,
   Check,
   ExternalLink,
-  Zap,
   ShieldCheck,
   Flame,
   BookOpen,
@@ -108,48 +107,34 @@ export const ArticleCard = memo(function ArticleCard({
       >
         <CardImage article={article} mode={cardMode} priority={idx < 4} />
         
-        {/* Category + Hero + NEW Overlay Badges */}
-        <div className="absolute top-2.5 left-2.5 right-24 flex items-center gap-1.5 flex-wrap pointer-events-none">
+        {/* Category + Hero Overlay Badges (Single Clean Row) */}
+        <div className="absolute top-2.5 left-2.5 right-20 flex items-center gap-1.5 flex-nowrap overflow-hidden pointer-events-none">
           {isHero && (
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black tracking-wider uppercase bg-[var(--accent)] text-white shadow-lg flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black tracking-wider uppercase bg-[var(--accent)] text-white shadow-lg flex items-center gap-1 shrink-0">
               <Flame className="w-3 h-3 fill-white" />
-              LEAD DISPATCH
+              LEAD
             </span>
           )}
-          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase bg-black/80 ${badgeClass}`}>
+          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider uppercase bg-black/80 shrink-0 ${badgeClass}`}>
             {categoryConfig.label}
           </span>
-          {isNew && (
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 flex items-center gap-0.5">
-              <Zap className="w-2.5 h-2.5 fill-black" />
-              NEW
-            </span>
-          )}
           {storyImpact && (
-            <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase bg-black/80 border ${storyImpact.badgeClass}`}>
+            <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase bg-black/80 border truncate ${storyImpact.badgeClass}`}>
               {storyImpact.label}
             </span>
           )}
           {isFocused && (
-            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase bg-[var(--accent)] text-white shadow-md">
-              ⏎ ENTER TO READ
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-black tracking-wider uppercase bg-[var(--accent)] text-white shadow-md shrink-0">
+              ⏎ READ
             </span>
           )}
         </div>
 
-        {/* Top-right Action Buttons (Snapshot, Bookmark & Copy Link) */}
+        {/* Top-right Action Buttons (Bookmark & Copy Link) */}
         <div
           className="absolute top-2.5 right-2.5 flex items-center gap-1.5"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            type="button"
-            onClick={() => onOpenSnapshot(article)}
-            className="w-7 h-7 rounded-full bg-black/80 hover:bg-black text-gray-200 hover:text-white flex items-center justify-center transition-opacity opacity-90 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
-            title="Generate HD Share Snapshot Card (P)"
-          >
-            <Camera className="w-3.5 h-3.5 text-[var(--accent)]" />
-          </button>
           <button
             type="button"
             onClick={() => onToggleSave(article)}
@@ -182,6 +167,7 @@ export const ArticleCard = memo(function ArticleCard({
               <span className="truncate">{outlet.name.toUpperCase()}</span>
             </span>
             <span className="flex items-center gap-1 shrink-0 ml-2" title={article.date.toLocaleString()}>
+              {isNew && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="New since last check-in" />}
               <Clock className="w-3 h-3 opacity-60" />
               {formatTimeAgo(article.date)}
             </span>
@@ -249,16 +235,16 @@ export const ArticleCard = memo(function ArticleCard({
         </div>
 
         <div className="mt-auto">
-          {/* Feature 2 & 4: Harmonized Consensus, Developing Timeline & Wire Verification Bar */}
-          {relatedSources.length > 0 ? (
-            <div className={`p-2 rounded-lg border mb-2.5 transition-all ${
+          {/* Multi-Outlet Consensus & Timeline Bar (only shown when verified across multiple outlets) */}
+          {relatedSources.length > 0 && (
+            <div className={`p-2 rounded-lg border mb-2 transition-all ${
               isDark ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-emerald-50/80 border-emerald-300'
             }`}>
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span className="text-[10px] font-mono font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider truncate">
-                    {relatedSources.length >= 3 ? '100% CONSENSUS' : `${relatedSources.length + 1}-OUTLET WIRE`}
+                    {relatedSources.length + 1} WIRES
                   </span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -294,47 +280,29 @@ export const ArticleCard = memo(function ArticleCard({
                 </span>
               </div>
             </div>
-          ) : (
-            <div className="p-2 rounded-lg border border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.015] mb-2.5">
-              <div className="flex items-center justify-between gap-1.5 text-[10px] font-mono text-[var(--ink-muted)]">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 shrink-0" />
-                  <span className="font-bold uppercase tracking-wider truncate text-[9px]">
-                    PRIMARY WIRE DISPATCH
-                  </span>
-                </div>
-                <span className="text-[9px] opacity-60 font-semibold shrink-0 uppercase">
-                  VERIFIED DESK
-                </span>
-              </div>
-              <div className="flex items-center gap-1 mt-1 text-[9px] font-mono text-[var(--ink-muted)] opacity-60 truncate">
-                <span className="truncate">EXCLUSIVE REPORTING VIA {article.src.toUpperCase()}</span>
-              </div>
-            </div>
           )}
 
-          {/* Feature 3: Compact 1-Click Community Sentiment Pulse Bar */}
-          <div className="mb-2.5 px-2 py-1.5 rounded-lg border border-[var(--border)] bg-black/[0.025] dark:bg-white/[0.015]">
-            <div className="flex items-center justify-between gap-1 text-[10px] font-mono mb-1">
+          {/* Slim 1-Line Community Sentiment Pulse Bar */}
+          <div className="mb-2 pt-1.5">
+            <div className="flex items-center justify-between gap-2 text-[10px] font-mono mb-1">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   onVotePulse(article.id, 'up');
                 }}
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1 font-bold transition-colors cursor-pointer ${
                   pulse.userVote === 'up'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                    : 'text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/10'
+                    ? 'text-emerald-400 underline'
+                    : 'text-emerald-500/85 hover:text-emerald-400'
                 }`}
                 title={`Vote ${pulse.upLabel} (${pulse.upVotes} votes)`}
               >
                 <TrendingUp className="w-3 h-3" />
-                <span>{pulse.upShortLabel}</span>
-                <span className="font-black">{pulse.upPct}%</span>
+                <span>{pulse.upShortLabel} {pulse.upPct}%</span>
               </button>
 
-              <span className="text-[9px] text-[var(--ink-muted)] opacity-70">
+              <span className="text-[9px] text-[var(--ink-muted)] opacity-60">
                 {pulse.totalVotes} VOTES
               </span>
 
@@ -344,19 +312,18 @@ export const ArticleCard = memo(function ArticleCard({
                   e.stopPropagation();
                   onVotePulse(article.id, 'down');
                 }}
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1 font-bold transition-colors cursor-pointer ${
                   pulse.userVote === 'down'
-                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                    : 'text-rose-500 dark:text-rose-400 hover:bg-rose-500/10'
+                    ? 'text-rose-400 underline'
+                    : 'text-rose-500/85 hover:text-rose-400'
                 }`}
                 title={`Vote ${pulse.downLabel} (${pulse.downVotes} votes)`}
               >
-                <span>{pulse.downPct}%</span>
-                <span>{pulse.downShortLabel}</span>
+                <span>{pulse.downPct}% {pulse.downShortLabel}</span>
                 <TrendingDown className="w-3 h-3" />
               </button>
             </div>
-            <div className="w-full h-1 rounded-full bg-rose-500/35 overflow-hidden flex">
+            <div className="w-full h-1 rounded-full bg-rose-500/30 overflow-hidden flex">
               <div
                 className="h-full bg-emerald-500 transition-all duration-300"
                 style={{ width: `${pulse.upPct}%` }}
@@ -390,18 +357,6 @@ export const ArticleCard = memo(function ArticleCard({
             >
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
-            <button
-              type="button"
-              onClick={() => onToggleSave(article)}
-              className={`px-2.5 py-2 rounded-lg border transition-colors flex items-center justify-center cursor-pointer ${
-                isSaved
-                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 dark:text-amber-400'
-                  : 'border-[var(--border)] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--accent)]/40'
-              }`}
-              title={isSaved ? 'Saved in Read-Later Queue' : 'Save for Later'}
-            >
-              <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-amber-400' : ''}`} />
-            </button>
           </div>
         </div>
       </div>

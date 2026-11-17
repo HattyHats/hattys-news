@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, SlidersHorizontal, ArrowUp, ArrowDown, Eye, EyeOff, RotateCcw, Check } from 'lucide-react';
+import { X, SlidersHorizontal, ArrowUp, ArrowDown, Eye, EyeOff, RotateCcw, Check, Volume2 } from 'lucide-react';
 import { AppMode, DashboardSettings } from '../../types';
 import { CRYPTO_CATEGORIES, WORLD_CATEGORIES } from '../../config/feeds';
+import { formatVoiceLabel } from '../../utils/speech';
 
 export interface DashboardSettingsModalProps {
   isOpen: boolean;
@@ -11,6 +12,9 @@ export interface DashboardSettingsModalProps {
   settings: DashboardSettings;
   onUpdateSettings: (newSettings: DashboardSettings) => void;
   categoryCounts: Record<string, number>;
+  voices?: SpeechSynthesisVoice[];
+  selectedVoiceUri?: string;
+  onChangeVoiceUri?: (uri: string) => void;
 }
 
 export function DashboardSettingsModal({
@@ -19,7 +23,10 @@ export function DashboardSettingsModal({
   mode,
   settings,
   onUpdateSettings,
-  categoryCounts
+  categoryCounts,
+  voices = [],
+  selectedVoiceUri = 'auto',
+  onChangeVoiceUri,
 }: DashboardSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<AppMode>(mode);
 
@@ -312,6 +319,36 @@ export function DashboardSettingsModal({
               </button>
             </div>
           </div>
+
+          {/* Section: Audio Brief Narrator Voice */}
+          {onChangeVoiceUri && voices.length > 0 && (
+            <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Volume2 className="w-4 h-4 text-emerald-500" />
+                  <span className="text-xs font-mono font-bold text-[var(--ink)]">
+                    AUDIO BRIEF NARRATOR VOICE
+                  </span>
+                </div>
+                <p className="text-[11px] text-[var(--ink-muted)] mt-1">
+                  Select which system voice reads your 60-Second Brief and Saved Queue aloud.
+                </p>
+              </div>
+              <select
+                value={selectedVoiceUri}
+                onChange={(e) => onChangeVoiceUri(e.target.value)}
+                aria-label="Select narrator voice"
+                className="text-xs font-mono font-semibold bg-[var(--surface-solid)] text-[var(--ink)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 max-w-full sm:max-w-[190px] truncate outline-none cursor-pointer hover:border-emerald-500/40 shrink-0"
+              >
+                <option value="auto">Auto (Best Natural)</option>
+                {voices.slice(0, 18).map((v) => (
+                  <option key={v.voiceURI} value={v.voiceURI}>
+                    {formatVoiceLabel(v)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

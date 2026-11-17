@@ -19,24 +19,25 @@ export const ASSET_DEFINITIONS: AssetDefinition[] = [
   // Key Commodities
   { id: 'GOLD', symbol: 'GOLD', name: 'Gold Spot', type: 'commodity', regex: /\b(Gold|Bullion|XAU)\b/i, color: '#ca8a04', marketKey: 'GOLD' },
   { id: 'SILVER', symbol: 'SILVER', name: 'Silver Spot', type: 'commodity', regex: /\b(Silver|XAG)\b/i, color: '#94a3b8', marketKey: 'SILVER' },
-  { id: 'OIL_CRUDE', symbol: 'OIL', name: 'Crude Oil', type: 'commodity', regex: /\b(Crude Oil|Brent|WTI|Petroleum|OPEC)\b/i, color: '#ea580c', marketKey: 'OIL_CRUDE' },
+  { id: 'OIL_CRUDE', symbol: 'OIL', name: 'Crude Oil', type: 'commodity', regex: /\b(Crude Oil|Oil|Brent|WTI|Petroleum|OPEC)\b/i, color: '#ea580c', marketKey: 'OIL_CRUDE' },
   { id: 'NAT_GAS', symbol: 'NATGAS', name: 'Natural Gas', type: 'commodity', regex: /\b(Natural Gas|NatGas|LNG)\b/i, color: '#0284c7', marketKey: 'NAT_GAS' },
   { id: 'COPPER', symbol: 'COPPER', name: 'Copper', type: 'commodity', regex: /\b(Copper)\b/i, color: '#d97706', marketKey: 'COPPER' },
   { id: 'URANIUM', symbol: 'URANIUM', name: 'Uranium', type: 'commodity', regex: /\b(Uranium)\b/i, color: '#10b981', marketKey: 'URANIUM' },
 
   // Top Equities & Tech
   { id: 'NVDA', symbol: 'NVDA', name: 'Nvidia', type: 'stock', regex: /\b(\$?NVDA|Nvidia)\b/i, color: '#16a34a', marketKey: 'NVDA' },
-  { id: 'AAPL', symbol: 'AAPL', name: 'Apple', type: 'stock', regex: /\b(\$?AAPL|Apple Inc)\b/i, color: '#64748b', marketKey: 'AAPL' },
+  { id: 'AAPL', symbol: 'AAPL', name: 'Apple', type: 'stock', regex: /\b(\$?AAPL|Apple(?:\s+Inc)?)\b/i, color: '#64748b', marketKey: 'AAPL' },
   { id: 'TSLA', symbol: 'TSLA', name: 'Tesla', type: 'stock', regex: /\b(\$?TSLA|Tesla)\b/i, color: '#e11d48', marketKey: 'TSLA' },
   { id: 'MSFT', symbol: 'MSFT', name: 'Microsoft', type: 'stock', regex: /\b(\$?MSFT|Microsoft)\b/i, color: '#0284c7', marketKey: 'MSFT' },
   { id: 'AMZN', symbol: 'AMZN', name: 'Amazon', type: 'stock', regex: /\b(\$?AMZN|Amazon)\b/i, color: '#f59e0b', marketKey: 'AMZN' },
   { id: 'GOOGL', symbol: 'GOOGL', name: 'Alphabet', type: 'stock', regex: /\b(\$?GOOGL?|Alphabet|Google)\b/i, color: '#dc2626', marketKey: 'GOOGL' },
-  { id: 'META', symbol: 'META', name: 'Meta', type: 'stock', regex: /\b(\$?META|Facebook)\b/i, color: '#2563eb', marketKey: 'META' },
+  { id: 'META', symbol: 'META', name: 'Meta', type: 'stock', regex: /\b(\$?META|Meta\s+Platforms|Facebook)\b/i, color: '#2563eb', marketKey: 'META' },
 
   // Major Indices
-  { id: 'SPY', symbol: 'S&P 500', name: 'S&P 500', type: 'index', regex: /\b(S&P ?500|SPX|Wall Street)\b/i, color: '#3b82f6', marketKey: 'SPY' },
+  { id: 'SPY', symbol: 'S&P 500', name: 'S&P 500', type: 'index', regex: /\b(SPY|S&P ?500|SPX|Wall Street)\b/i, color: '#3b82f6', marketKey: 'SPY' },
   { id: 'QQQ', symbol: 'NASDAQ', name: 'Nasdaq 100', type: 'index', regex: /\b(Nasdaq|QQQ)\b/i, color: '#8b5cf6', marketKey: 'QQQ' },
-  { id: 'DIA', symbol: 'DOW', name: 'Dow Jones', type: 'index', regex: /\b(Dow Jones|DJIA)\b/i, color: '#059669', marketKey: 'DIA' },
+  { id: 'DIA', symbol: 'DOW', name: 'Dow Jones', type: 'index', regex: /\b(Dow Jones|DJIA|DIA)\b/i, color: '#059669', marketKey: 'DIA' },
+  { id: 'IWM', symbol: 'IWM', name: 'Russell 2000', type: 'index', regex: /\b(Russell\s*2000|Small[- ]Caps?|IWM)\b/i, color: '#7c3aed', marketKey: 'IWM' },
 ];
 
 export const DEFAULT_TOKENS: Record<string, TickerToken> = {

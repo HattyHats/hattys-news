@@ -1,8 +1,8 @@
 /**
  * Hatty's News - Native Push & Notification Handler
- * Cache/SW Revision: 2026-11-14.2
+ * Cache/SW Revision: 2026-11-16.1
  */
-const SW_VERSION = '2026-11-14.2';
+const SW_VERSION = '2026-11-16.1';
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

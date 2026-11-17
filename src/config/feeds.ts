@@ -102,26 +102,6 @@ export const WORLD_FEEDS: FeedConfig[] = [
   { n: 'The Verge', u: 'https://www.theverge.com/rss/index.xml', defaultCat: 'tech' }
 ];
 
-export const CRYPTO_SPLASH_HEADLINES = [
-  { tag: 'BREAKING', cat: 'BITCOIN', text: 'Bitcoin Hashrate Reaches New All-Time High Amid Global Expansion' },
-  { tag: 'MARKET ALERT', cat: 'ETHEREUM', text: 'Ethereum Layer-2 TVL Explodes Past $50B Milestone' },
-  { tag: 'REGULATION', cat: 'POLICY', text: 'Global Regulators Form Digital Asset Unified Framework' },
-  { tag: 'DEFI DISPATCH', cat: 'DEFI', text: 'Institutional Staking Volumes Surge by 140% in Q3' },
-  { tag: 'FLASH INTEL', cat: 'ALTCOINS', text: 'Solana DEX Volume Flips Major CeFi Exchanges in Weekly Stats' },
-  { tag: 'TECH INTEL', cat: 'MINING', text: 'Next-Gen 3nm ASIC Miners Enter Commercial Mass Production' },
-  { tag: 'MARKET FLASH', cat: 'BITCOIN', text: 'Spot ETF Cumulative Net Inflows Cross Record Frontiers' },
-  { tag: 'WEB3 WIRE', cat: 'NFT/WEB3', text: 'Zero-Knowledge Cryptography Integrations Go Mainstream' }
-];
-
-export const WORLD_SPLASH_HEADLINES = [
-  { tag: 'GLOBAL WIRE', cat: 'DIPLOMACY', text: 'International Delegations Convene on Global Ceasefire Framework' },
-  { tag: 'WIRE FLASH', cat: 'ECONOMY', text: 'Global Central Banks Report Synchronized Decline in Core Inflation' },
-  { tag: 'FACT-CHECKED', cat: 'SCIENCE', text: 'James Webb Telescope Detects Organic Compounds in Exoplanet Orbit' },
-  { tag: 'DISPATCH', cat: 'WORLD', text: 'United Nations High Council Unveils Comprehensive Humanitarian Plan' },
-  { tag: 'GLOBAL TECH', cat: 'TECH & AI', text: 'International Standards Body Establishes Open Ethics Framework for AI' },
-  { tag: 'WORLD REPORT', cat: 'CLIMATE', text: 'Renewable Power Generation Surpasses Global Coal Capacity in Milestone' }
-];
-
 export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
   cryptoCategories: CRYPTO_CATEGORIES.map(c => c.id),
   cryptoHidden: [],

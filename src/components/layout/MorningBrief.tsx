@@ -1,19 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap, Calendar, Bookmark, Volume2, Pause, Play, Square, Gauge, BookOpen } from 'lucide-react';
+import {
+  Zap,
+  Bookmark,
+  Volume2,
+  Pause,
+  Play,
+  Square,
+  Gauge,
+  BookOpen,
+  Target,
+  TrendingUp,
+  TrendingDown,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
 import { Article, AppMode } from '../../types';
 import { formatTimeAgo } from '../../utils/formatters';
-import {
-  BRIEF_SPEED_OPTIONS,
-  createSpeechQueueController,
-  formatVoiceLabel,
-  getRankedEnglishVoices,
-  loadSavedSpeechRate,
-  loadSavedVoiceUri,
-  saveSpeechRate,
-  saveVoiceUri,
-  SpeechQueueController,
-} from '../../utils/speech';
+import { AudioTrack, TerminalAudioPlayer } from '../../hooks/useTerminalAudioPlayer';
+import { DailyCallStats } from '../../utils/dailyCall';
 
 interface MorningBriefProps {
   showBrief: boolean;
@@ -23,8 +28,12 @@ interface MorningBriefProps {
   filter: string;
   query: string;
   savedIds: Set<string>;
+  audioPlayer: TerminalAudioPlayer;
+  dailyCallStats: DailyCallStats;
+  callAssetQuote: { price: number; change24h: number; formatted: string } | undefined;
+  isCallAssetLive: boolean;
+  onSubmitDailyCall: (direction: 'up' | 'down') => void;
   onToggleBrief: () => void;
-  onOpenCatalysts: () => void;
   onToggleSave: (article: Article) => void;
   onOpenPerspective: (article: Article, related: Article[]) => void;
   onOpenArticle: (article: Article) => void;
@@ -38,281 +47,162 @@ export function MorningBrief({
   filter,
   query,
   savedIds,
+  audioPlayer,
+  dailyCallStats,
+  callAssetQuote,
+  isCallAssetLive,
+  onSubmitDailyCall,
   onToggleBrief,
-  onOpenCatalysts,
   onToggleSave,
   onOpenPerspective,
   onOpenArticle,
 }: MorningBriefProps) {
-  // Feature 3 + 6: Realistic Natural Audio Brief Reader with Voice Picker & Speed Control
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [isPausedAudio, setIsPausedAudio] = useState(false);
-  const [activeSpeakingIdx, setActiveSpeakingIdx] = useState<number | null>(null);
-  const [audioNotice, setAudioNotice] = useState<string | null>(null);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [selectedVoiceUri, setSelectedVoiceUri] = useState<string>(() => loadSavedVoiceUri());
-  const [playbackRate, setPlaybackRate] = useState<number>(() => loadSavedSpeechRate());
+  const briefQueueLabel = `60S ${mode === 'world' ? 'GLOBAL' : 'CRYPTO'} BRIEF`;
+  const isPlayingBrief = audioPlayer.isActive && audioPlayer.sourceLabel === briefQueueLabel;
+  const activeBriefTrackId = isPlayingBrief ? audioPlayer.activeTrack?.id : null;
 
-  const selectedVoiceUriRef = useRef(selectedVoiceUri);
-  selectedVoiceUriRef.current = selectedVoiceUri;
-  const playbackRateRef = useRef(playbackRate);
-  playbackRateRef.current = playbackRate;
-  const currentStoryIdxRef = useRef<number>(0);
-  const controllerRef = useRef<SpeechQueueController | null>(null);
-
-  if (!controllerRef.current) {
-    controllerRef.current = createSpeechQueueController({
-      getVoiceUri: () => selectedVoiceUriRef.current,
-      getRate: () => playbackRateRef.current,
-      betweenItemDelayMs: 450,
-      onItemStart: (idx) => {
-        currentStoryIdxRef.current = idx;
-        setActiveSpeakingIdx(idx);
-        setAudioNotice(null);
-      },
-      onComplete: () => {
-        setIsPlayingAudio(false);
-        setIsPausedAudio(false);
-        setActiveSpeakingIdx(null);
-      },
-      onError: (reason) => {
-        setIsPlayingAudio(false);
-        setIsPausedAudio(false);
-        setActiveSpeakingIdx(null);
-        setAudioNotice(`Speech engine issue (${reason}) — try another voice`);
-      },
-    });
-  }
-
-  // Discover ranked English neural / natural voices on mount & when Chrome finishes loading voices
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
-    const loadVoiceList = () => {
-      setVoices(getRankedEnglishVoices());
-    };
-
-    loadVoiceList();
-    const synth = window.speechSynthesis;
-    if (typeof synth.addEventListener === 'function') {
-      synth.addEventListener('voiceschanged', loadVoiceList);
-      return () => {
-        synth.removeEventListener('voiceschanged', loadVoiceList);
-      };
-    }
-    synth.onvoiceschanged = loadVoiceList;
-    return () => {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.onvoiceschanged = null;
-      }
-    };
-  }, []);
-
-  // Stop speech cleanly if brief closes, mode changes, or component unmounts
-  useEffect(() => {
-    return () => {
-      controllerRef.current?.stop();
-      setIsPlayingAudio(false);
-      setIsPausedAudio(false);
-      setActiveSpeakingIdx(null);
-      setAudioNotice(null);
-    };
-  }, [mode, showBrief]);
-
-  const handleStopAudio = () => {
-    controllerRef.current?.stop();
-    setIsPlayingAudio(false);
-    setIsPausedAudio(false);
-    setActiveSpeakingIdx(null);
-    setAudioNotice(null);
-  };
-
-  const buildBriefScripts = () => {
+  const buildBriefTracks = (): AudioTrack[] => {
     const total = morningBriefStories.length;
     return morningBriefStories.map((item, idx) => {
       const cleanTitle = item.article.title.replace(/[\n\r]+/g, ' ').trim();
       const sourceName = item.article.src;
+      let spokenText = '';
       if (idx === 0) {
-        return `Welcome to Hatty's News sixty-second ${mode === 'world' ? 'world' : 'crypto'} brief. Here are today's top stories. First, ${cleanTitle}. Reported by ${sourceName}.`;
+        spokenText = `Welcome to Hatty's News sixty-second ${mode === 'world' ? 'world' : 'crypto'} brief. Here are today's top stories. First, ${cleanTitle}. Reported by ${sourceName}.`;
+      } else if (idx === total - 1) {
+        spokenText = `And finally... ${cleanTitle}. Covered by ${sourceName}. That concludes your sixty-second brief.`;
+      } else {
+        const transitions = [
+          `Next story... ${cleanTitle}. From ${sourceName}.`,
+          `Also developing... ${cleanTitle}. According to ${sourceName}.`,
+          `In other news... ${cleanTitle}. Reported by ${sourceName}.`,
+        ];
+        spokenText = transitions[(idx - 1) % transitions.length];
       }
-      if (idx === total - 1) {
-        return `And finally... ${cleanTitle}. Covered by ${sourceName}. That concludes your sixty-second brief.`;
-      }
-      const transitions = [
-        `Next story... ${cleanTitle}. From ${sourceName}.`,
-        `Also developing... ${cleanTitle}. According to ${sourceName}.`,
-        `In other news... ${cleanTitle}. Reported by ${sourceName}.`
-      ];
-      return transitions[(idx - 1) % transitions.length];
+
+      return {
+        id: item.article.id,
+        title: cleanTitle,
+        src: sourceName,
+        spokenText,
+        article: item.article,
+      };
     });
   };
 
-  const startBriefSequence = (startIdx: number) => {
-    const scripts = buildBriefScripts();
-    if (scripts.length === 0) return;
-    setAudioNotice(null);
-    setIsPlayingAudio(true);
-    setIsPausedAudio(false);
-    controllerRef.current?.start(scripts, startIdx);
-  };
-
-  const handleTogglePlayAudio = () => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      setAudioNotice('Text-to-speech is not supported in this browser.');
+  const handleTogglePlayBrief = () => {
+    if (isPlayingBrief) {
+      audioPlayer.togglePlayPause();
       return;
     }
-
-    if (isPlayingAudio) {
-      if (isPausedAudio) {
-        controllerRef.current?.resume();
-        setIsPausedAudio(false);
-      } else {
-        controllerRef.current?.pause();
-        setIsPausedAudio(true);
-      }
-      return;
-    }
-
-    startBriefSequence(0);
-  };
-
-  const handleCycleRate = () => {
-    const idx = BRIEF_SPEED_OPTIONS.findIndex(r => Math.abs(r - playbackRate) < 0.02);
-    const nextRate = BRIEF_SPEED_OPTIONS[(idx + 1) % BRIEF_SPEED_OPTIONS.length];
-    setPlaybackRate(nextRate);
-    playbackRateRef.current = nextRate;
-    saveSpeechRate(nextRate);
-    if (isPlayingAudio && !isPausedAudio) {
-      startBriefSequence(currentStoryIdxRef.current);
+    const tracks = buildBriefTracks();
+    if (tracks.length > 0) {
+      audioPlayer.playQueue(tracks, 0, briefQueueLabel);
     }
   };
 
-  const handleVoiceChange = (nextUri: string) => {
-    setSelectedVoiceUri(nextUri);
-    selectedVoiceUriRef.current = nextUri;
-    saveVoiceUri(nextUri);
-    if (isPlayingAudio && !isPausedAudio) {
-      startBriefSequence(currentStoryIdxRef.current);
-    }
-  };
+  const callSymbol = mode === 'world' ? 'SPY' : 'BTC';
+  const callDisplayName = mode === 'world' ? 'S&P 500 (SPY)' : 'Bitcoin (BTC)';
+  const { todayCall, lastResolvedCall, wins, losses, totalResolved, winRatePct } = dailyCallStats;
+
+  const unrealizedPct =
+    todayCall && callAssetQuote?.price
+      ? ((callAssetQuote.price - todayCall.entryPrice) / todayCall.entryPrice) * 100
+      : null;
+
+  const callOnTrack =
+    todayCall && unrealizedPct !== null
+      ? (todayCall.direction === 'up' && unrealizedPct > 0) ||
+        (todayCall.direction === 'down' && unrealizedPct < 0)
+      : null;
 
   return (
     <AnimatePresence initial={false}>
-      {showBrief && morningBriefStories.length > 0 && filter !== 'saved' && !query && (
+      {showBrief && morningBriefStories.length > 0 && filter !== 'saved' && filter !== 'radar' && !query && (
         <motion.section
           initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-          animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
+          animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
           exit={{ opacity: 0, height: 0, marginBottom: 0 }}
           transition={{ duration: 0.25, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
-          <div className={`rounded-2xl border p-4 sm:p-5 relative overflow-hidden ${
+          <div className={`rounded-2xl border p-3.5 sm:p-4 relative overflow-hidden ${
             mode === 'world'
               ? isDark
-                ? 'bg-gradient-to-br from-blue-950/35 via-[var(--surface-solid)] to-[var(--surface-solid)] border-blue-500/30'
+                ? 'bg-gradient-to-br from-blue-950/30 via-[var(--surface-solid)] to-[var(--surface-solid)] border-blue-500/25'
                 : 'bg-gradient-to-br from-blue-50 via-white to-white border-blue-300/70 shadow-sm'
               : isDark
-                ? 'bg-gradient-to-br from-amber-950/25 via-[var(--surface-solid)] to-[var(--surface-solid)] border-amber-500/30'
+                ? 'bg-gradient-to-br from-amber-950/20 via-[var(--surface-solid)] to-[var(--surface-solid)] border-amber-500/25'
                 : 'bg-gradient-to-br from-amber-50 via-white to-white border-amber-300/70 shadow-sm'
           }`}>
-            <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-[var(--border)] flex-wrap">
-              <div className="flex items-center gap-2.5">
-                <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg border ${
+            {/* Minimal Clean Brief Header */}
+            <div className="flex items-center justify-between gap-2 pb-2.5 mb-3 border-b border-[var(--border)] flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg border shrink-0 ${
                   mode === 'world'
-                    ? 'bg-blue-500/15 border-blue-500/40 text-blue-500 dark:text-blue-400'
-                    : 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400'
+                    ? 'bg-blue-500/15 border-blue-500/35 text-blue-500 dark:text-blue-400'
+                    : 'bg-amber-500/15 border-amber-500/35 text-amber-600 dark:text-amber-400'
                 }`}>
-                  <Zap className="w-4 h-4" />
+                  <Zap className="w-3.5 h-3.5" />
                 </span>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="font-display text-lg sm:text-xl tracking-wide text-[var(--ink)] leading-none">
-                      60-SECOND {mode === 'world' ? 'GLOBAL' : 'CRYPTO'} BRIEF
-                    </h2>
-                    <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full border ${
-                      mode === 'world'
-                        ? 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30'
-                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
-                    }`}>
-                      TOP 5 MUST-KNOW
-                    </span>
-                  </div>
-                  <p className="text-[11px] font-mono text-[var(--ink-muted)] mt-0.5">
-                    Ranked by multi-source wire consensus & breaking velocity
-                  </p>
-                  {audioNotice && (
-                    <p className="text-[11px] font-mono text-amber-500 mt-1 font-bold">
-                      {audioNotice}
-                    </p>
-                  )}
-                </div>
+                <h2 className="font-display text-base sm:text-lg tracking-wide text-[var(--ink)] leading-none truncate">
+                  60-SECOND {mode === 'world' ? 'GLOBAL' : 'CRYPTO'} BRIEF
+                </h2>
+                {audioPlayer.audioNotice && (
+                  <span className="text-[10px] font-mono text-amber-500 font-bold truncate">
+                    • {audioPlayer.audioNotice}
+                  </span>
+                )}
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Feature 3 + 6: Audio Brief Player + Speed + Voice Picker */}
-                <div className="inline-flex items-center gap-1 bg-black/10 dark:bg-white/10 p-0.5 rounded-lg border border-[var(--border)] flex-wrap">
-                  <button
-                    onClick={handleTogglePlayAudio}
-                    className={`text-[11px] font-mono px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 ${
-                      isPlayingAudio
-                        ? 'bg-emerald-500 text-black shadow-sm'
-                        : 'text-[var(--ink)] hover:bg-black/10 dark:hover:bg-white/10'
-                    }`}
-                    title={isPlayingAudio ? (isPausedAudio ? 'Resume Audio Brief' : 'Pause Audio Brief') : 'Listen to 60-Second Audio Brief'}
-                  >
-                    {isPlayingAudio ? (
-                      isPausedAudio ? <Play className="w-3.5 h-3.5 fill-current" /> : <Pause className="w-3.5 h-3.5 fill-current" />
-                    ) : (
-                      <Volume2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-                    )}
-                    <span>{isPlayingAudio ? (isPausedAudio ? 'RESUME' : 'PAUSE') : 'LISTEN'}</span>
-                  </button>
 
-                  {isPlayingAudio && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* Clean Listen Button (Speed appears only while playing; Voice lives inside Customize) */}
+                <button
+                  type="button"
+                  onClick={handleTogglePlayBrief}
+                  className={`text-[11px] font-mono px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 ${
+                    isPlayingBrief
+                      ? 'bg-emerald-500 text-black border-emerald-400 shadow-sm'
+                      : 'bg-[var(--bg)] border-[var(--border)] text-[var(--ink)] hover:border-emerald-500/50'
+                  }`}
+                  title={isPlayingBrief ? (audioPlayer.isPaused ? 'Resume Audio Brief' : 'Pause Audio Brief') : 'Listen to 60-Second Audio Brief (adjust voice inside Customize)'}
+                >
+                  {isPlayingBrief ? (
+                    audioPlayer.isPaused ? <Play className="w-3 h-3 fill-current" /> : <Pause className="w-3 h-3 fill-current" />
+                  ) : (
+                    <Volume2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+                  )}
+                  <span>{isPlayingBrief ? (audioPlayer.isPaused ? 'RESUME' : 'PAUSE') : 'LISTEN'}</span>
+                </button>
+
+                {isPlayingBrief && (
+                  <>
                     <button
-                      onClick={handleStopAudio}
-                      className="text-[11px] font-mono p-1 rounded-md text-[var(--ink-muted)] hover:text-red-400 transition-colors cursor-pointer"
+                      type="button"
+                      onClick={audioPlayer.cycleRate}
+                      className="px-2 py-1 rounded-lg text-[10px] font-mono font-bold text-[var(--ink)] bg-[var(--bg)] border border-[var(--border)] flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Cycle playback speed"
+                    >
+                      <Gauge className="w-3 h-3 text-emerald-500" />
+                      <span>
+                        {audioPlayer.playbackRate.toFixed(
+                          audioPlayer.playbackRate === 1 || audioPlayer.playbackRate === 0.9 || audioPlayer.playbackRate === 1.3 ? 1 : 2
+                        )}x
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={audioPlayer.stop}
+                      className="p-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--ink-muted)] hover:text-red-400 transition-colors cursor-pointer"
                       title="Stop Audio Brief"
                     >
-                      <Square className="w-3.5 h-3.5 fill-current" />
+                      <Square className="w-3 h-3 fill-current" />
                     </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleCycleRate}
-                    className="px-2 py-1 rounded-md text-[10px] font-mono font-bold text-[var(--ink)] bg-[var(--surface-solid)]/80 hover:bg-[var(--surface-solid)] border border-[var(--border)] flex items-center gap-1 transition-colors cursor-pointer"
-                    title="Cycle playback speed (0.9x / 1.0x / 1.15x / 1.3x)"
-                  >
-                    <Gauge className="w-3 h-3 text-emerald-500" />
-                    <span>{playbackRate.toFixed(playbackRate === 1 || playbackRate === 0.9 || playbackRate === 1.3 ? 1 : 2)}x</span>
-                  </button>
-
-                  {voices.length > 0 && (
-                    <select
-                      value={selectedVoiceUri}
-                      onChange={(e) => handleVoiceChange(e.target.value)}
-                      aria-label="Select narrator voice"
-                      title="Select narrator voice for 60s Audio Brief"
-                      className="text-[10px] font-mono font-semibold bg-[var(--surface-solid)] text-[var(--ink)] border border-[var(--border)] rounded-md px-1.5 py-1 max-w-[130px] sm:max-w-[165px] truncate outline-none cursor-pointer hover:border-emerald-500/40"
-                    >
-                      <option value="auto">Auto (Best Natural)</option>
-                      {voices.slice(0, 18).map((v) => (
-                        <option key={v.voiceURI} value={v.voiceURI}>
-                          {formatVoiceLabel(v)}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
+                  </>
+                )}
 
                 <button
-                  onClick={onOpenCatalysts}
-                  className="text-[11px] font-mono px-2.5 py-1 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors flex items-center gap-1.5 font-bold cursor-pointer"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">UPCOMING</span> CATALYSTS
-                </button>
-                <button
+                  type="button"
                   onClick={onToggleBrief}
                   className="text-[11px] font-mono px-2.5 py-1 rounded-lg border border-[var(--border)] text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
                 >
@@ -321,17 +211,17 @@ export function MorningBrief({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
               {morningBriefStories.map((item, i) => {
                 const isSaved = savedIds.has(item.article.id);
-                const isSpeakingThis = activeSpeakingIdx === i;
+                const isSpeakingThis = activeBriefTrackId === item.article.id;
 
                 return (
                   <div
                     key={item.article.id}
                     className={`group relative rounded-xl border p-3 flex flex-col justify-between transition-all ${
                       isSpeakingThis
-                        ? 'border-emerald-500 ring-2 ring-emerald-500/40 bg-emerald-500/10 shadow-lg scale-[1.02]'
+                        ? 'border-emerald-500 ring-2 ring-emerald-500/40 bg-emerald-500/10 shadow-lg scale-[1.01]'
                         : `border-[var(--border)] hover:border-[var(--accent)]/50 ${
                             isDark ? 'bg-black/25 hover:bg-black/40' : 'bg-white/90 hover:bg-white shadow-sm'
                           }`
@@ -358,7 +248,6 @@ export function MorningBrief({
                             title={`Compare coverage across ${item.related.length + 1} independent outlets`}
                           >
                             <span>+{item.related.length} wires</span>
-                            <span>⇄</span>
                           </button>
                         )}
                       </div>
@@ -371,7 +260,7 @@ export function MorningBrief({
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[var(--border)] text-[10px] font-mono text-[var(--ink-muted)]">
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--border)] text-[10px] font-mono text-[var(--ink-muted)]">
                       <span>{formatTimeAgo(item.article.date)}</span>
                       <div className="flex items-center gap-1.5">
                         <button
@@ -396,6 +285,90 @@ export function MorningBrief({
                   </div>
                 );
               })}
+            </div>
+
+            {/* Subtle Single-Line Daily 24h Call Strip */}
+            <div className="mt-3 pt-2.5 border-t border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400">
+                  <Target className="w-3.5 h-3.5" />
+                  <span>24H {callSymbol} CALL:</span>
+                </span>
+
+                {todayCall ? (
+                  <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                    <span className={`font-bold flex items-center gap-1 ${
+                      todayCall.direction === 'up' ? 'text-emerald-400' : 'text-rose-400'
+                    }`}>
+                      {todayCall.direction === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      <span>
+                        {todayCall.direction === 'up' ? 'Higher' : 'Lower'} from $
+                        {todayCall.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </span>
+
+                    {unrealizedPct !== null && (
+                      <span className={`font-bold ${
+                        callOnTrack === true ? 'text-emerald-400' : callOnTrack === false ? 'text-rose-400' : 'text-[var(--ink-muted)]'
+                      }`}>
+                        ({unrealizedPct >= 0 ? '+' : ''}{unrealizedPct.toFixed(2)}% live)
+                      </span>
+                    )}
+
+                    <span className="text-[10px] text-[var(--ink-muted)] hidden md:inline">
+                      • Scores tomorrow
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-[var(--ink-muted)] font-sans">
+                    Will <strong className="font-mono text-[var(--ink)]">{callDisplayName}</strong> close higher or lower tomorrow?
+                    {callAssetQuote ? ` (${callAssetQuote.formatted})` : ''}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                {lastResolvedCall && (
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold ${
+                    lastResolvedCall.status === 'won' ? 'text-emerald-400' : 'text-rose-400'
+                  }`}>
+                    {lastResolvedCall.status === 'won' ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                    <span>Last {lastResolvedCall.assetSymbol}: {lastResolvedCall.status === 'won' ? 'Won' : 'Missed'}</span>
+                  </span>
+                )}
+
+                {totalResolved > 0 && winRatePct !== null && (
+                  <span
+                    className="text-[10px] font-bold text-amber-400"
+                    title={`All-Time Call Accuracy: ${wins}W - ${losses}L`}
+                  >
+                    • Win Rate {winRatePct}% ({wins}/{totalResolved})
+                  </span>
+                )}
+
+                {!todayCall && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={!isCallAssetLive}
+                      onClick={() => onSubmitDailyCall('up')}
+                      className="px-2.5 py-1 rounded-md bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-black border border-emerald-500/40 font-mono text-[10px] font-black flex items-center gap-1 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <TrendingUp className="w-3 h-3" />
+                      <span>▲ HIGHER</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!isCallAssetLive}
+                      onClick={() => onSubmitDailyCall('down')}
+                      className="px-2.5 py-1 rounded-md bg-rose-500/15 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/40 font-mono text-[10px] font-black flex items-center gap-1 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <TrendingDown className="w-3 h-3" />
+                      <span>▼ LOWER</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </motion.section>

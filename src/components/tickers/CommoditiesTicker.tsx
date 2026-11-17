@@ -4,9 +4,20 @@ import { DEFAULT_COMMODITIES, DEFAULT_STOCKS } from '../../config/assets';
 
 interface CommoditiesTickerProps {
   marketQuotes?: Record<string, { price: number; change24h: number; formatted: string }>;
+  activeQuery?: string;
+  onSelectSymbol?: (symbol: string) => void;
 }
 
-export const CommoditiesTicker = memo(function CommoditiesTicker({ marketQuotes }: CommoditiesTickerProps) {
+function getFilterSymbolForAsset(item: CommodityItem): string {
+  if (item.symbol === 'WTI' || item.symbol === 'BRENT') return 'OIL';
+  return item.symbol;
+}
+
+export const CommoditiesTicker = memo(function CommoditiesTicker({
+  marketQuotes,
+  activeQuery = '',
+  onSelectSymbol,
+}: CommoditiesTickerProps) {
   const [tickerView, setTickerView] = useState<'commodities' | 'stocks'>('commodities');
   const [commodities, setCommodities] = useState<Record<string, CommodityItem>>(DEFAULT_COMMODITIES);
   const [stocks, setStocks] = useState<Record<string, CommodityItem>>(DEFAULT_STOCKS);
@@ -180,28 +191,42 @@ export const CommoditiesTicker = memo(function CommoditiesTicker({ marketQuotes 
         </button>
       </div>
 
-      {/* Stream of Live Assets with Flash Indicators */}
+      {/* Stream of Live Assets with Flash Indicators (Clickable to Filter News) */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        {activeItems.map((item) => (
-          <div
-            key={item.symbol}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs transition-colors duration-200 shrink-0 ${
-              item.flash === 'up'
-                ? 'bg-emerald-500/25 border-emerald-500/60 text-emerald-400'
-                : item.flash === 'down'
-                ? 'bg-rose-500/25 border-rose-500/60 text-rose-400'
-                : 'bg-[var(--surface-solid)] border-[var(--border)] text-[var(--ink)] hover:border-[var(--accent)] shadow-sm'
-            }`}
-          >
-            <span className="font-bold text-[var(--ink-muted)] text-[11px]">{item.symbol}</span>
-            <span className="font-semibold text-[var(--ink)] tracking-tight">{item.formatted}</span>
-            <span className={`text-[10px] font-bold flex items-center gap-0.5 ${
-              item.change24h >= 0 ? 'text-emerald-500 dark:text-green-400' : 'text-rose-500 dark:text-red-400'
-            }`}>
-              {item.change24h >= 0 ? '▲' : '▼'}{Math.abs(item.change24h).toFixed(2)}%
-            </span>
-          </div>
-        ))}
+        {activeItems.map((item) => {
+          const filterSym = getFilterSymbolForAsset(item);
+          const cleanActive = activeQuery.trim().replace(/^\$/, '').toLowerCase();
+          const isSelected = cleanActive === filterSym.toLowerCase();
+          return (
+            <button
+              type="button"
+              key={item.symbol}
+              onClick={() => onSelectSymbol?.(filterSym)}
+              title={
+                isSelected
+                  ? `Filtering by ${item.name} — click again to clear`
+                  : `Click to filter news mentioning ${item.name}`
+              }
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-xs transition-all duration-200 shrink-0 cursor-pointer active:scale-95 ${
+                isSelected
+                  ? 'bg-[var(--accent)]/15 border-[var(--accent)] text-[var(--ink)] ring-1 ring-[var(--accent)] shadow-sm'
+                  : item.flash === 'up'
+                    ? 'bg-emerald-500/25 border-emerald-500/60 text-emerald-400'
+                    : item.flash === 'down'
+                      ? 'bg-rose-500/25 border-rose-500/60 text-rose-400'
+                      : 'bg-[var(--surface-solid)] border-[var(--border)] text-[var(--ink)] hover:border-[var(--accent)] shadow-sm'
+              }`}
+            >
+              <span className={`font-bold text-[11px] ${isSelected ? 'text-[var(--accent)]' : 'text-[var(--ink-muted)]'}`}>{item.symbol}</span>
+              <span className="font-semibold text-[var(--ink)] tracking-tight">{item.formatted}</span>
+              <span className={`text-[10px] font-bold flex items-center gap-0.5 ${
+                item.change24h >= 0 ? 'text-emerald-500 dark:text-green-400' : 'text-rose-500 dark:text-red-400'
+              }`}>
+                {item.change24h >= 0 ? '▲' : '▼'}{Math.abs(item.change24h).toFixed(2)}%
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

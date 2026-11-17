@@ -15,7 +15,7 @@ function scoreVoice(v: SpeechSynthesisVoice): number {
   if (failedVoiceUris.has(v.voiceURI)) return -90;
 
   // Exclude robotic/novelty macOS voices and unstable Siri aliases in Auto mode
-  if (/compact|espeak|eloquence|albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley/i.test(name)) {
+  if (/compact|espeak|eloquence|albert|fred|junior|kathy|ralph|bruce|bahh|bad news|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley/i.test(name)) {
     return -80;
   }
   if (/siri/i.test(name)) {

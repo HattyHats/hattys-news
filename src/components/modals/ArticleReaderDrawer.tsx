@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -9,7 +9,6 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
   BookOpen,
   Volume2,
   Square,
@@ -24,12 +23,7 @@ import { CardImage } from '../cards/CardImage';
 import { CRYPTO_CATEGORIES, WORLD_CATEGORIES } from '../../config/feeds';
 import { detectAssetsInArticle, detectStoryImpact, getOutletBadge } from '../../utils/classifier';
 import { formatTimeAgo } from '../../utils/formatters';
-import {
-  createSpeechQueueController,
-  loadSavedSpeechRate,
-  loadSavedVoiceUri,
-  SpeechQueueController,
-} from '../../utils/speech';
+import { TerminalAudioPlayer } from '../../hooks/useTerminalAudioPlayer';
 import { computeStoryPulse, PulseVote } from '../../utils/communityPulse';
 import { buildStoryTimeline } from '../../utils/storyTimeline';
 
@@ -45,6 +39,7 @@ interface ArticleReaderDrawerProps {
   articleIndex: number;
   totalCount: number;
   userVote: PulseVote | null;
+  audioPlayer: TerminalAudioPlayer;
   onVotePulse: (articleId: string, vote: PulseVote) => void;
   onOpenSnapshot: (article: Article) => void;
   onClose: () => void;
@@ -69,6 +64,7 @@ export function ArticleReaderDrawer({
   articleIndex,
   totalCount,
   userVote,
+  audioPlayer,
   onVotePulse,
   onOpenSnapshot,
   onClose,
@@ -81,59 +77,44 @@ export function ArticleReaderDrawer({
   onFilterBySymbol,
 }: ArticleReaderDrawerProps) {
   const scrollBodyRef = useRef<HTMLDivElement>(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [audioError, setAudioError] = useState<string | null>(null);
-  const speechControllerRef = useRef<SpeechQueueController | null>(null);
 
-  // Keep latest navigation handlers/indices in a ref so App's 1s countdown re-renders don't rerun effects & abort speech
+  const isSpeaking = Boolean(
+    article && audioPlayer.isActive && audioPlayer.activeTrack?.id === article.id
+  );
+
+  // Keep latest navigation handlers/indices in a ref so 1s timers don't rebind listener
   const navStateRef = useRef({ articleIndex, totalCount, onClose, onPrevArticle, onNextArticle });
   navStateRef.current = { articleIndex, totalCount, onClose, onPrevArticle, onNextArticle };
 
-  if (!speechControllerRef.current) {
-    speechControllerRef.current = createSpeechQueueController({
-      getVoiceUri: loadSavedVoiceUri,
-      getRate: loadSavedSpeechRate,
-      onComplete: () => setIsSpeaking(false),
-      onError: (reason) => {
-        setIsSpeaking(false);
-        setAudioError(`Speech engine issue (${reason}) — try another voice`);
-      },
-    });
-  }
-
-  const stopReadingAloud = () => {
-    speechControllerRef.current?.stop();
-    setIsSpeaking(false);
-  };
-
   const handleToggleSpeech = () => {
     if (!article) return;
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      setAudioError('Text-to-speech is not supported in this browser.');
-      return;
-    }
     if (isSpeaking) {
-      stopReadingAloud();
+      audioPlayer.stop();
       return;
     }
-
-    setAudioError(null);
     const bodyText = (article.fullText || article.snippet || '').replace(/\s+/g, ' ').trim();
     const spokenText = `${article.title}. Reported by ${article.src}. ${bodyText}`.slice(0, 3200);
-    setIsSpeaking(true);
-    speechControllerRef.current?.start([spokenText], 0);
+    audioPlayer.playQueue(
+      [
+        {
+          id: article.id,
+          title: article.title,
+          src: article.src,
+          spokenText,
+          article,
+        },
+      ],
+      0,
+      'READER DISPATCH'
+    );
   };
 
   const speechToggleRef = useRef(handleToggleSpeech);
   speechToggleRef.current = handleToggleSpeech;
 
-  // Scroll lock + Escape / Left-Right navigation + custom speech toggle event
+  // Scroll lock + Escape / Left-Right navigation + custom speech toggle event (keeps audio playing when drawer closes!)
   useEffect(() => {
-    if (!article) {
-      stopReadingAloud();
-      setAudioError(null);
-      return;
-    }
+    if (!article) return;
 
     const originalOverflow = document.body.style.overflow;
     const originalTouchAction = document.body.style.touchAction;
@@ -166,14 +147,11 @@ export function ArticleReaderDrawer({
       document.body.style.touchAction = originalTouchAction;
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('hattys-toggle-reader-speech', handleCustomSpeechEvent);
-      stopReadingAloud();
     };
   }, [Boolean(article)]);
 
-  // Reset scroll position & speech whenever switched to another dispatch
+  // Reset scroll position whenever switched to another dispatch
   useEffect(() => {
-    stopReadingAloud();
-    setAudioError(null);
     if (scrollBodyRef.current) {
       scrollBodyRef.current.scrollTop = 0;
     }
@@ -321,9 +299,9 @@ export function ArticleReaderDrawer({
                 </div>
               </div>
 
-              {audioError && (
+              {audioPlayer.audioNotice && (
                 <div className="px-4 py-1.5 border-b border-amber-500/30 bg-amber-500/10 text-amber-500 text-[11px] font-mono font-bold shrink-0">
-                  {audioError}
+                  {audioPlayer.audioNotice}
                 </div>
               )}
 

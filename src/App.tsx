@@ -5,7 +5,19 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Radio, ShieldAlert, BellRing, Zap, Calendar, Clock, Gauge, Flame, CheckCircle2, Keyboard } from 'lucide-react';
+import {
+  BellRing,
+  ShieldAlert,
+  Flame,
+  CheckCircle2,
+  Keyboard,
+  Star,
+  Plus,
+  X,
+  Crosshair,
+  Target,
+  Play,
+} from 'lucide-react';
 
 import { AppMode, Article, FearGreedData, FeedConfig, ViewLayoutMode } from './types';
 import { CRYPTO_FEEDS, WORLD_FEEDS, CRYPTO_CATEGORIES, WORLD_CATEGORIES, DEFAULT_DASHBOARD_SETTINGS } from './config/feeds';
@@ -28,6 +40,23 @@ import {
   saveUserPulseVote,
   PulseVote,
 } from './utils/communityPulse';
+import {
+  CRYPTO_RADAR_SUGGESTIONS,
+  WORLD_RADAR_SUGGESTIONS,
+  loadRadarTerms,
+  saveRadarTerms,
+  matchesAnyRadarTerm,
+  matchesSingleRadarTerm,
+} from './utils/radar';
+import {
+  loadDailyCalls,
+  resolveDueDailyCalls,
+  submitDailyCall,
+  computeDailyCallStats,
+  DailyCallRecord,
+} from './utils/dailyCall';
+import { analyzeSignalQuality } from './utils/signalFilter';
+import { AudioTrack, useTerminalAudioPlayer } from './hooks/useTerminalAudioPlayer';
 
 const EMPTY_RELATED: Article[] = [];
 
@@ -83,6 +112,7 @@ import { SponsoredCard } from './components/cards/SponsoredCard';
 import { TerminalWireView } from './components/views/TerminalWireView';
 import { AffizyAdUnit } from './components/ads/AffizyAdUnit';
 import { BackToTop } from './components/common/BackToTop';
+import { AudioMiniPlayer } from './components/common/AudioMiniPlayer';
 import { CatalystCountdownPill } from './components/common/CatalystCountdownPill';
 import { LiveTicker } from './components/tickers/LiveTicker';
 import { StockTickerTape } from './components/tickers/StockTickerTape';
@@ -183,6 +213,69 @@ export default function App() {
     setSnapshotArticle(article);
   }, []);
 
+  // Unified Feature 3 Audio Mini-Player
+  const audioPlayer = useTerminalAudioPlayer();
+
+  // Feature 1: Personal "MY RADAR" Watchlist State
+  const [radarTerms, setRadarTerms] = useState<string[]>(() => loadRadarTerms('crypto'));
+  const [radarInput, setRadarInput] = useState('');
+
+  useEffect(() => {
+    setRadarTerms(loadRadarTerms(mode));
+    setRadarInput('');
+  }, [mode]);
+
+  const handleAddRadarTerm = useCallback(
+    (rawTerm: string) => {
+      const next = saveRadarTerms(mode, [...radarTerms, rawTerm]);
+      setRadarTerms(next);
+      setRadarInput('');
+    },
+    [mode, radarTerms]
+  );
+
+  const handleRemoveRadarTerm = useCallback(
+    (termToRemove: string) => {
+      const targetLower = termToRemove.toLowerCase();
+      const next = saveRadarTerms(
+        mode,
+        radarTerms.filter(t => t.toLowerCase() !== targetLower)
+      );
+      setRadarTerms(next);
+    },
+    [mode, radarTerms]
+  );
+
+  const handleTickerSelectSymbol = useCallback((symbol: string) => {
+    setQuery(prev => {
+      const cleanPrev = prev.trim().replace(/^\$/, '').toLowerCase();
+      return cleanPrev === symbol.toLowerCase() ? '' : symbol;
+    });
+  }, []);
+
+  // Feature 4: "Signal Only" Anti-Clickbait Filter Toggle
+  const [signalOnly, setSignalOnly] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('hattys_signal_only_v1') === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSignalOnly = useCallback(() => {
+    setSignalOnly(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('hattys_signal_only_v1', next ? '1' : '0');
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  // Feature 2: Daily 24h Market Call + Live Win-Rate State
+  const [liveSyncedSymbols, setLiveSyncedSymbols] = useState<Set<string>>(() => new Set());
+  const [dailyCalls, setDailyCalls] = useState<DailyCallRecord[]>(() => loadDailyCalls());
+
   // Notifications State
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
     try {
@@ -268,8 +361,12 @@ export default function App() {
 
   const handleMarkCaughtUp = useCallback(() => {
     const now = Date.now();
-    saveCaughtUpTimestamp(mode, now);
-    setLastVisitTime(now);
+    const watermark = articlesRef.current.reduce(
+      (maxTs, a) => (!a.mode || a.mode === mode ? Math.max(maxTs, a.date.getTime()) : maxTs),
+      now
+    );
+    saveCaughtUpTimestamp(mode, watermark);
+    setLastVisitTime(watermark);
     setDailyStreak(markDailyStreakCaughtUp());
     setFilter(prev => (prev === 'new' ? 'all' : prev));
     setRefreshToast({ message: '✓ All caught up! Watermark synced to latest wire.', active: false });
@@ -386,6 +483,22 @@ export default function App() {
   });
 
   const handleBatchPriceTick = useCallback((updates: Record<string, { price: number; change: number; formatted: string }>) => {
+    const incomingSyms = Object.keys(updates);
+    if (incomingSyms.length > 0) {
+      setLiveSyncedSymbols(prev => {
+        let missing = false;
+        for (const s of incomingSyms) {
+          if (!prev.has(s)) {
+            missing = true;
+            break;
+          }
+        }
+        if (!missing) return prev;
+        const next = new Set(prev);
+        for (const s of incomingSyms) next.add(s);
+        return next;
+      });
+    }
     setMarketQuotes(prev => {
       let changed = false;
       const next = { ...prev };
@@ -413,25 +526,51 @@ export default function App() {
         const data = await res.json();
         if (!data || !isMounted) return;
 
+        const arrivedSyms: string[] = [];
         setMarketQuotes(prev => {
           const next = { ...prev };
           if (data.crypto) {
             for (const [k, v] of Object.entries(data.crypto as Record<string, any>)) {
-              if (v?.price) next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted };
+              if (v?.price) {
+                next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted };
+                arrivedSyms.push(k);
+              }
             }
           }
           if (data.commodities) {
             for (const [k, v] of Object.entries(data.commodities as Record<string, any>)) {
-              if (v?.price) next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted };
+              if (v?.price) {
+                next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted };
+                arrivedSyms.push(k);
+              }
             }
           }
           if (data.stocks) {
             for (const [k, v] of Object.entries(data.stocks as Record<string, any>)) {
-              if (v?.price) next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted };
+              if (v?.price) {
+                next[k] = { price: v.price, change24h: v.change24h ?? 0, formatted: v.formatted };
+                arrivedSyms.push(k);
+              }
             }
           }
           return next;
         });
+
+        if (arrivedSyms.length > 0 && isMounted) {
+          setLiveSyncedSymbols(prev => {
+            let missing = false;
+            for (const s of arrivedSyms) {
+              if (!prev.has(s)) {
+                missing = true;
+                break;
+              }
+            }
+            if (!missing) return prev;
+            const next = new Set(prev);
+            for (const s of arrivedSyms) next.add(s);
+            return next;
+          });
+        }
       } catch {}
     };
 
@@ -446,6 +585,35 @@ export default function App() {
       window.removeEventListener('refresh-market-data', handleRefresh);
     };
   }, []);
+
+  // Feature 2: Auto-resolve any previous day's 24h Market Call once live quotes arrive
+  useEffect(() => {
+    if (liveSyncedSymbols.size === 0) return;
+    const { calls: resolvedCalls, changed } = resolveDueDailyCalls(dailyCalls, marketQuotes, liveSyncedSymbols);
+    if (changed) {
+      setDailyCalls(resolvedCalls);
+    }
+  }, [marketQuotes, liveSyncedSymbols, dailyCalls]);
+
+  const dailyCallStats = useMemo(() => computeDailyCallStats(dailyCalls, mode), [dailyCalls, mode]);
+
+  const handleSubmitDailyCall = useCallback(
+    (direction: 'up' | 'down') => {
+      const sym: 'BTC' | 'SPY' = mode === 'world' ? 'SPY' : 'BTC';
+      if (!liveSyncedSymbols.has(sym)) return;
+      const quote = marketQuotes[sym];
+      if (!quote || !quote.price) return;
+
+      setDailyCalls(prev => submitDailyCall(prev, mode, direction, quote.price));
+      setRefreshToast({
+        message: `🎯 Locked ${sym} ${direction === 'up' ? '▲ HIGHER' : '▼ LOWER'} @ ${quote.formatted} — scores tomorrow!`,
+        active: false,
+      });
+      if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
+      refreshToastTimerRef.current = window.setTimeout(() => setRefreshToast(null), 3200);
+    },
+    [mode, liveSyncedSymbols, marketQuotes]
+  );
 
   // Monitor scroll for Back-to-Top Floating Button
   useEffect(() => {
@@ -733,11 +901,11 @@ export default function App() {
     } catch {}
   }, [articles, notificationsEnabled, triggerNativeNotification]);
 
-  // Periodic background check for alerts
+  // Periodic background check for alerts (uses 3-min RSS cache to keep Netlify function usage light)
   useEffect(() => {
     if (!notificationsEnabled) return;
     const interval = setInterval(() => {
-      loadNews(true);
+      loadNews(false);
     }, 90000);
     return () => clearInterval(interval);
   }, [notificationsEnabled, loadNews]);
@@ -903,6 +1071,20 @@ export default function App() {
     return picked;
   }, [currentModeArticles, articleClusters]);
 
+  // Radar match count & per-term counts (scoped strictly to current mode)
+  const radarMatchCount = useMemo(() => {
+    if (radarTerms.length === 0) return 0;
+    return currentModeArticles.filter(a => matchesAnyRadarTerm(a, radarTerms)).length;
+  }, [currentModeArticles, radarTerms]);
+
+  const radarPerTermCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const term of radarTerms) {
+      map[term] = currentModeArticles.filter(a => matchesSingleRadarTerm(a, term)).length;
+    }
+    return map;
+  }, [currentModeArticles, radarTerms]);
+
   // Category counts (scoped strictly to current mode)
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: currentModeArticles.length };
@@ -916,8 +1098,8 @@ export default function App() {
     return counts;
   }, [currentModeArticles, mode]);
 
-  // Filtered articles (strictly topic-isolated)
-  const filtered = useMemo(() => {
+  // Filtered articles (strictly topic-isolated + My Radar + Signal Only filter)
+  const { filtered, hiddenFluffCount } = useMemo(() => {
     const baseList = filter === 'saved' ? savedArticles : currentModeArticles;
     const q = query.trim().toLowerCase();
     const cleanQ = q.replace(/^\$/, '').trim();
@@ -930,14 +1112,18 @@ export default function App() {
         )
       : undefined;
 
-    return baseList.filter(a => {
+    const preSignal = baseList.filter(a => {
       if (filter === 'saved' && a.mode && a.mode !== mode) {
         return false;
       }
       const matchCat =
         filter === 'all' ||
         filter === 'saved' ||
-        (filter === 'new' ? a.date.getTime() > lastVisitTime : (a.matchedCategories.includes(filter) || a.primaryCat === filter));
+        (filter === 'radar'
+          ? matchesAnyRadarTerm(a, radarTerms)
+          : filter === 'new'
+            ? a.date.getTime() > lastVisitTime
+            : (a.matchedCategories.includes(filter) || a.primaryCat === filter));
       if (!matchCat) return false;
       if (!q) return true;
 
@@ -951,7 +1137,36 @@ export default function App() {
         : false;
       return textMatch || assetMatch;
     });
-  }, [currentModeArticles, savedArticles, filter, query, lastVisitTime, mode]);
+
+    let fluffCount = 0;
+    const signalResult = preSignal.filter(a => {
+      const analysis = analyzeSignalQuality(a);
+      if (analysis.isClickbait) {
+        fluffCount += 1;
+        return !signalOnly;
+      }
+      return true;
+    });
+
+    return {
+      filtered: signalResult,
+      hiddenFluffCount: fluffCount,
+    };
+  }, [currentModeArticles, savedArticles, filter, query, lastVisitTime, mode, radarTerms, signalOnly]);
+
+  // Play all Saved articles for current mode in persistent Commute Audio Mini-Player
+  const handlePlaySavedQueue = useCallback(() => {
+    const modeSaved = savedArticles.filter(a => !a.mode || a.mode === mode);
+    if (modeSaved.length === 0) return;
+    const tracks: AudioTrack[] = modeSaved.slice(0, 15).map((art, i) => ({
+      id: art.id,
+      title: art.title,
+      src: art.src,
+      spokenText: `${i === 0 ? 'Starting your saved reading queue. ' : ''}Story ${i + 1}. ${art.title}. Reported by ${art.src}. ${(art.snippet || '').slice(0, 220)}`,
+      article: art,
+    }));
+    audioPlayer.playQueue(tracks, 0, 'SAVED QUEUE');
+  }, [savedArticles, mode, audioPlayer]);
 
   // Progressive Page Render Limit (Pagination to prevent DOM bloat & paint lag)
   const [displayLimit, setDisplayLimit] = useState(24);
@@ -1276,6 +1491,9 @@ export default function App() {
         settings={dashboardSettings}
         onUpdateSettings={updateDashboardSettings}
         categoryCounts={categoryCounts}
+        voices={audioPlayer.voices}
+        selectedVoiceUri={audioPlayer.selectedVoiceUri}
+        onChangeVoiceUri={audioPlayer.setVoiceUri}
       />
 
       <PwaInstallModal
@@ -1317,6 +1535,7 @@ export default function App() {
         articleIndex={readerIndex}
         totalCount={filtered.length}
         userVote={readerArticle ? pulseVotes[readerArticle.id] || null : null}
+        audioPlayer={audioPlayer}
         onVotePulse={handleVotePulse}
         onOpenSnapshot={handleOpenSnapshot}
         onClose={handleCloseReader}
@@ -1368,14 +1587,22 @@ export default function App() {
           onOpenNotifications={() => setShowNotificationModal(true)}
         />
 
-        {/* Dedicated Top Ticker Strip (Stays Stuck with Header on Scroll) */}
+        {/* Dedicated Top Ticker Strip (Stays Stuck with Header on Scroll — Clickable Pills Filter Feed!) */}
         <div id="top-sub-bar" className="relative z-10 py-1 px-3 sm:px-4 bg-[var(--bg2)] border-b border-[var(--border)]">
           <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0 overflow-hidden">
               {mode === 'crypto' ? (
-                <LiveTicker onBatchPriceTick={handleBatchPriceTick} />
+                <LiveTicker
+                  activeQuery={query}
+                  onSelectSymbol={handleTickerSelectSymbol}
+                  onBatchPriceTick={handleBatchPriceTick}
+                />
               ) : (
-                <CommoditiesTicker marketQuotes={marketQuotes} />
+                <CommoditiesTicker
+                  marketQuotes={marketQuotes}
+                  activeQuery={query}
+                  onSelectSymbol={handleTickerSelectSymbol}
+                />
               )}
             </div>
 
@@ -1398,16 +1625,121 @@ export default function App() {
           categories={activeCategories}
           categoryCounts={categoryCounts}
           activeFilter={filter}
-          newArticlesCount={newArticlesCount}
+          radarMatchCount={radarMatchCount}
+          radarTermsCount={radarTerms.length}
           savedArticles={savedArticles}
           showBrief={showBrief}
+          signalOnly={signalOnly}
+          hiddenFluffCount={hiddenFluffCount}
           mode={mode}
           viewMode={viewMode}
           onSetFilter={setFilter}
-          onOpenDashboard={() => setShowDashboardModal(true)}
           onToggleBrief={toggleBrief}
           onToggleViewMode={toggleViewMode}
+          onToggleSignalOnly={toggleSignalOnly}
+          onPlaySavedQueue={handlePlaySavedQueue}
         />
+
+        {/* Feature 1: Inline Personal "MY RADAR" Watchlist Manager */}
+        <AnimatePresence initial={false}>
+          {filter === 'radar' && (
+            <motion.section
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="rounded-2xl border border-cyan-500/35 bg-[var(--surface-solid)] p-3.5 sm:p-4 space-y-3 shadow-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />
+                    <span className="font-display text-base sm:text-lg tracking-wide text-[var(--ink)]">
+                      MY {mode === 'world' ? 'GLOBAL' : 'CRYPTO'} RADAR WATCHLIST
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-bold">
+                      {radarTerms.length}/12 TRACKED
+                    </span>
+                  </div>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (radarInput.trim()) handleAddRadarTerm(radarInput);
+                    }}
+                    className="flex items-center gap-1.5 w-full sm:w-auto"
+                  >
+                    <input
+                      type="text"
+                      value={radarInput}
+                      onChange={(e) => setRadarInput(e.target.value)}
+                      placeholder={mode === 'world' ? 'Add ticker or topic (e.g. Fed, Gold, AI)...' : 'Add coin or topic (e.g. XRP, NEAR, ETF)...'}
+                      className="flex-1 sm:w-64 px-3 py-1.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] focus:border-cyan-400 text-xs font-mono text-[var(--ink)] outline-none placeholder:text-[var(--ink-muted)]"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-mono text-xs font-black flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>ADD</span>
+                    </button>
+                  </form>
+                </div>
+
+                {/* Active Tracked Terms */}
+                {radarTerms.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase mr-1">
+                      ACTIVE:
+                    </span>
+                    {radarTerms.map(term => (
+                      <span
+                        key={term}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-mono text-[11px] font-bold"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleTickerSelectSymbol(term)}
+                          className="hover:underline cursor-pointer"
+                          title={`Narrow Radar feed strictly to ${term}`}
+                        >
+                          {term.toUpperCase()} ({radarPerTermCounts[term] ?? 0})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRadarTerm(term)}
+                          aria-label={`Remove ${term} from My Radar`}
+                          className="text-cyan-200/70 hover:text-rose-400 cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Quick-Add Preset Suggestions */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-[var(--border)]/60">
+                  <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)] uppercase mr-1">
+                    QUICK PIN:
+                  </span>
+                  {(mode === 'world' ? WORLD_RADAR_SUGGESTIONS : CRYPTO_RADAR_SUGGESTIONS)
+                    .filter(s => !radarTerms.some(t => t.toLowerCase() === s.toLowerCase()))
+                    .map(suggestion => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => handleAddRadarTerm(suggestion)}
+                        className="px-2 py-0.5 rounded-md border border-dashed border-[var(--border)] hover:border-cyan-400 text-[10px] font-mono font-bold text-[var(--ink-muted)] hover:text-cyan-400 transition-colors cursor-pointer"
+                      >
+                        + {suggestion}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
 
         {/* 60-Second Morning Brief */}
         <MorningBrief
@@ -1418,86 +1750,110 @@ export default function App() {
           filter={filter}
           query={query}
           savedIds={savedIds}
+          audioPlayer={audioPlayer}
+          dailyCallStats={dailyCallStats}
+          callAssetQuote={marketQuotes[mode === 'world' ? 'SPY' : 'BTC']}
+          isCallAssetLive={liveSyncedSymbols.has(mode === 'world' ? 'SPY' : 'BTC')}
+          onSubmitDailyCall={handleSubmitDailyCall}
           onToggleBrief={toggleBrief}
-          onOpenCatalysts={() => setShowCatalysts(true)}
           onToggleSave={toggleSaveArticle}
           onOpenPerspective={handleOpenPerspective}
           onOpenArticle={handleOpenReader}
         />
 
-        {/* Status subheader */}
-        <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-muted)] mb-4 px-1 flex-wrap gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span>SHOWING: <strong className="text-[var(--ink)]">{filtered.length}</strong> {filter === 'saved' ? 'SAVED DISPATCHES' : mode === 'world' ? 'GLOBAL DISPATCHES' : 'CRYPTO DISPATCHES'}</span>
+        {/* Quiet, Clean Status Utility Bar */}
+        <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-muted)] mb-3.5 px-1 flex-wrap gap-2">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span>
+              <strong className="text-[var(--ink)]">{filtered.length}</strong>{' '}
+              {filter === 'saved' ? 'Saved' : mode === 'world' ? 'Global' : 'Crypto'} Dispatches
+            </span>
 
-            {/* Feature 3: Live Wire Velocity Speedometer Pill */}
-            <div 
-              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[10px] sm:text-[11px] font-mono font-bold transition-all cursor-default ${
+            <span className="opacity-40">•</span>
+
+            <span
+              className={`font-bold ${
                 wireVelocity.status === 'SURGE'
-                  ? 'bg-red-500/10 text-red-500 border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.2)]'
+                  ? 'text-red-500'
                   : wireVelocity.status === 'HIGH'
-                    ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/30'
-                    : 'bg-[var(--surface-solid)] text-[var(--ink-muted)] border-[var(--border)]'
+                    ? 'text-emerald-500 dark:text-emerald-400'
+                    : ''
               }`}
-              title={`Breaking Wire Velocity: ${wireVelocity.count} dispatches per hour based on incoming wire feed cadence`}
+              title={`Wire Velocity: ${wireVelocity.count} dispatches/hr (${wireVelocity.status})`}
             >
-              <Zap className={`w-3 h-3 ${wireVelocity.status === 'SURGE' ? 'fill-red-500 animate-bounce' : 'fill-current'}`} />
-              <span className="hidden sm:inline">SPEEDOMETER:</span>
-              <span className="text-[var(--ink)] font-black">{wireVelocity.count}/HR</span>
-              <span className={`text-[9px] px-1.5 py-0.5 rounded leading-none font-black tracking-wider uppercase ${
-                wireVelocity.status === 'SURGE'
-                  ? 'bg-red-500 text-white animate-pulse'
-                  : wireVelocity.status === 'HIGH'
-                    ? 'bg-emerald-500 text-black'
-                    : 'bg-black/10 dark:bg-white/10 text-[var(--ink-muted)]'
-              }`}>
-                {wireVelocity.status}
-              </span>
-            </div>
+              {wireVelocity.count}/hr
+            </span>
 
-            {/* Feature 1: Daily Terminal Streak Badge */}
-            <div
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-amber-500/35 bg-amber-500/10 text-amber-500 dark:text-amber-400 text-[10px] sm:text-[11px] font-mono font-bold cursor-default"
-              title={`Daily Terminal Streak: ${dailyStreak.count} Day${dailyStreak.count === 1 ? '' : 's'} (Best: ${dailyStreak.bestStreak}d) • ${dailyStreak.caughtUpToday ? 'Caught up today!' : 'Click Mark Caught Up when finished reading'}`}
+            <span className="opacity-40">•</span>
+
+            <span
+              className="inline-flex items-center gap-1 text-amber-500 dark:text-amber-400 font-bold"
+              title={`Daily Streak: ${dailyStreak.count}d (Best: ${dailyStreak.bestStreak}d)`}
             >
               <Flame className="w-3 h-3 fill-amber-400 text-amber-400" />
-              <span>{dailyStreak.count}D STREAK</span>
-            </div>
+              <span>{dailyStreak.count}d Streak</span>
+            </span>
 
-            {/* Feature 1: "Since You Last Checked" Catch-Up Bar & Mark Caught Up Action */}
             {newArticlesCount > 0 ? (
-              <div className="inline-flex items-center rounded-md border border-emerald-500/35 bg-emerald-500/10 overflow-hidden text-[10px] sm:text-[11px] font-mono font-bold">
-                <button
-                  type="button"
-                  onClick={() => setFilter(filter === 'new' ? 'all' : 'new')}
-                  className={`px-2 py-0.5 flex items-center gap-1 transition-colors cursor-pointer ${
-                    filter === 'new'
-                      ? 'bg-emerald-500 text-black font-black'
-                      : 'text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/20'
-                  }`}
-                  title="Filter feed to dispatches published since your last check-in"
-                >
-                  <Zap className="w-3 h-3 fill-current" />
-                  <span>{newArticlesCount} NEW SINCE LAST CHECK</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleMarkCaughtUp}
-                  className="px-2 py-0.5 border-l border-emerald-500/35 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500 hover:text-black transition-colors flex items-center gap-1 cursor-pointer"
-                  title="Mark all dispatches as Caught Up (Shortcut: C)"
-                >
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span>MARK CAUGHT UP</span>
-                </button>
-              </div>
+              <>
+                <span className="opacity-40">•</span>
+                <div className="inline-flex items-center gap-1.5 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setFilter(filter === 'new' ? 'all' : 'new')}
+                    className={`font-bold transition-colors cursor-pointer ${
+                      filter === 'new'
+                        ? 'text-emerald-400 underline'
+                        : 'text-emerald-500 dark:text-emerald-400 hover:underline'
+                    }`}
+                    title="Filter feed to unread dispatches since your last check-in"
+                  >
+                    {newArticlesCount} New
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleMarkCaughtUp}
+                    className="px-1.5 py-0.5 rounded border border-[var(--border)] hover:border-emerald-500/50 hover:text-emerald-400 text-[10px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Mark all dispatches as Caught Up (Shortcut: C)"
+                  >
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Mark Caught Up</span>
+                  </button>
+                </div>
+              </>
             ) : (
-              <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 text-[10px] sm:text-[11px] font-mono font-bold"
-                title="You are completely caught up with the latest wire dispatches"
+              <>
+                <span className="opacity-40">•</span>
+                <span className="inline-flex items-center gap-1 text-emerald-500 dark:text-emerald-400 font-bold text-[11px]">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Caught Up</span>
+                </span>
+              </>
+            )}
+
+            {dailyCallStats.totalResolved > 0 && dailyCallStats.winRatePct !== null && (
+              <>
+                <span className="opacity-40">•</span>
+                <span
+                  className="inline-flex items-center gap-1 text-amber-400 font-bold text-[11px]"
+                  title={`24h Market Call Record: ${dailyCallStats.wins}W - ${dailyCallStats.losses}L`}
+                >
+                  <Target className="w-3 h-3" />
+                  <span>{dailyCallStats.winRatePct}% Calls</span>
+                </span>
+              </>
+            )}
+
+            {signalOnly && (
+              <button
+                type="button"
+                onClick={toggleSignalOnly}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-emerald-500/35 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-[10px] font-bold transition-colors cursor-pointer"
+                title="Signal Only filter active — click to show all headlines"
               >
-                <CheckCircle2 className="w-3 h-3" />
-                <span>ALL CAUGHT UP</span>
-              </span>
+                <Crosshair className="w-3 h-3" />
+                <span>Signal ({hiddenFluffCount} hidden)</span>
+              </button>
             )}
 
             {refreshToast && (
@@ -1514,27 +1870,57 @@ export default function App() {
               <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold border ${
                 mode === 'world' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : 'bg-red-500/10 text-red-500 border-red-500/20'
               }`}>
-                FILTER: {filter}
+                {filter}
               </span>
             )}
             {query && (
-              <span className="px-2 py-0.5 rounded bg-[var(--surface-solid)] border border-[var(--border)] text-[var(--ink)] text-[10px]">
-                SEARCH: "{query}"
-              </span>
+              <div className="inline-flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--surface-solid)] border border-[var(--accent)]/40 text-[var(--ink)] text-[10px] font-bold">
+                  <span>&quot;{query}&quot;</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search filter"
+                    className="text-[var(--ink-muted)] hover:text-[var(--accent)] cursor-pointer ml-0.5"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+                {!radarTerms.some(t => t.toLowerCase() === query.trim().toLowerCase()) && (
+                  <button
+                    type="button"
+                    onClick={() => handleAddRadarTerm(query)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500 hover:text-black text-cyan-400 text-[10px] font-mono font-bold transition-colors cursor-pointer"
+                    title={`Pin "${query.trim()}" to your My Radar watchlist`}
+                  >
+                    <Star className="w-2.5 h-2.5" />
+                    <span>+ Pin Radar</span>
+                  </button>
+                )}
+              </div>
+            )}
+            {filter === 'saved' && filtered.length > 0 && (
+              <button
+                type="button"
+                onClick={handlePlaySavedQueue}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-black text-[10px] font-mono font-bold transition-colors cursor-pointer"
+                title="Play saved dispatches in Persistent Audio Mini-Player"
+              >
+                <Play className="w-2.5 h-2.5 fill-current" />
+                <span>Play Queue ({filtered.length})</span>
+              </button>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowShortcutsModal(true)}
-              className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[var(--border)] bg-[var(--surface-solid)] hover:border-[var(--accent)] text-[10px] font-mono font-bold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+              className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[var(--border)] hover:border-[var(--accent)] text-[10px] font-mono font-bold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
               title="Open Keyboard Shortcuts Guide (?)"
             >
               <Keyboard className="w-3 h-3 text-[var(--accent)]" />
-              <span>SHORTCUTS [?]</span>
+              <span>[?]</span>
             </button>
-            <Radio className={`w-3.5 h-3.5 animate-pulse ${mode === 'world' ? 'text-blue-400' : 'text-[var(--red)]'}`} />
-            <span>{mode === 'world' ? 'VERIFIED NON-PARTISAN WIRE SERVICES' : 'ENCRYPTED RSS FEED PROTOCOL'}</span>
           </div>
         </div>
 
@@ -1564,14 +1950,28 @@ export default function App() {
           <div className="text-center p-16 border border-dashed border-[var(--border)] rounded-2xl bg-[var(--surface)] my-8">
             <ShieldAlert className="w-12 h-12 text-[var(--accent)] mx-auto mb-3 opacity-80" />
             <h2 className="font-display text-[var(--accent)] text-3xl">
-              {filter === 'saved' ? 'NO SAVED STORIES YET' : 'NO MATCHING DISPATCHES'}
+              {filter === 'saved'
+                ? 'NO SAVED STORIES YET'
+                : filter === 'radar' && radarTerms.length === 0
+                  ? 'YOUR MY RADAR IS EMPTY'
+                  : 'NO MATCHING DISPATCHES'}
             </h2>
             <p className="text-[var(--ink-muted)] max-w-md mx-auto my-3 text-sm">
               {filter === 'saved'
                 ? 'Tap the bookmark icon on any dispatch to save it to your personal Read-Later queue.'
-                : 'No reports match your current category or search criteria. Try choosing another filter or resetting your search.'}
+                : filter === 'radar' && radarTerms.length === 0
+                  ? 'Add coins, stocks, or keywords in the My Radar bar above (or click Quick Pin) to build your custom live news stream.'
+                  : 'No reports match your current category, Signal Only filter, or search criteria. Try resetting or widening your filter.'}
             </p>
-            <div className="flex gap-3 justify-center mt-5">
+            <div className="flex gap-3 justify-center mt-5 flex-wrap">
+              {signalOnly && (
+                <button
+                  onClick={toggleSignalOnly}
+                  className="fp cursor-pointer border-emerald-500/40 text-emerald-400"
+                >
+                  SHOW ALL STORIES (OFF SIGNAL ONLY)
+                </button>
+              )}
               <button 
                 onClick={() => { setFilter('all'); setQuery(''); }} 
                 className="rbtn cursor-pointer"
@@ -1690,8 +2090,15 @@ export default function App() {
         )}
       </main>
 
+      {/* Persistent Morning Commute Audio Mini-Player */}
+      <AudioMiniPlayer
+        player={audioPlayer}
+        mode={mode}
+        onOpenArticle={handleOpenReader}
+      />
+
       {/* Floating Back-to-Top Button */}
-      <BackToTop show={showBackToTop} />
+      <BackToTop show={showBackToTop} hasAudioPlayer={audioPlayer.isActive} />
 
       {/* Notification Toast */}
       <AnimatePresence>
@@ -1700,7 +2107,11 @@ export default function App() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-[calc(74px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-50 pointer-events-none max-w-md px-4 w-full"
+            className={`fixed left-1/2 -translate-x-1/2 z-50 pointer-events-none max-w-md px-4 w-full ${
+              audioPlayer.isActive
+                ? 'bottom-[calc(132px+env(safe-area-inset-bottom,0px))]'
+                : 'bottom-[calc(74px+env(safe-area-inset-bottom,0px))]'
+            }`}
           >
             <div className="px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-[var(--surface-solid)]/95 text-emerald-500 dark:text-emerald-400 font-mono text-xs shadow-2xl backdrop-blur-md flex items-center gap-2 text-center justify-center">
               <BellRing className="w-4 h-4 shrink-0 text-emerald-500" />

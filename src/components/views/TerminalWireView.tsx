@@ -4,7 +4,6 @@ import {
   Bookmark,
   Share2,
   Check,
-  ShieldCheck,
   BookOpen,
   Camera,
   TrendingUp,
