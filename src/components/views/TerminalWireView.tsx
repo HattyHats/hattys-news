@@ -9,10 +9,15 @@ import {
   TrendingUp,
   TrendingDown,
   GitCommitHorizontal,
+  Pin,
+  EyeOff,
+  Eye,
+  Zap,
 } from 'lucide-react';
 import { Article, AppMode, DashboardSettings } from '../../types';
 import { formatTimeAgo } from '../../utils/formatters';
-import { detectStoryImpact, getOutletBadge, detectAssetsInArticle } from '../../utils/classifier';
+import { detectStoryImpact, getOutletBadge, detectAssetsInArticle, isGlobalBlindspot } from '../../utils/classifier';
+import { getBrokeFirstInfo } from '../../utils/clustering';
 import { AffizyAdUnit } from '../ads/AffizyAdUnit';
 import { computeStoryPulse, PulseVote } from '../../utils/communityPulse';
 
@@ -29,6 +34,8 @@ interface TerminalWireViewProps {
   articleClusters: Map<string, Article[]>;
   dashboardSettings: DashboardSettings;
   marketQuotes: Record<string, { price: number; change24h: number; formatted: string }>;
+  pinnedSourcesSet?: Set<string>;
+  showBlindspotBadge?: boolean;
   onVotePulse: (articleId: string, vote: PulseVote) => void;
   onOpenSnapshot: (article: Article) => void;
   onToggleSave: (article: Article) => void;
@@ -36,6 +43,8 @@ interface TerminalWireViewProps {
   onOpenPerspective: (article: Article, related: Article[], initialTab?: 'compare' | 'timeline') => void;
   onOpenArticle: (article: Article) => void;
   onSetQuery: (q: string | ((prev: string) => string)) => void;
+  onTogglePinSource?: (src: string) => void;
+  onMuteSource?: (src: string) => void;
 }
 
 export const TerminalWireView = memo(function TerminalWireView({
@@ -49,6 +58,8 @@ export const TerminalWireView = memo(function TerminalWireView({
   articleClusters,
   dashboardSettings,
   marketQuotes,
+  pinnedSourcesSet,
+  showBlindspotBadge = false,
   onVotePulse,
   onOpenSnapshot,
   onToggleSave,
@@ -56,6 +67,8 @@ export const TerminalWireView = memo(function TerminalWireView({
   onOpenPerspective,
   onOpenArticle,
   onSetQuery,
+  onTogglePinSource,
+  onMuteSource,
 }: TerminalWireViewProps) {
   return (
     <div className="w-full rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--surface-solid)] shadow-xl mb-8">
@@ -83,6 +96,9 @@ export const TerminalWireView = memo(function TerminalWireView({
             const related = articleClusters.get(art.id) || EMPTY_RELATED;
             const impact = detectStoryImpact(art.title, art.snippet);
             const outlet = getOutletBadge(art.src);
+            const isPinnedSource = pinnedSourcesSet?.has(art.src.toLowerCase()) ?? false;
+            const brokeFirst = getBrokeFirstInfo(art, related);
+            const blindspot = mode === 'world' && (showBlindspotBadge || related.length > 0) && isGlobalBlindspot(art, related);
             const detectedAssets = dashboardSettings.showAssetTags
               ? detectAssetsInArticle(art.title, art.snippet, marketQuotes)
               : [];
@@ -118,6 +134,49 @@ export const TerminalWireView = memo(function TerminalWireView({
                           <span>{outlet.flag}</span>
                           <span className="truncate">{outlet.name}</span>
                         </span>
+
+                        {isPinnedSource && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] leading-none font-mono font-black bg-amber-500/15 text-amber-400 border border-amber-500/35">
+                            PINNED
+                          </span>
+                        )}
+
+                        {(onTogglePinSource || onMuteSource) && (
+                          <span className="inline-flex items-center gap-0.5 opacity-75 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            {onTogglePinSource && (
+                              <button
+                                type="button"
+                                onClick={() => onTogglePinSource(art.src)}
+                                className={`p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer ${
+                                  isPinnedSource ? 'text-amber-400' : 'text-[var(--ink-muted)] hover:text-amber-400'
+                                }`}
+                                title={isPinnedSource ? `Unpin ${art.src}` : `Pin ${art.src} to prioritize in feed`}
+                              >
+                                <Pin className={`w-3 h-3 ${isPinnedSource ? 'fill-amber-400' : ''}`} />
+                              </button>
+                            )}
+                            {onMuteSource && (
+                              <button
+                                type="button"
+                                onClick={() => onMuteSource(art.src)}
+                                className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--ink-muted)] hover:text-rose-400 transition-colors cursor-pointer"
+                                title={`Mute ${art.src} (manage in Customize)`}
+                              >
+                                <EyeOff className="w-3 h-3" />
+                              </button>
+                            )}
+                          </span>
+                        )}
+
+                        {blindspot && (
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] leading-none font-mono font-black bg-amber-500/15 text-amber-500 dark:text-amber-300 border border-amber-500/35"
+                            title="Global Blindspot: International dispatch with zero US domestic media coverage"
+                          >
+                            <Eye className="w-2.5 h-2.5" />
+                            <span>BLINDSPOT</span>
+                          </span>
+                        )}
 
                         {/* Primary Category Pill */}
                         <span className="text-[9px] font-mono uppercase font-bold px-1.5 py-0.5 rounded leading-none bg-black/5 dark:bg-white/5 text-[var(--ink-muted)] border border-[var(--border)]">
@@ -189,9 +248,22 @@ export const TerminalWireView = memo(function TerminalWireView({
                       </button>
                     </div>
 
-                    {/* Consensus & Timeline Badge */}
+                    {/* Consensus & Timeline Badge + "Broke First" Attribution */}
                     {related.length > 0 && (
                       <div className="inline-flex items-center gap-1">
+                        {brokeFirst && (
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-md text-[9.5px] font-mono font-black uppercase bg-amber-500/15 border border-amber-500/35 text-amber-600 dark:text-amber-300"
+                            title={
+                              brokeFirst.isCurrentArticle
+                                ? `${outlet.name} broke this story first among matched wires`
+                                : `First reported by ${brokeFirst.outlet}`
+                            }
+                          >
+                            <Zap className="w-2.5 h-2.5 fill-current" />
+                            <span>{brokeFirst.isCurrentArticle ? 'FIRST' : `FIRST: ${brokeFirst.outlet}`}</span>
+                          </span>
+                        )}
                         <button
                           type="button"
                           onClick={() => onOpenPerspective(art, related, 'timeline')}

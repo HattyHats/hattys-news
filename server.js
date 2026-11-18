@@ -13,11 +13,14 @@ const ALLOWED_FEED_DOMAINS = [
   'cointelegraph.com', 'coindesk.com', 'decrypt.co', 'theblock.co', 'blockworks.co',
   'bitcoinmagazine.com', 'cryptoslate.com', 'dailycoin.com', 'u.today', 'beincrypto.com',
   'ambcrypto.com', 'thedefiant.io', 'cryptobriefing.com', 'bankless.com', 'crypto.news',
-  'cryptopotato.com', 'newsbtc.com', 'bitcoin.com', 'techcrunch.com', 'news.google.com',
+  'cryptopotato.com', 'newsbtc.com', 'bitcoin.com', 'techcrunch.com', 'protos.com',
+  'bitcoinist.com', 'unchainedcrypto.com', 'news.google.com',
   'bbci.co.uk', 'bbc.co.uk', 'bbc.com', 'dw.com', 'france24.com', 'aljazeera.com',
   'theguardian.com', 'cbc.ca', 'npr.org', 'upi.com', 'un.org', 'abc.net.au',
-  'channelnewsasia.com', 'africanews.com', 'rte.ie', 'nasa.gov', 'space.com',
-  'phys.org', 'sciencedaily.com', 'arstechnica.com', 'theverge.com', 'reuters.com', 'apnews.com'
+  'channelnewsasia.com', 'africanews.com', 'rte.ie', 'euronews.com', 'scmp.com',
+  'middleeasteye.net', 'mercopress.com', 'thehindu.com', 'cnbc.com', 'politico.com',
+  'nasa.gov', 'space.com', 'phys.org', 'sciencedaily.com', 'arstechnica.com',
+  'theverge.com', 'reuters.com', 'apnews.com'
 ];
 
 function isAllowedUrl(inputUrl) {
@@ -430,8 +433,85 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // API Route: /api/news
+  // API Route: /api/news (Supports both single ?url= and batched ?urls=[...])
   if (pathname === '/api/news') {
+    const isBypass = parsedUrl.searchParams.get('nocache') === '1' || !!parsedUrl.searchParams.get('_t');
+    const rawUrlsParam = parsedUrl.searchParams.get('urls');
+
+    async function fetchOrGetCachedLocalFeed(targetUrl) {
+      const now = Date.now();
+      const cached = newsFeedCache.get(targetUrl);
+      const ttl = isBypass ? 35000 : 180000;
+      if (cached && (now - cached.timestamp < ttl)) {
+        return { parsed: cached.parsed, body: cached.body, hit: true };
+      }
+
+      try {
+        const feedRes = await fetch(targetUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Referer': 'https://www.google.com/'
+          },
+          signal: AbortSignal.timeout(6000)
+        });
+
+        if (!feedRes.ok) {
+          throw new Error(`Status ${feedRes.status}`);
+        }
+
+        const xmlText = await feedRes.text();
+        const parsed = parseXmlFeed(xmlText);
+        const trimmed = { items: Array.isArray(parsed.items) ? parsed.items.slice(0, 18) : [] };
+        const bodyStr = JSON.stringify(trimmed);
+
+        if (newsFeedCache.size >= 160 && !newsFeedCache.has(targetUrl)) {
+          const oldestKey = newsFeedCache.keys().next().value;
+          if (oldestKey) newsFeedCache.delete(oldestKey);
+        }
+        newsFeedCache.set(targetUrl, { body: bodyStr, parsed: trimmed, timestamp: Date.now() });
+        return { parsed: trimmed, body: bodyStr, hit: false };
+      } catch (err) {
+        if (cached) {
+          return { parsed: cached.parsed, body: cached.body, hit: true };
+        }
+        throw err;
+      }
+    }
+
+    if (rawUrlsParam) {
+      let urlsList = [];
+      try {
+        const parsed = JSON.parse(rawUrlsParam);
+        if (Array.isArray(parsed)) {
+          urlsList = parsed.filter(u => typeof u === 'string' && isAllowedUrl(u)).slice(0, 10);
+        }
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid urls batch parameter' }));
+        return;
+      }
+
+      const results = {};
+      await Promise.allSettled(
+        urlsList.map(async (u) => {
+          try {
+            const { parsed } = await fetchOrGetCachedLocalFeed(u);
+            results[u] = { items: Array.isArray(parsed?.items) ? parsed.items : [] };
+          } catch {
+            results[u] = { items: [] };
+          }
+        })
+      );
+
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': isBypass ? 'no-cache, no-store' : 'public, max-age=180'
+      });
+      res.end(JSON.stringify({ batch: true, results }));
+      return;
+    }
+
     const feedUrl = parsedUrl.searchParams.get('url');
     if (!feedUrl) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -445,64 +525,16 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    const isBypass = parsedUrl.searchParams.get('nocache') === '1' || !!parsedUrl.searchParams.get('_t');
-    const now = Date.now();
-    const cached = newsFeedCache.get(feedUrl);
-
-    if (!isBypass && cached && (now - cached.timestamp < 180000)) {
-      res.writeHead(200, {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'public, max-age=180',
-        'X-Cache': 'HIT'
-      });
-      res.end(cached.body);
-      return;
-    }
-
     try {
-      const feedRes = await fetch(feedUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Referer': 'https://www.google.com/'
-        },
-        signal: AbortSignal.timeout(6000)
-      });
-
-      if (!feedRes.ok) {
-        res.writeHead(feedRes.status, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: `Feed responded with status ${feedRes.status}` }));
-        return;
-      }
-
-      const xmlText = await feedRes.text();
-      const parsed = parseXmlFeed(xmlText);
-      const bodyStr = JSON.stringify(parsed);
-
-      if (newsFeedCache.size >= 80 && !newsFeedCache.has(feedUrl)) {
-        const oldestKey = newsFeedCache.keys().next().value;
-        if (oldestKey) newsFeedCache.delete(oldestKey);
-      }
-      newsFeedCache.set(feedUrl, { body: bodyStr, timestamp: Date.now() });
-
+      const { body, hit } = await fetchOrGetCachedLocalFeed(feedUrl);
       res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': isBypass ? 'no-cache, no-store' : 'public, max-age=180',
-        'X-Cache': 'MISS'
+        'X-Cache': hit ? 'HIT' : 'MISS'
       });
-      res.end(bodyStr);
+      res.end(body);
     } catch (err) {
       console.error(`Error fetching feed from ${feedUrl}:`, err?.message || err);
-      // If we have stale cache, serve it on error!
-      if (cached) {
-        res.writeHead(200, {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Cache-Control': 'public, max-age=60',
-          'X-Cache': 'STALE-FALLBACK'
-        });
-        res.end(cached.body);
-        return;
-      }
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to fetch feed', details: err?.message || String(err) }));
     }

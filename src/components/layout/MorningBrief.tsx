@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Article, AppMode } from '../../types';
 import { formatTimeAgo } from '../../utils/formatters';
+import { getBrokeFirstInfo } from '../../utils/clustering';
 import { AudioTrack, TerminalAudioPlayer } from '../../hooks/useTerminalAudioPlayer';
 import { DailyCallStats } from '../../utils/dailyCall';
 
@@ -215,6 +216,7 @@ export function MorningBrief({
               {morningBriefStories.map((item, i) => {
                 const isSaved = savedIds.has(item.article.id);
                 const isSpeakingThis = activeBriefTrackId === item.article.id;
+                const brokeFirst = getBrokeFirstInfo(item.article, item.related);
 
                 return (
                   <div
@@ -245,7 +247,7 @@ export function MorningBrief({
                           <button
                             onClick={() => onOpenPerspective(item.article, item.related)}
                             className="shrink-0 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors cursor-pointer flex items-center gap-0.5"
-                            title={`Compare coverage across ${item.related.length + 1} independent outlets`}
+                            title={`Compare coverage across ${item.related.length + 1} independent outlets${brokeFirst ? ` • First reported by ${brokeFirst.outlet}` : ''}`}
                           >
                             <span>+{item.related.length} wires</span>
                           </button>
@@ -261,7 +263,17 @@ export function MorningBrief({
                     </div>
 
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--border)] text-[10px] font-mono text-[var(--ink-muted)]">
-                      <span>{formatTimeAgo(item.article.date)}</span>
+                      <div className="flex items-center gap-1.5 min-w-0 truncate">
+                        <span className="shrink-0">{formatTimeAgo(item.article.date)}</span>
+                        {brokeFirst && (
+                          <span
+                            className="inline-flex items-center gap-0.5 text-[8.5px] font-black text-amber-500 dark:text-amber-400 truncate"
+                            title={`First reported by ${brokeFirst.outlet}`}
+                          >
+                            <span>• ⚡ {brokeFirst.isCurrentArticle ? 'BROKE 1ST' : `1ST: ${brokeFirst.outlet}`}</span>
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => onToggleSave(item.article)}

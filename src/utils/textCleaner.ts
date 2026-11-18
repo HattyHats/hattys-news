@@ -73,13 +73,22 @@ export function getPublisherRoot(src: string): string {
   if (s.startsWith('reuters')) return 'reuters';
   if (s.includes('guardian')) return 'guardian';
   if (s.includes('associated press') || s.startsWith('ap ')) return 'ap';
+  if (s.startsWith('afp')) return 'afp';
+  if (s.includes('euronews')) return 'euronews';
+  if (s.includes('africanews')) return 'africanews';
+  if (s.includes('mercopress')) return 'mercopress';
+  if (s.includes('south china morning post') || s.includes('scmp')) return 'scmp';
   return s;
 }
 
 export function cleanWireTitle(rawTitle: string): string {
   return decodeHtmlEntities(rawTitle)
     .replace(/\s*\|\s*NHK WORLD-JAPAN News\s*-\s*NHKニュース$/i, '')
-    .replace(/\s+-\s+(Reuters|Associated Press|AP News|PBS|PBS NewsHour|NHK WORLD-JAPAN|NHK World|NHKニュース|BBC News|Al Jazeera|The Guardian|DW|France 24|NPR|UPI\.com|CBC\.ca|ABC News)$/i, '')
+    .replace(
+      /\s+-\s+(Reuters|Associated Press|AP News|AFP|Agence France-Presse|PBS|PBS NewsHour|NHK WORLD-JAPAN|NHK World|NHKニュース|BBC News| BBC|Al Jazeera|The Guardian|DW|France 24|NPR|UPI\.com|CBC\.ca|ABC News|DL News|CoinGape|The Japan Times|The Korea Herald|Korea Herald|AllAfrica|allafrica\.com|Daily Maverick|Buenos Aires Times|The National|The Times of Israel|The Kyiv Independent|Kyiv Independent)$/i,
+      ''
+    )
+    .replace(/^(.{32,})\s+-\s+[A-Z0-9][A-Za-z0-9 .&'/-]{1,34}$/, '$1')
     .replace(/^NEWSLETTER:\s*/i, '')
     .replace(/\s+/g, ' ')
     .trim();

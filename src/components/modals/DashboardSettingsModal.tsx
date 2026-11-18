@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, SlidersHorizontal, ArrowUp, ArrowDown, Eye, EyeOff, RotateCcw, Check, Volume2 } from 'lucide-react';
+import { X, SlidersHorizontal, ArrowUp, ArrowDown, Eye, EyeOff, RotateCcw, Check, Volume2, Pin } from 'lucide-react';
 import { AppMode, DashboardSettings } from '../../types';
-import { CRYPTO_CATEGORIES, WORLD_CATEGORIES } from '../../config/feeds';
+import { CRYPTO_CATEGORIES, WORLD_CATEGORIES, CRYPTO_FEEDS, WORLD_FEEDS } from '../../config/feeds';
+import { getOutletBadge } from '../../utils/classifier';
 import { formatVoiceLabel } from '../../utils/speech';
 
 export interface DashboardSettingsModalProps {
@@ -109,6 +110,44 @@ export function DashboardSettingsModal({
       worldHidden: [],
       showAssetTags: true,
       cardDensity: 'comfortable',
+      pinnedSources: [],
+      mutedSources: [],
+    });
+  };
+
+  const activeFeedsList = isCrypto ? CRYPTO_FEEDS : WORLD_FEEDS;
+  const pinnedList = Array.isArray(settings.pinnedSources) ? settings.pinnedSources : [];
+  const mutedList = Array.isArray(settings.mutedSources) ? settings.mutedSources : [];
+  const pinnedSet = new Set(pinnedList.map(s => s.toLowerCase()));
+  const mutedSet = new Set(mutedList.map(s => s.toLowerCase()));
+
+  const handleTogglePinPublisher = (srcName: string) => {
+    const lower = srcName.toLowerCase();
+    const isPinned = pinnedSet.has(lower);
+    const nextPinned = isPinned
+      ? pinnedList.filter(s => s.toLowerCase() !== lower)
+      : [...pinnedList, srcName];
+    // If pinning a muted source, automatically unmute it
+    const nextMuted = !isPinned ? mutedList.filter(s => s.toLowerCase() !== lower) : mutedList;
+    onUpdateSettings({
+      ...settings,
+      pinnedSources: nextPinned,
+      mutedSources: nextMuted,
+    });
+  };
+
+  const handleToggleMutePublisher = (srcName: string) => {
+    const lower = srcName.toLowerCase();
+    const isMuted = mutedSet.has(lower);
+    const nextMuted = isMuted
+      ? mutedList.filter(s => s.toLowerCase() !== lower)
+      : [...mutedList, srcName];
+    // If muting a pinned source, automatically unpin it
+    const nextPinned = !isMuted ? pinnedList.filter(s => s.toLowerCase() !== lower) : pinnedList;
+    onUpdateSettings({
+      ...settings,
+      pinnedSources: nextPinned,
+      mutedSources: nextMuted,
     });
   };
 
@@ -248,6 +287,89 @@ export function DashboardSettingsModal({
                           <span>{isHidden ? 'HIDDEN' : 'SHOWN'}</span>
                         </button>
                       )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section: Verified Source Directory (Pin / Mute Publishers) */}
+          <div>
+            <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+              <label className="text-xs font-mono font-bold text-[var(--ink)] uppercase flex items-center gap-1.5">
+                <span>VERIFIED SOURCE DIRECTORY ({activeFeedsList.length} OUTLETS)</span>
+              </label>
+              <div className="flex items-center gap-2 text-[10px] font-mono">
+                <span className="text-amber-400 font-bold">{pinnedList.length} PINNED</span>
+                <span className="text-[var(--ink-muted)]">•</span>
+                <span className="text-rose-400 font-bold">{mutedList.length} MUTED</span>
+                {(pinnedList.length > 0 || mutedList.length > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateSettings({ ...settings, pinnedSources: [], mutedSources: [] })}
+                    className="underline text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer ml-1"
+                  >
+                    CLEAR
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5 bg-[var(--bg)] p-2 rounded-xl border border-[var(--border)] max-h-48 overflow-y-auto touch-scroll">
+              {activeFeedsList.map((feed) => {
+                const lower = feed.n.toLowerCase();
+                const isPinned = pinnedSet.has(lower);
+                const isMuted = mutedSet.has(lower);
+                const badge = getOutletBadge(feed.n);
+
+                return (
+                  <div
+                    key={feed.n}
+                    className={`flex items-center justify-between gap-2 p-2 rounded-lg border text-xs font-mono transition-all ${
+                      isMuted
+                        ? 'opacity-50 bg-black/5 dark:bg-white/5 border-transparent'
+                        : isPinned
+                          ? 'bg-amber-500/10 border-amber-500/40 shadow-xs'
+                          : 'bg-[var(--surface-solid)] border-[var(--border)] shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm shrink-0">{badge.flag}</span>
+                      <span className="font-bold text-[var(--ink)] truncate">{feed.n}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded uppercase bg-black/10 dark:bg-white/10 text-[var(--ink-muted)] shrink-0">
+                        {feed.tier === 'extended' ? 'ROTATING' : 'CORE'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePinPublisher(feed.n)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors flex items-center gap-1 cursor-pointer ${
+                          isPinned
+                            ? 'bg-amber-500 text-black border-amber-400'
+                            : 'bg-black/5 dark:bg-white/5 text-[var(--ink-muted)] border-[var(--border)] hover:text-amber-400 hover:border-amber-500/40'
+                        }`}
+                        title={isPinned ? `Unpin ${feed.n}` : `Pin ${feed.n} to prioritize in feed`}
+                      >
+                        <Pin className={`w-3 h-3 ${isPinned ? 'fill-black' : ''}`} />
+                        <span>{isPinned ? 'PINNED' : 'PIN'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleMutePublisher(feed.n)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors flex items-center gap-1 cursor-pointer ${
+                          isMuted
+                            ? 'bg-rose-500/15 text-rose-400 border-rose-500/35 hover:bg-rose-500/25'
+                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                        }`}
+                        title={isMuted ? `Unmute ${feed.n}` : `Mute ${feed.n}`}
+                      >
+                        {isMuted ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        <span>{isMuted ? 'MUTED' : 'ON'}</span>
+                      </button>
                     </div>
                   </div>
                 );

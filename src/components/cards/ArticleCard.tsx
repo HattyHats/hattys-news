@@ -12,10 +12,15 @@ import {
   TrendingUp,
   TrendingDown,
   GitCommitHorizontal,
+  Pin,
+  EyeOff,
+  Eye,
+  Zap,
 } from 'lucide-react';
 import { Article, AppMode, DashboardSettings } from '../../types';
 import { CardImage } from './CardImage';
-import { detectAssetsInArticle, detectStoryImpact, getOutletBadge } from '../../utils/classifier';
+import { detectAssetsInArticle, detectStoryImpact, getOutletBadge, isGlobalBlindspot } from '../../utils/classifier';
+import { getBrokeFirstInfo } from '../../utils/clustering';
 import { formatTimeAgo } from '../../utils/formatters';
 import { CRYPTO_CATEGORIES, WORLD_CATEGORIES } from '../../config/feeds';
 import { computeStoryPulse, PulseVote } from '../../utils/communityPulse';
@@ -29,6 +34,8 @@ interface ArticleCardProps {
   isNew: boolean;
   isHero?: boolean;
   isFocused?: boolean;
+  isPinnedSource?: boolean;
+  showBlindspotBadge?: boolean;
   copiedId: string | null;
   dashboardSettings: DashboardSettings;
   marketQuotes: Record<string, { price: number; change24h: number; formatted: string }>;
@@ -42,6 +49,8 @@ interface ArticleCardProps {
   onSetQuery: (q: string | ((prev: string) => string)) => void;
   onOpenPerspective: (article: Article, related: Article[], initialTab?: 'compare' | 'timeline') => void;
   onOpenArticle: (article: Article) => void;
+  onTogglePinSource?: (src: string) => void;
+  onMuteSource?: (src: string) => void;
 }
 
 export const ArticleCard = memo(function ArticleCard({
@@ -53,6 +62,8 @@ export const ArticleCard = memo(function ArticleCard({
   isNew,
   isHero = false,
   isFocused = false,
+  isPinnedSource = false,
+  showBlindspotBadge = false,
   copiedId,
   dashboardSettings,
   marketQuotes,
@@ -66,6 +77,8 @@ export const ArticleCard = memo(function ArticleCard({
   onSetQuery,
   onOpenPerspective,
   onOpenArticle,
+  onTogglePinSource,
+  onMuteSource,
 }: ArticleCardProps) {
   const cardMode = article.mode || mode;
   const cardCategories = cardMode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
@@ -77,6 +90,18 @@ export const ArticleCard = memo(function ArticleCard({
 
   // Feature 5: Outlet Country & Wire Desk Metas
   const outlet = useMemo(() => getOutletBadge(article.src), [article.src]);
+
+  // "Broke First" Attribution across clustered wires
+  const brokeFirst = useMemo(
+    () => getBrokeFirstInfo(article, relatedSources),
+    [article, relatedSources]
+  );
+
+  // Global Blindspot Indicator (non-US international story missed by US domestic wires)
+  const blindspot = useMemo(
+    () => cardMode === 'world' && (showBlindspotBadge || relatedSources.length > 0) && isGlobalBlindspot(article, relatedSources),
+    [cardMode, showBlindspotBadge, article, relatedSources]
+  );
 
   // Detected financial asset tags (only re-runs when article or quotes update)
   const detectedAssets = useMemo(
@@ -160,13 +185,70 @@ export const ArticleCard = memo(function ArticleCard({
 
       <div className="cb">
         <div>
-          {/* Source & Date line with Feature 5: Regional Flag Badge */}
-          <div className="flex items-center justify-between text-[11px] font-mono text-[var(--ink-muted)] mb-1.5">
-            <span className={`font-bold tracking-wide flex items-center gap-1.5 min-w-0 ${cardMode === 'world' ? 'text-blue-500 dark:text-blue-400' : 'text-[var(--accent)]'}`}>
-              <span className="text-xs shrink-0" title={`${outlet.region} Wire Desk`}>{outlet.flag}</span>
-              <span className="truncate">{outlet.name.toUpperCase()}</span>
-            </span>
-            <span className="flex items-center gap-1 shrink-0 ml-2" title={article.date.toLocaleString()}>
+          {/* Source & Date line with Feature 5: Regional Flag Badge + One-Tap Pin/Mute Outlet Controls */}
+          <div className="flex items-center justify-between text-[11px] font-mono text-[var(--ink-muted)] mb-1.5 gap-1">
+            <div className="flex items-center gap-1 min-w-0">
+              <span className={`font-bold tracking-wide flex items-center gap-1.5 min-w-0 ${cardMode === 'world' ? 'text-blue-500 dark:text-blue-400' : 'text-[var(--accent)]'}`}>
+                <span className="text-xs shrink-0" title={`${outlet.region} Wire Desk`}>{outlet.flag}</span>
+                <span className="truncate">{outlet.name.toUpperCase()}</span>
+              </span>
+
+              {isPinnedSource && (
+                <span
+                  className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[8.5px] font-mono font-black bg-amber-500/15 text-amber-400 border border-amber-500/35 shrink-0"
+                  title={`${article.src} is pinned to the top of your recency brackets`}
+                >
+                  PINNED
+                </span>
+              )}
+
+              {blindspot && (
+                <span
+                  className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[8.5px] font-mono font-black bg-amber-500/15 text-amber-500 dark:text-amber-300 border border-amber-500/35 shrink-0"
+                  title="Global Blindspot: International dispatch with zero US domestic media coverage"
+                >
+                  <Eye className="w-2.5 h-2.5" />
+                  <span>BLINDSPOT</span>
+                </span>
+              )}
+
+              {(onTogglePinSource || onMuteSource) && (
+                <div className="inline-flex items-center gap-0.5 opacity-75 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0 ml-0.5">
+                  {onTogglePinSource && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTogglePinSource(article.src);
+                      }}
+                      aria-label={isPinnedSource ? `Unpin ${article.src}` : `Pin ${article.src}`}
+                      className={`p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer ${
+                        isPinnedSource ? 'text-amber-400' : 'text-[var(--ink-muted)] hover:text-amber-400'
+                      }`}
+                      title={isPinnedSource ? `Unpin ${article.src}` : `Pin ${article.src} to prioritize in feed`}
+                    >
+                      <Pin className={`w-3 h-3 ${isPinnedSource ? 'fill-amber-400' : ''}`} />
+                    </button>
+                  )}
+                  {onMuteSource && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMuteSource(article.src);
+                      }}
+                      aria-label={`Mute ${article.src}`}
+                      className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 text-[var(--ink-muted)] hover:text-rose-400 transition-colors cursor-pointer"
+                      title={`Mute ${article.src} (manage muted sources inside Customize)`}
+                    >
+                      <EyeOff className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <span className="flex items-center gap-1 shrink-0 ml-1" title={article.date.toLocaleString()}>
               {isNew && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="New since last check-in" />}
               <Clock className="w-3 h-3 opacity-60" />
               {formatTimeAgo(article.date)}
@@ -243,7 +325,7 @@ export const ArticleCard = memo(function ArticleCard({
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                  <span className="text-[10px] font-mono font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider truncate">
+                  <span className="text-[10px] font-mono font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider shrink-0">
                     {relatedSources.length + 1} WIRES
                   </span>
                 </div>
@@ -272,8 +354,23 @@ export const ArticleCard = memo(function ArticleCard({
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-1 mt-1 text-[9px] font-mono text-[var(--ink-muted)] truncate">
-                <span className="opacity-70">ALSO ON:</span>
+              <div className="flex items-center gap-1.5 mt-1.5 text-[9px] font-mono text-[var(--ink-muted)] truncate">
+                {brokeFirst && (
+                  <span
+                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8.5px] font-mono font-black uppercase bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/35 shrink-0"
+                    title={
+                      brokeFirst.isCurrentArticle
+                        ? `${outlet.name} broke this story first among matched wires${brokeFirst.leadMinutes > 0 ? ` (+${brokeFirst.leadMinutes}m ahead)` : ''}`
+                        : `First reported by ${brokeFirst.outlet}${brokeFirst.leadMinutes > 0 ? ` (${brokeFirst.leadMinutes}m earlier)` : ''}`
+                    }
+                  >
+                    <Zap className="w-2.5 h-2.5 fill-current shrink-0" />
+                    <span>
+                      {brokeFirst.isCurrentArticle ? 'BROKE FIRST' : `FIRST: ${brokeFirst.outlet}`}
+                    </span>
+                  </span>
+                )}
+                <span className="opacity-70 shrink-0">ALSO:</span>
                 <span className="font-bold text-[var(--ink)] truncate">
                   {relatedSources.map(r => r.src).slice(0, 3).join(', ')}
                   {relatedSources.length > 3 ? ` +${relatedSources.length - 3}` : ''}

@@ -1,6 +1,7 @@
 import { Article, AppMode } from '../types';
 import { cleanWireTitle, cleanWireSnippet, safeParseDate } from './textCleaner';
 import { getEditorialPhoto } from '../config/photos';
+import { detectArticleRegions } from './classifier';
 
 export function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
   try {
@@ -13,10 +14,16 @@ export function loadCachedArticlesForMode(targetMode: AppMode): Article[] {
           const title = cleanWireTitle(a.title || '');
           const snippet = cleanWireSnippet(a.snippet || '', title);
           const normId = title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 36) || String(idx);
+          const regions = Array.isArray(a.regions) && a.regions.length > 0
+            ? a.regions
+            : targetMode === 'world'
+              ? detectArticleRegions(title, snippet, a.src || '')
+              : undefined;
           return {
             ...a,
             title,
             snippet,
+            regions,
             fullText: typeof a.fullText === 'string' ? a.fullText : undefined,
             readingMinutes: typeof a.readingMinutes === 'number' ? a.readingMinutes : undefined,
             mode: targetMode,
@@ -37,10 +44,10 @@ export function saveArticlesCache(targetMode: AppMode, articles: Article[]) {
     // Strict isolation: only save articles matching targetMode to target cache; cap fullText to stay well under localStorage quota
     const isolated = articles
       .filter(a => !a.mode || a.mode === targetMode)
-      .slice(0, 180)
+      .slice(0, 260)
       .map(a => ({
         ...a,
-        fullText: a.fullText ? a.fullText.slice(0, 1400) : undefined,
+        fullText: a.fullText ? a.fullText.slice(0, 1100) : undefined,
       }));
     localStorage.setItem(cacheKey, JSON.stringify(isolated));
   } catch {}

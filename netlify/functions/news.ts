@@ -46,6 +46,9 @@ const ALLOWED_FEED_DOMAINS = [
   'newsbtc.com',
   'bitcoin.com',
   'techcrunch.com',
+  'protos.com',
+  'bitcoinist.com',
+  'unchainedcrypto.com',
   'news.google.com',
   'bbci.co.uk',
   'bbc.co.uk',
@@ -62,6 +65,13 @@ const ALLOWED_FEED_DOMAINS = [
   'channelnewsasia.com',
   'africanews.com',
   'rte.ie',
+  'euronews.com',
+  'scmp.com',
+  'middleeasteye.net',
+  'mercopress.com',
+  'thehindu.com',
+  'cnbc.com',
+  'politico.com',
   'nasa.gov',
   'space.com',
   'phys.org',
@@ -84,7 +94,37 @@ function isAllowedUrl(inputUrl: string): boolean {
 }
 
 // In-memory cache for warm Lambda executions (3-minute TTL)
-const lambdaFeedCache = new Map<string, { body: string; timestamp: number }>();
+const lambdaFeedCache = new Map<string, { body: string; parsed: any; timestamp: number }>();
+
+async function fetchOrGetCachedFeed(targetUrl: string, nocache: boolean): Promise<{ parsed: any; body: string; hit: boolean }> {
+  const now = Date.now();
+  const cached = lambdaFeedCache.get(targetUrl);
+  // Even on manual refresh (nocache), reuse cache if under 35s old to avoid redundant upstream XML fetches
+  const ttl = nocache ? 35000 : 180000;
+  if (cached && now - cached.timestamp < ttl) {
+    return { parsed: cached.parsed, body: cached.body, hit: true };
+  }
+
+  try {
+    const feed = await parser.parseURL(targetUrl);
+    const trimmed = {
+      ...feed,
+      items: Array.isArray(feed.items) ? feed.items.slice(0, 18) : [],
+    };
+    const bodyStr = JSON.stringify(trimmed);
+    if (lambdaFeedCache.size >= 160 && !lambdaFeedCache.has(targetUrl)) {
+      const oldestKey = lambdaFeedCache.keys().next().value;
+      if (oldestKey) lambdaFeedCache.delete(oldestKey);
+    }
+    lambdaFeedCache.set(targetUrl, { body: bodyStr, parsed: trimmed, timestamp: Date.now() });
+    return { parsed: trimmed, body: bodyStr, hit: false };
+  } catch (err) {
+    if (cached) {
+      return { parsed: cached.parsed, body: cached.body, hit: true };
+    }
+    throw err;
+  }
+}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
@@ -99,9 +139,57 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const url = event.queryStringParameters?.url;
-  const nocache = event.queryStringParameters?.nocache === "1" || event.queryStringParameters?.nocache === "true" || !!event.queryStringParameters?._t;
+  const nocache =
+    event.queryStringParameters?.nocache === "1" ||
+    event.queryStringParameters?.nocache === "true" ||
+    !!event.queryStringParameters?._t;
 
+  // Batched Multi-Feed Endpoint: ?urls=["https://...","https://..."] (reduces Netlify Function calls by ~80%)
+  const rawUrlsParam = event.queryStringParameters?.urls;
+  if (rawUrlsParam) {
+    let urlsList: string[] = [];
+    try {
+      const parsed = JSON.parse(rawUrlsParam);
+      if (Array.isArray(parsed)) {
+        urlsList = parsed.filter((u): u is string => typeof u === "string" && isAllowedUrl(u)).slice(0, 10);
+      }
+    } catch {
+      return {
+        statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({ error: "Invalid urls batch parameter" }),
+      };
+    }
+
+    const results: Record<string, { items: any[] }> = {};
+    await Promise.allSettled(
+      urlsList.map(async (u) => {
+        try {
+          const { parsed } = await fetchOrGetCachedFeed(u, nocache);
+          results[u] = { items: Array.isArray(parsed?.items) ? parsed.items : [] };
+        } catch {
+          results[u] = { items: [] };
+        }
+      })
+    );
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": nocache
+          ? "no-store, no-cache, must-revalidate, proxy-revalidate"
+          : "public, max-age=180, s-maxage=180",
+      },
+      body: JSON.stringify({ batch: true, results }),
+    };
+  }
+
+  const url = event.queryStringParameters?.url;
   if (!url) {
     return {
       statusCode: 400,
@@ -124,30 +212,8 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const now = Date.now();
-  const cached = lambdaFeedCache.get(url);
-  if (!nocache && cached && (now - cached.timestamp < 180000)) {
-    return {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, max-age=180, s-maxage=180",
-        "X-Cache": "HIT"
-      },
-      body: cached.body,
-    };
-  }
-
   try {
-    const feed = await parser.parseURL(url);
-    const bodyStr = JSON.stringify(feed);
-    if (lambdaFeedCache.size >= 80 && !lambdaFeedCache.has(url)) {
-      const oldestKey = lambdaFeedCache.keys().next().value;
-      if (oldestKey) lambdaFeedCache.delete(oldestKey);
-    }
-    lambdaFeedCache.set(url, { body: bodyStr, timestamp: Date.now() });
-
+    const { body, hit } = await fetchOrGetCachedFeed(url, nocache);
     return {
       statusCode: 200,
       headers: {
@@ -156,25 +222,13 @@ export const handler: Handler = async (event) => {
         "Cache-Control": nocache
           ? "no-store, no-cache, must-revalidate, proxy-revalidate"
           : "public, max-age=180, s-maxage=180",
-        "X-Cache": "MISS",
+        "X-Cache": hit ? "HIT" : "MISS",
         ...(nocache ? { "Pragma": "no-cache", "Expires": "0" } : {})
       },
-      body: bodyStr,
+      body,
     };
   } catch (error: any) {
     console.error(`Error fetching feed from ${url}:`, error?.message || error);
-    if (cached) {
-      return {
-        statusCode: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-          "Cache-Control": "public, max-age=60",
-          "X-Cache": "STALE-FALLBACK"
-        },
-        body: cached.body,
-      };
-    }
     return {
       statusCode: 500,
       headers: {

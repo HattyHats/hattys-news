@@ -1,6 +1,24 @@
 export type AppMode = 'crypto' | 'world';
 export type ViewLayoutMode = 'grid' | 'wire';
 
+export type WorldRegionId =
+  | 'all'
+  | 'north-america'
+  | 'europe'
+  | 'middle-east'
+  | 'asia-pacific'
+  | 'africa'
+  | 'latin-america'
+  | 'global-wires'
+  | 'blindspot';
+
+export interface WorldRegionConfig {
+  id: WorldRegionId;
+  label: string;
+  shortLabel: string;
+  icon: string;
+}
+
 export interface StoryImpact {
   type: 'BULLISH' | 'BEARISH' | 'POLICY' | 'BREAKING';
   label: string;
@@ -11,6 +29,7 @@ export interface OutletMeta {
   name: string;
   flag: string;
   region: string;
+  worldRegion?: WorldRegionId;
 }
 
 export interface Article {
@@ -22,6 +41,7 @@ export interface Article {
   src: string;
   primaryCat: string;
   matchedCategories: string[];
+  regions?: WorldRegionId[];
   snippet?: string;
   fullText?: string;
   readingMinutes?: number;
@@ -39,6 +59,8 @@ export interface FeedConfig {
   n: string;
   u: string;
   defaultCat: string;
+  region?: WorldRegionId;
+  tier?: 'core' | 'extended';
 }
 
 export interface DetectedAsset {
@@ -69,6 +91,8 @@ export interface DashboardSettings {
   worldHidden: string[];
   showAssetTags: boolean;
   cardDensity: 'comfortable' | 'compact';
+  pinnedSources: string[];
+  mutedSources: string[];
 }
 
 export interface TickerToken {

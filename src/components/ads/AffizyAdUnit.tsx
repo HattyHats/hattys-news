@@ -1,4 +1,4 @@
-import React, { memo, useRef, useState, useEffect, useMemo } from 'react';
+import { memo, useRef, useState, useEffect, useMemo } from 'react';
 
 let affizyScanTimer: number | null = null;
 
@@ -34,6 +34,28 @@ export interface AffizyAdUnitProps {
   noCardWrapper?: boolean;
 }
 
+function detectCreativeSize(
+  adDiv: HTMLElement,
+  fallbackW: number,
+  fallbackH: number
+): { w: number; h: number } {
+  const candidates = Array.from(adDiv.querySelectorAll('iframe, img, a, div')) as HTMLElement[];
+  for (const el of candidates) {
+    const attrW = parseInt(el.getAttribute('width') || '', 10);
+    const attrH = parseInt(el.getAttribute('height') || '', 10);
+    if (!isNaN(attrW) && !isNaN(attrH) && attrW >= 120 && attrH >= 40) {
+      return { w: attrW, h: attrH };
+    }
+    if (el instanceof HTMLImageElement && el.naturalWidth >= 120 && el.naturalHeight >= 40) {
+      return { w: el.naturalWidth, h: el.naturalHeight };
+    }
+    if (el.offsetWidth >= 120 && el.offsetHeight >= 40) {
+      return { w: el.offsetWidth, h: el.offsetHeight };
+    }
+  }
+  return { w: fallbackW, h: fallbackH };
+}
+
 export const AffizyAdUnit = memo(function AffizyAdUnit({
   zoneId = '1007',
   bannerSize = '480x320',
@@ -43,34 +65,40 @@ export const AffizyAdUnit = memo(function AffizyAdUnit({
   const outerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [adLoaded, setAdLoaded] = useState(false);
-  const [scale, setScale] = useState(1);
+  const [availableWidth, setAvailableWidth] = useState(0);
 
-  const { naturalWidth, naturalHeight } = useMemo(() => {
+  const defaultDims = useMemo(() => {
     const match = /^(\d+)\s*x\s*(\d+)$/i.exec(bannerSize.trim());
     return {
-      naturalWidth: match ? parseInt(match[1], 10) : 300,
-      naturalHeight: match ? parseInt(match[2], 10) : 250,
+      w: match ? parseInt(match[1], 10) : 300,
+      h: match ? parseInt(match[2], 10) : 250,
     };
   }, [bannerSize]);
+
+  const [creativeDims, setCreativeDims] = useState<{ w: number; h: number }>(defaultDims);
+
+  useEffect(() => {
+    setCreativeDims(defaultDims);
+  }, [defaultDims]);
 
   useEffect(() => {
     const el = outerRef.current;
     if (!el) return;
 
-    const updateScale = () => {
-      const available = el.clientWidth;
-      if (available > 0 && naturalWidth > 0) {
-        setScale(available < naturalWidth ? Math.max(0.25, available / naturalWidth) : 1);
+    const updateWidth = () => {
+      const w = el.clientWidth;
+      if (w > 0) {
+        setAvailableWidth(prev => (prev !== w ? w : prev));
       }
     };
 
-    updateScale();
+    updateWidth();
     if (typeof ResizeObserver === 'undefined') return;
 
-    const ro = new ResizeObserver(updateScale);
+    const ro = new ResizeObserver(updateWidth);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [naturalWidth]);
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -78,6 +106,7 @@ export const AffizyAdUnit = memo(function AffizyAdUnit({
 
     container.innerHTML = '';
     setAdLoaded(false);
+    setCreativeDims(defaultDims);
 
     // Create target div matching Affizy specification:
     // <div class="affizy-ad" data-zone="..."></div>
@@ -86,12 +115,34 @@ export const AffizyAdUnit = memo(function AffizyAdUnit({
     adDiv.setAttribute('data-zone', zoneId);
     container.appendChild(adDiv);
 
-    // Watch if Affizy successfully renders an ad inside adDiv
-    const observer = new MutationObserver(() => {
+    const inspectRenderedAd = () => {
       const isVisible = adDiv.style.display !== 'none' && adDiv.children.length > 0;
       setAdLoaded(isVisible);
+      if (isVisible) {
+        const measured = detectCreativeSize(adDiv, defaultDims.w, defaultDims.h);
+        setCreativeDims(prev => (prev.w === measured.w && prev.h === measured.h ? prev : measured));
+
+        const imgEl = adDiv.querySelector('img');
+        if (imgEl && !imgEl.complete) {
+          imgEl.addEventListener(
+            'load',
+            () => {
+              const postLoad = detectCreativeSize(adDiv, defaultDims.w, defaultDims.h);
+              setCreativeDims(prev => (prev.w === postLoad.w && prev.h === postLoad.h ? prev : postLoad));
+            },
+            { once: true }
+          );
+        }
+      }
+    };
+
+    const observer = new MutationObserver(inspectRenderedAd);
+    observer.observe(adDiv, {
+      attributes: true,
+      attributeFilter: ['style'],
+      childList: true,
+      subtree: true,
     });
-    observer.observe(adDiv, { attributes: true, attributeFilter: ['style'], childList: true });
 
     scheduleAffizyScan();
 
@@ -101,27 +152,34 @@ export const AffizyAdUnit = memo(function AffizyAdUnit({
         container.innerHTML = '';
       }
     };
-  }, [zoneId]);
+  }, [zoneId, defaultDims]);
 
-  const scaledHeight = adLoaded ? Math.round(naturalHeight * scale) : undefined;
+  const scale =
+    availableWidth > 0 && creativeDims.w > 0 && availableWidth < creativeDims.w
+      ? Math.max(0.25, availableWidth / creativeDims.w)
+      : 1;
+
+  const isScaledDown = adLoaded && scale < 1;
+  const scaledHeight = isScaledDown ? Math.round(creativeDims.h * scale) : undefined;
 
   const renderResponsiveAdSlot = (idleMinHeightClass: string) => (
     <div
       ref={outerRef}
-      className={`w-full overflow-hidden flex items-center justify-center ${adLoaded ? '' : idleMinHeightClass}`}
+      className={`w-full relative overflow-hidden ${adLoaded ? '' : `flex items-center justify-center ${idleMinHeightClass}`}`}
       style={scaledHeight ? { height: `${scaledHeight}px` } : undefined}
     >
       <div
         ref={containerRef}
-        className="flex items-center justify-center origin-top"
+        className={isScaledDown ? 'absolute top-0 left-1/2 flex items-start justify-center' : 'w-full flex items-center justify-center'}
         style={
-          scale < 1 && adLoaded
+          isScaledDown
             ? {
-                width: `${naturalWidth}px`,
-                transform: `scale(${scale})`,
+                width: `${creativeDims.w}px`,
+                height: `${creativeDims.h}px`,
                 transformOrigin: 'top center',
+                transform: `translateX(-50%) scale(${scale})`,
               }
-            : { width: '100%' }
+            : undefined
         }
       />
     </div>
@@ -151,7 +209,7 @@ export const AffizyAdUnit = memo(function AffizyAdUnit({
   return (
     <div className="w-full my-3 flex flex-col items-center justify-center">
       <div className={`w-full ${maxWidth} relative mx-auto`} style={{ zIndex: 20 }}>
-        <div className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface-solid)] shadow-sm p-1.5 sm:p-2 flex flex-col items-center justify-center">
+        <div className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--surface-solid)] shadow-sm p-1 sm:p-2 flex flex-col items-center justify-center">
           {renderResponsiveAdSlot('min-h-[48px]')}
           {!adLoaded && renderPendingBar()}
         </div>

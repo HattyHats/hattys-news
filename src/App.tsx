@@ -17,15 +17,18 @@ import {
   Crosshair,
   Target,
   Play,
+  Eye,
+  EyeOff,
+  Pin,
 } from 'lucide-react';
 
-import { AppMode, Article, FearGreedData, FeedConfig, ViewLayoutMode } from './types';
-import { CRYPTO_FEEDS, WORLD_FEEDS, CRYPTO_CATEGORIES, WORLD_CATEGORIES, DEFAULT_DASHBOARD_SETTINGS } from './config/feeds';
+import { AppMode, Article, FearGreedData, FeedConfig, ViewLayoutMode, WorldRegionId } from './types';
+import { CRYPTO_FEEDS, WORLD_FEEDS, CRYPTO_CATEGORIES, WORLD_CATEGORIES, WORLD_REGIONS, DEFAULT_DASHBOARD_SETTINGS } from './config/feeds';
 import { ASSET_DEFINITIONS } from './config/assets';
 import { getEditorialPhoto } from './config/photos';
 import { cleanWireTitle, cleanWireSnippet, getPublisherRoot, safeParseDate, extractReadableBody } from './utils/textCleaner';
-import { classifyArticle } from './utils/classifier';
-import { computeArticleClusters } from './utils/clustering';
+import { classifyArticle, detectArticleRegions, isGlobalBlindspot } from './utils/classifier';
+import { computeArticleClusters, interleaveArticlesByDiversity } from './utils/clustering';
 import { loadCachedArticlesForMode, saveArticlesCache } from './utils/storage';
 import { getUpcomingCatalysts } from './utils/formatters';
 import {
@@ -135,6 +138,9 @@ export default function App() {
   const articlesRef = useRef(articles);
   articlesRef.current = articles;
   const [filter, setFilter] = useState('all');
+  const [activeRegion, setActiveRegion] = useState<WorldRegionId>('all');
+  const [rotationSeed, setRotationSeed] = useState<number>(0);
+  const rotationSeedRef = useRef<number>(0);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState<boolean>(initialCached.length === 0);
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -438,6 +444,8 @@ export default function App() {
           cryptoHidden: Array.isArray(parsed.cryptoHidden) ? parsed.cryptoHidden : [],
           worldCategories: Array.isArray(parsed.worldCategories) ? parsed.worldCategories : DEFAULT_DASHBOARD_SETTINGS.worldCategories,
           worldHidden: Array.isArray(parsed.worldHidden) ? parsed.worldHidden : [],
+          pinnedSources: Array.isArray(parsed.pinnedSources) ? parsed.pinnedSources : [],
+          mutedSources: Array.isArray(parsed.mutedSources) ? parsed.mutedSources : [],
         });
       }
     } catch {}
@@ -448,6 +456,66 @@ export default function App() {
     try {
       localStorage.setItem('hattys_dashboard_settings', JSON.stringify(newSettings));
     } catch {}
+  }, []);
+
+  const pinnedSourcesSet = useMemo(
+    () => new Set((dashboardSettings.pinnedSources || []).map(s => s.toLowerCase())),
+    [dashboardSettings.pinnedSources]
+  );
+
+  const mutedSourcesSet = useMemo(
+    () => new Set((dashboardSettings.mutedSources || []).map(s => s.toLowerCase())),
+    [dashboardSettings.mutedSources]
+  );
+
+  const handleTogglePinSource = useCallback((srcName: string) => {
+    setDashboardSettings(prev => {
+      const pinned = Array.isArray(prev.pinnedSources) ? prev.pinnedSources : [];
+      const muted = Array.isArray(prev.mutedSources) ? prev.mutedSources : [];
+      const lower = srcName.toLowerCase();
+      const isAlreadyPinned = pinned.some(s => s.toLowerCase() === lower);
+      const nextPinned = isAlreadyPinned
+        ? pinned.filter(s => s.toLowerCase() !== lower)
+        : [...pinned, srcName];
+      const nextMuted = !isAlreadyPinned
+        ? muted.filter(s => s.toLowerCase() !== lower)
+        : muted;
+      const updated = { ...prev, pinnedSources: nextPinned, mutedSources: nextMuted };
+      try {
+        localStorage.setItem('hattys_dashboard_settings', JSON.stringify(updated));
+      } catch {}
+      setRefreshToast({
+        message: isAlreadyPinned
+          ? `Unpinned ${srcName}`
+          : `📌 Pinned ${srcName} — prioritized at the top of each recency bracket`,
+        active: false,
+      });
+      if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
+      refreshToastTimerRef.current = window.setTimeout(() => setRefreshToast(null), 2600);
+      return updated;
+    });
+  }, []);
+
+  const handleMuteSource = useCallback((srcName: string) => {
+    setDashboardSettings(prev => {
+      const pinned = Array.isArray(prev.pinnedSources) ? prev.pinnedSources : [];
+      const muted = Array.isArray(prev.mutedSources) ? prev.mutedSources : [];
+      const lower = srcName.toLowerCase();
+      if (muted.some(s => s.toLowerCase() === lower)) return prev;
+      const nextMuted = [...muted, srcName];
+      const nextPinned = pinned.filter(s => s.toLowerCase() !== lower);
+      const updated = { ...prev, pinnedSources: nextPinned, mutedSources: nextMuted };
+      try {
+        localStorage.setItem('hattys_dashboard_settings', JSON.stringify(updated));
+      } catch {}
+      setRefreshToast({
+        message: `🔇 Muted ${srcName} — manage or unmute outlets anytime in Customize`,
+        active: false,
+      });
+      if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
+      refreshToastTimerRef.current = window.setTimeout(() => setRefreshToast(null), 3000);
+      return updated;
+    });
   }, []);
 
   // Unified Real-Time Market Quotes (Single Central Source of Truth)
@@ -624,8 +692,50 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Map raw RSS items for a feed into normalized Article objects (with Dual-Signal World Regions)
+  const mapRawItemsToArticles = useCallback((items: any[], feed: FeedConfig, targetMode: AppMode): Article[] => {
+    if (!Array.isArray(items)) return [];
+    return items.slice(0, 18).map((i: any, idx: number) => {
+      let img = pickFeedThumbnail(i);
+
+      if (img && img.startsWith('http://')) {
+        img = img.replace(/^http:\/\//i, 'https://');
+      }
+
+      const rawTitle = i.title ? i.title.trim() : (targetMode === 'world' ? 'World Wire Update' : 'Crypto Market Update');
+      const title = cleanWireTitle(rawTitle);
+      const rawBodyHtml = i.contentEncoded || i.content || i.description || i.contentSnippet || '';
+      const snippet = cleanWireSnippet(i.contentSnippet || i.description || '', title);
+      const { fullText, readingMinutes } = extractReadableBody(rawBodyHtml, title);
+      const { primary, matched } = classifyArticle(title, snippet, feed.defaultCat, targetMode);
+      const regions = targetMode === 'world' ? detectArticleRegions(title, snippet, feed.n, feed.region) : undefined;
+
+      if (!img) {
+        img = getEditorialPhoto(primary, title, targetMode);
+      }
+
+      const normId = title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 36) || String(idx);
+
+      return {
+        id: `${targetMode}-${feed.n}-${normId}`,
+        title,
+        link: i.link || '#',
+        img,
+        date: safeParseDate(i.pubDate || i.isoDate),
+        src: feed.n,
+        primaryCat: primary,
+        matchedCategories: matched,
+        regions,
+        snippet,
+        fullText,
+        readingMinutes,
+        mode: targetMode
+      };
+    });
+  }, []);
+
   // Fetch individual feed with resilient 8.5s timeout
-  const fetchFeed = async (feed: FeedConfig, targetMode: AppMode, forceRefresh = false): Promise<Article[]> => {
+  const fetchFeed = useCallback(async (feed: FeedConfig, targetMode: AppMode, forceRefresh = false): Promise<Article[]> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8500);
 
@@ -641,64 +751,94 @@ export default function App() {
       const data = await response.json();
       if (!data.items || !Array.isArray(data.items)) return [];
 
-      return data.items.slice(0, 18).map((i: any, idx: number) => {
-        let img = pickFeedThumbnail(i);
-
-        if (img && img.startsWith('http://')) {
-          img = img.replace(/^http:\/\//i, 'https://');
-        }
-
-        const rawTitle = i.title ? i.title.trim() : (targetMode === 'world' ? 'World Wire Update' : 'Crypto Market Update');
-        const title = cleanWireTitle(rawTitle);
-        const rawBodyHtml = i.contentEncoded || i.content || i.description || i.contentSnippet || '';
-        const snippet = cleanWireSnippet(i.contentSnippet || i.description || '', title);
-        const { fullText, readingMinutes } = extractReadableBody(rawBodyHtml, title);
-        const { primary, matched } = classifyArticle(title, snippet, feed.defaultCat, targetMode);
-
-        if (!img) {
-          img = getEditorialPhoto(primary, title, targetMode);
-        }
-
-        const normId = title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 36) || String(idx);
-
-        return {
-          id: `${targetMode}-${feed.n}-${normId}`,
-          title,
-          link: i.link || '#',
-          img,
-          date: safeParseDate(i.pubDate || i.isoDate),
-          src: feed.n,
-          primaryCat: primary,
-          matchedCategories: matched,
-          snippet,
-          fullText,
-          readingMinutes,
-          mode: targetMode
-        };
-      });
+      return mapRawItemsToArticles(data.items, feed, targetMode);
     } catch {
       return [];
     }
-  };
+  }, [mapRawItemsToArticles]);
 
-  // Progressive Early-Flush Feed Aggregator (Ultra-Fast 300ms First Paint)
+  // Fetch a batch of up to 7 feeds in a single /api/news?urls=... invocation (~80% fewer Netlify Function calls)
+  const fetchFeedBatch = useCallback(async (batch: FeedConfig[], targetMode: AppMode, forceRefresh = false): Promise<Article[]> => {
+    if (batch.length === 0) return [];
+    if (batch.length === 1) return fetchFeed(batch[0], targetMode, forceRefresh);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 9000);
+
+    try {
+      const urlsPayload = JSON.stringify(batch.map(f => f.u));
+      const cacheBust = forceRefresh ? `&_t=${Date.now()}&nocache=1` : '';
+      const response = await fetch(`/api/news?urls=${encodeURIComponent(urlsPayload)}${cacheBust}`, {
+        signal: controller.signal,
+        cache: forceRefresh ? 'no-store' : 'default'
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const fallbackResults = await Promise.all(batch.map(f => fetchFeed(f, targetMode, forceRefresh)));
+        return fallbackResults.flat();
+      }
+
+      const data = await response.json();
+      if (!data || !data.results || typeof data.results !== 'object') {
+        const fallbackResults = await Promise.all(batch.map(f => fetchFeed(f, targetMode, forceRefresh)));
+        return fallbackResults.flat();
+      }
+
+      const articlesOut: Article[] = [];
+      for (const feed of batch) {
+        const entry = data.results[feed.u];
+        if (entry && Array.isArray(entry.items)) {
+          articlesOut.push(...mapRawItemsToArticles(entry.items, feed, targetMode));
+        }
+      }
+      return articlesOut;
+    } catch {
+      clearTimeout(timeoutId);
+      const fallbackResults = await Promise.all(batch.map(f => fetchFeed(f, targetMode, forceRefresh)));
+      return fallbackResults.flat();
+    }
+  }, [fetchFeed, mapRawItemsToArticles]);
+
+  // Batched Multi-Source & Rotating Discovery Pool Aggregator (Ultra-Fast First Paint + Regional Diversity)
   const loadNews = useCallback(async (force = false) => {
     const reqId = ++fetchSeqRef.current;
     const targetMode = mode;
     if (articlesRef.current.length === 0) setLoading(true);
-    const activeFeeds = targetMode === 'world' ? WORLD_FEEDS : CRYPTO_FEEDS;
-    
+    const allModeFeeds = targetMode === 'world' ? WORLD_FEEDS : CRYPTO_FEEDS;
+    const seed = rotationSeedRef.current;
+
+    // Separate Core vs Extended Rotating Feeds
+    const coreFeeds = allModeFeeds.filter(f => f.tier !== 'extended');
+    const extendedFeeds = allModeFeeds.filter(f => f.tier === 'extended');
+
+    // Rotate extended discovery feeds by seed so every refresh prioritizes a fresh regional/discovery cohort first
+    const shift = extendedFeeds.length > 0 ? seed % extendedFeeds.length : 0;
+    const rotatedExtended = [
+      ...extendedFeeds.slice(shift),
+      ...extendedFeeds.slice(0, shift),
+    ];
+
+    const activeFeeds = [...coreFeeds, ...rotatedExtended];
+
+    // Group into batches of 6 feeds per HTTP call (cuts 36+ feed requests down to 6 batched calls)
+    const BATCH_SIZE = 6;
+    const batches: FeedConfig[][] = [];
+    for (let i = 0; i < activeFeeds.length; i += BATCH_SIZE) {
+      batches.push(activeFeeds.slice(i, i + BATCH_SIZE));
+    }
+
     try {
       const accumulated: Article[] = [];
       const seen = new Set<string>();
       let hasFlushedEarly = false;
 
-      const feedPromises = activeFeeds.map(async (f) => {
+      const batchPromises = batches.map(async (batch) => {
         try {
-          const feedArticles = await fetchFeed(f, targetMode, force);
+          const batchArticles = await fetchFeedBatch(batch, targetMode, force);
           if (reqId !== fetchSeqRef.current) return;
 
-          for (const a of feedArticles) {
+          for (const a of batchArticles) {
             const normKey = a.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 45);
             if (!seen.has(normKey)) {
               seen.add(normKey);
@@ -706,22 +846,45 @@ export default function App() {
             }
           }
 
-          // Progressive Early Flush: As soon as the fastest feeds return 16+ dispatches, display immediately!
+          // Progressive Early Flush: As soon as the first batch returns 16+ dispatches, display immediately!
           if (!hasFlushedEarly && accumulated.length >= 16) {
             hasFlushedEarly = true;
-            const earlySorted = [...accumulated].sort((a, b) => b.date.getTime() - a.date.getTime());
-            setArticles(earlySorted);
-            setLoading(false); // Skeletons clear in ~300ms!
+            const earlyInterleaved = interleaveArticlesByDiversity(accumulated, [], seed);
+            setArticles(earlyInterleaved);
+            setLoading(false);
           }
         } catch {}
       });
 
-      await Promise.allSettled(feedPromises);
+      await Promise.allSettled(batchPromises);
       if (reqId !== fetchSeqRef.current) return;
 
       if (accumulated.length > 0) {
-        accumulated.sort((a, b) => b.date.getTime() - a.date.getTime());
-        const capped = accumulated.slice(0, 180);
+        const interleaved = interleaveArticlesByDiversity(accumulated, [], seed);
+        let capped = interleaved.slice(0, 260);
+
+        // Guarantee minimum regional representation in World mode so Africa & LatAm dispatches are never evicted by volume
+        if (targetMode === 'world' && interleaved.length > 260) {
+          const includedIds = new Set(capped.map(a => a.id));
+          const extraRegional: Article[] = [];
+          for (const regionKey of ['africa', 'latin-america', 'middle-east', 'asia-pacific'] as WorldRegionId[]) {
+            let countInCapped = capped.filter(a => a.regions?.includes(regionKey)).length;
+            if (countInCapped < 18) {
+              for (const art of interleaved.slice(260)) {
+                if (!includedIds.has(art.id) && art.regions?.includes(regionKey)) {
+                  includedIds.add(art.id);
+                  extraRegional.push(art);
+                  countInCapped++;
+                  if (countInCapped >= 18) break;
+                }
+              }
+            }
+          }
+          if (extraRegional.length > 0) {
+            capped = [...capped.slice(0, 260 - extraRegional.length), ...extraRegional];
+          }
+        }
+
         setArticles(capped);
         saveArticlesCache(targetMode, capped);
       }
@@ -732,7 +895,7 @@ export default function App() {
         setLoading(false);
       }
     }
-  }, [mode]);
+  }, [mode, fetchFeedBatch]);
 
   const fetchFearGreed = async () => {
     try {
@@ -764,7 +927,15 @@ export default function App() {
       setFilter('all');
     }
 
-    setRefreshToast({ message: `Fetching latest ${mode === 'world' ? 'world wire' : 'crypto'} dispatches...`, active: true });
+    // Advance diversity rotation seed so every manual refresh rotates discovery sources & publisher queue order
+    rotationSeedRef.current += 1;
+    setRotationSeed(rotationSeedRef.current);
+
+    const totalSources = mode === 'world' ? WORLD_FEEDS.length : CRYPTO_FEEDS.length;
+    setRefreshToast({
+      message: `Syncing ${totalSources} ${mode === 'world' ? 'global regional' : 'crypto'} wires (Rotation #${rotationSeedRef.current})...`,
+      active: true,
+    });
     try {
       if (mode === 'world') {
         window.dispatchEvent(new CustomEvent('refresh-market-data'));
@@ -772,7 +943,10 @@ export default function App() {
         fetchFearGreed();
       }
       await loadNews(true);
-      setRefreshToast({ message: `Feed updated with latest ${mode === 'world' ? 'global' : 'crypto'} dispatches`, active: false });
+      setRefreshToast({
+        message: `✓ Fresh mix synced across ${totalSources} ${mode === 'world' ? 'global' : 'crypto'} outlets`,
+        active: false,
+      });
       if (refreshToastTimerRef.current) window.clearTimeout(refreshToastTimerRef.current);
       refreshToastTimerRef.current = window.setTimeout(() => {
         setRefreshToast(null);
@@ -959,6 +1133,7 @@ export default function App() {
     setLoading(restored.length === 0);
     setMode(newMode);
     setFilter('all');
+    setActiveRegion('all');
     setQuery('');
     setDisplayLimit(24);
 
@@ -994,13 +1169,40 @@ export default function App() {
     }
   }, [mode, dashboardSettings, filter]);
 
-  // Strict topic-isolated articles for current mode (guarantees Crypto only in crypto, World only in world)
+  // Strict topic-isolated articles for current mode + Publisher Mute Filter + Diversity & Pinned Source Interleaving
   const currentModeArticles = useMemo(() => {
-    return articles.filter(a => !a.mode || a.mode === mode);
-  }, [articles, mode]);
+    const modeScoped = articles.filter(a => {
+      if (a.mode && a.mode !== mode) return false;
+      if (mutedSourcesSet.has(a.src.toLowerCase())) return false;
+      return true;
+    });
+    return interleaveArticlesByDiversity(modeScoped, dashboardSettings.pinnedSources || [], rotationSeed);
+  }, [articles, mode, mutedSourcesSet, dashboardSettings.pinnedSources, rotationSeed]);
 
   // Multi-Source Story Clustering Map (scoped strictly to current mode)
   const articleClusters = useMemo(() => computeArticleClusters(currentModeArticles), [currentModeArticles]);
+
+  // World News Regional Desk & Global Blindspot Counts
+  const regionCounts = useMemo(() => {
+    if (mode !== 'world') return {};
+    const counts: Record<string, number> = { all: currentModeArticles.length };
+    for (const reg of WORLD_REGIONS) {
+      if (reg.id === 'all') continue;
+      if (reg.id === 'blindspot') {
+        counts.blindspot = currentModeArticles.filter(a =>
+          isGlobalBlindspot(a, articleClusters.get(a.id) || EMPTY_RELATED)
+        ).length;
+      } else {
+        counts[reg.id] = currentModeArticles.filter(a => {
+          const regs = a.regions && a.regions.length > 0
+            ? a.regions
+            : detectArticleRegions(a.title, a.snippet, a.src);
+          return regs.includes(reg.id);
+        }).length;
+      }
+    }
+    return counts;
+  }, [mode, currentModeArticles, articleClusters]);
 
   // Count of new stories since last visit (scoped to current mode)
   const newArticlesCount = useMemo(() => {
@@ -1098,7 +1300,7 @@ export default function App() {
     return counts;
   }, [currentModeArticles, mode]);
 
-  // Filtered articles (strictly topic-isolated + My Radar + Signal Only filter)
+  // Filtered articles (strictly topic-isolated + World Region / Global Blindspot + My Radar + Signal Only filter)
   const { filtered, hiddenFluffCount } = useMemo(() => {
     const baseList = filter === 'saved' ? savedArticles : currentModeArticles;
     const q = query.trim().toLowerCase();
@@ -1116,6 +1318,20 @@ export default function App() {
       if (filter === 'saved' && a.mode && a.mode !== mode) {
         return false;
       }
+
+      // World News Regional Desk & Global Blindspot filter
+      if (mode === 'world' && activeRegion !== 'all' && filter !== 'saved') {
+        if (activeRegion === 'blindspot') {
+          const related = articleClusters.get(a.id) || EMPTY_RELATED;
+          if (!isGlobalBlindspot(a, related)) return false;
+        } else {
+          const regs = a.regions && a.regions.length > 0
+            ? a.regions
+            : detectArticleRegions(a.title, a.snippet, a.src);
+          if (!regs.includes(activeRegion)) return false;
+        }
+      }
+
       const matchCat =
         filter === 'all' ||
         filter === 'saved' ||
@@ -1152,7 +1368,7 @@ export default function App() {
       filtered: signalResult,
       hiddenFluffCount: fluffCount,
     };
-  }, [currentModeArticles, savedArticles, filter, query, lastVisitTime, mode, radarTerms, signalOnly]);
+  }, [currentModeArticles, savedArticles, filter, activeRegion, articleClusters, query, lastVisitTime, mode, radarTerms, signalOnly]);
 
   // Play all Saved articles for current mode in persistent Commute Audio Mini-Player
   const handlePlaySavedQueue = useCallback(() => {
@@ -1174,7 +1390,7 @@ export default function App() {
   useEffect(() => {
     setDisplayLimit(24);
     setFocusedIdx(null);
-  }, [mode, filter, query]);
+  }, [mode, filter, activeRegion, query]);
 
   const visibleArticles = useMemo(() => {
     return filtered.slice(0, displayLimit);
@@ -1620,11 +1836,13 @@ export default function App() {
 
       {/* Main Stream Area */}
       <main className="max-w-[1440px] mx-auto my-4 sm:my-6 px-3 sm:px-4">
-        {/* Navigation Category Filters */}
+        {/* Navigation Category Filters + World Regional Desk & Global Blindspot Strip */}
         <FilterTabs
           categories={activeCategories}
           categoryCounts={categoryCounts}
           activeFilter={filter}
+          activeRegion={activeRegion}
+          regionCounts={regionCounts}
           radarMatchCount={radarMatchCount}
           radarTermsCount={radarTerms.length}
           savedArticles={savedArticles}
@@ -1634,6 +1852,7 @@ export default function App() {
           mode={mode}
           viewMode={viewMode}
           onSetFilter={setFilter}
+          onSetRegion={setActiveRegion}
           onToggleBrief={toggleBrief}
           onToggleViewMode={toggleViewMode}
           onToggleSignalOnly={toggleSignalOnly}
@@ -1873,6 +2092,43 @@ export default function App() {
                 {filter}
               </span>
             )}
+            {mode === 'world' && activeRegion !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setActiveRegion('all')}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] uppercase font-bold border cursor-pointer transition-colors ${
+                  activeRegion === 'blindspot'
+                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/40 hover:bg-amber-500/25'
+                    : 'bg-blue-500/15 text-blue-300 border-blue-500/35 hover:bg-blue-500/25'
+                }`}
+                title="Clear regional filter and return to All Regions"
+              >
+                {activeRegion === 'blindspot' ? <Eye className="w-3 h-3" /> : null}
+                <span>{WORLD_REGIONS.find(r => r.id === activeRegion)?.label || activeRegion}</span>
+                <X className="w-2.5 h-2.5 ml-0.5" />
+              </button>
+            )}
+            {(dashboardSettings.pinnedSources?.length > 0 || dashboardSettings.mutedSources?.length > 0) && (
+              <button
+                type="button"
+                onClick={() => setShowDashboardModal(true)}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-[var(--border)] hover:border-amber-500/40 text-[10px] font-mono font-bold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+                title="Manage pinned and muted news publishers in Customize"
+              >
+                {dashboardSettings.pinnedSources?.length > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-amber-400">
+                    <Pin className="w-2.5 h-2.5 fill-amber-400" />
+                    <span>{dashboardSettings.pinnedSources.length} Pinned</span>
+                  </span>
+                )}
+                {dashboardSettings.mutedSources?.length > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-rose-400">
+                    <EyeOff className="w-2.5 h-2.5" />
+                    <span>{dashboardSettings.mutedSources.length} Muted</span>
+                  </span>
+                )}
+              </button>
+            )}
             {query && (
               <div className="inline-flex items-center gap-1.5 flex-wrap">
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--surface-solid)] border border-[var(--accent)]/40 text-[var(--ink)] text-[10px] font-bold">
@@ -1972,12 +2228,12 @@ export default function App() {
                   SHOW ALL STORIES (OFF SIGNAL ONLY)
                 </button>
               )}
-              <button 
-                onClick={() => { setFilter('all'); setQuery(''); }} 
-                className="rbtn cursor-pointer"
-              >
-                RESET FILTER
-              </button>
+                <button
+                  onClick={() => { setFilter('all'); setActiveRegion('all'); setQuery(''); }}
+                  className="rbtn cursor-pointer"
+                >
+                  RESET FILTER
+                </button>
               <button 
                 onClick={() => handleManualRefresh()} 
                 className="fp cursor-pointer"
@@ -2000,6 +2256,8 @@ export default function App() {
               articleClusters={articleClusters}
               dashboardSettings={dashboardSettings}
               marketQuotes={marketQuotes}
+              pinnedSourcesSet={pinnedSourcesSet}
+              showBlindspotBadge={activeRegion === 'blindspot'}
               onVotePulse={handleVotePulse}
               onOpenSnapshot={handleOpenSnapshot}
               onToggleSave={toggleSaveArticle}
@@ -2007,6 +2265,8 @@ export default function App() {
               onOpenPerspective={handleOpenPerspective}
               onOpenArticle={handleOpenReader}
               onSetQuery={setQuery}
+              onTogglePinSource={handleTogglePinSource}
+              onMuteSource={handleMuteSource}
             />
 
             {/* Load More Dispatches Button */}
@@ -2048,6 +2308,8 @@ export default function App() {
                           isNew={isNew}
                           isHero={isHero}
                           isFocused={focusedIdx === idx}
+                          isPinnedSource={pinnedSourcesSet.has(a.src.toLowerCase())}
+                          showBlindspotBadge={activeRegion === 'blindspot'}
                           copiedId={copiedId}
                           dashboardSettings={dashboardSettings}
                           marketQuotes={marketQuotes}
@@ -2061,6 +2323,8 @@ export default function App() {
                           onSetQuery={setQuery}
                           onOpenPerspective={handleOpenPerspective}
                           onOpenArticle={handleOpenReader}
+                          onTogglePinSource={handleTogglePinSource}
+                          onMuteSource={handleMuteSource}
                         />
 
                         {/* In-Feed Sponsored Unit (Affizy Zone 1015 - 300x250) - Molds natively into 1 card slot without breaking grid */}

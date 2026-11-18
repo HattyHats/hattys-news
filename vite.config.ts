@@ -13,11 +13,14 @@ const ALLOWED_FEED_DOMAINS = [
   'cointelegraph.com', 'coindesk.com', 'decrypt.co', 'theblock.co', 'blockworks.co',
   'bitcoinmagazine.com', 'cryptoslate.com', 'dailycoin.com', 'u.today', 'beincrypto.com',
   'ambcrypto.com', 'thedefiant.io', 'cryptobriefing.com', 'bankless.com', 'crypto.news',
-  'cryptopotato.com', 'newsbtc.com', 'bitcoin.com', 'techcrunch.com', 'news.google.com',
+  'cryptopotato.com', 'newsbtc.com', 'bitcoin.com', 'techcrunch.com', 'protos.com',
+  'bitcoinist.com', 'unchainedcrypto.com', 'news.google.com',
   'bbci.co.uk', 'bbc.co.uk', 'bbc.com', 'dw.com', 'france24.com', 'aljazeera.com',
   'theguardian.com', 'cbc.ca', 'npr.org', 'upi.com', 'un.org', 'abc.net.au',
-  'channelnewsasia.com', 'africanews.com', 'rte.ie', 'nasa.gov', 'space.com',
-  'phys.org', 'sciencedaily.com', 'arstechnica.com', 'theverge.com', 'reuters.com', 'apnews.com'
+  'channelnewsasia.com', 'africanews.com', 'rte.ie', 'euronews.com', 'scmp.com',
+  'middleeasteye.net', 'mercopress.com', 'thehindu.com', 'cnbc.com', 'politico.com',
+  'nasa.gov', 'space.com', 'phys.org', 'sciencedaily.com', 'arstechnica.com',
+  'theverge.com', 'reuters.com', 'apnews.com'
 ];
 
 function isAllowedUrl(inputUrl: string): boolean {
@@ -55,6 +58,31 @@ function apiNewsPlugin() {
       server.middlewares.use('/api/news', async (req: any, res: any) => {
         try {
           const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost:4000'}`);
+          const rawUrlsParam = urlObj.searchParams.get('urls');
+
+          if (rawUrlsParam) {
+            const parsed = JSON.parse(rawUrlsParam);
+            const urlsList = Array.isArray(parsed)
+              ? parsed.filter((u: any) => typeof u === 'string' && isAllowedUrl(u)).slice(0, 10)
+              : [];
+            const results: Record<string, { items: any[] }> = {};
+            await Promise.allSettled(
+              urlsList.map(async (u: string) => {
+                try {
+                  const feed = await parser.parseURL(u);
+                  results[u] = { items: Array.isArray(feed.items) ? feed.items.slice(0, 18) : [] };
+                } catch {
+                  results[u] = { items: [] };
+                }
+              })
+            );
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.end(JSON.stringify({ batch: true, results }));
+            return;
+          }
+
           const feedUrl = urlObj.searchParams.get('url');
 
           if (!feedUrl) {
@@ -102,17 +130,16 @@ export default defineConfig(({mode}) => {
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true,
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
-          navigateFallback: 'index.html',
-          navigateFallbackDenylist: [/^\/api\//, /^\/robots\.txt$/i, /^\/sitemap\.xml$/i],
+          globPatterns: ['**/*.{js,css,ico,png,svg,webmanifest}'],
+          navigateFallback: null,
           runtimeCaching: [
             {
               // Navigation requests (opening the web app, Chrome app, or website)
-              // NetworkFirst ensures online users always load the newest index.html immediately!
+              // NetworkFirst without precached index.html ensures online users always get newest deploys immediately!
               urlPattern: ({ request }) => request.mode === 'navigate',
               handler: 'NetworkFirst',
               options: {
-                cacheName: 'hatty-html-cache-v2',
+                cacheName: 'hatty-html-cache-v3',
                 networkTimeoutSeconds: 2.5,
                 expiration: {
                   maxEntries: 10,
