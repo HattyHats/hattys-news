@@ -17,11 +17,14 @@ import {
   TrendingUp,
   TrendingDown,
   GitCommitHorizontal,
+  Eye,
+  Zap,
 } from 'lucide-react';
 import { Article, AppMode } from '../../types';
 import { CardImage } from '../cards/CardImage';
 import { CRYPTO_CATEGORIES, WORLD_CATEGORIES } from '../../config/feeds';
-import { detectAssetsInArticle, detectStoryImpact, getOutletBadge } from '../../utils/classifier';
+import { detectAssetsInArticle, detectStoryImpact, getOutletBadge, isGlobalBlindspot } from '../../utils/classifier';
+import { buildArticleTakeaways } from '../../utils/clustering';
 import { formatTimeAgo } from '../../utils/formatters';
 import { TerminalAudioPlayer } from '../../hooks/useTerminalAudioPlayer';
 import { computeStoryPulse, PulseVote } from '../../utils/communityPulse';
@@ -171,6 +174,7 @@ export function ArticleReaderDrawer({
         const badgeClass = categoryConfig.badgeClass || (cardMode === 'world' ? 'badge-world-top' : 'badge-all');
         const outlet = getOutletBadge(article.src);
         const storyImpact = detectStoryImpact(article.title, article.snippet);
+        const blindspot = cardMode === 'world' && isGlobalBlindspot(article, relatedArticles);
         const pulse = computeStoryPulse(article, cardMode, userVote, relatedArticles.length);
 
         const rawBody = (article.fullText || article.snippet || '').trim();
@@ -179,6 +183,7 @@ export function ArticleReaderDrawer({
           : [`Verified wire dispatch from ${article.src}. Open the publisher report below to read the full coverage.`];
 
         const detectedAssets = detectAssetsInArticle(article.title, rawBody, marketQuotes);
+        const takeaways = buildArticleTakeaways(article, relatedArticles, cardMode, marketQuotes);
         const canPrev = articleIndex > 0;
         const canNext = articleIndex >= 0 && articleIndex < totalCount - 1;
         const isWireShort = rawBody.length < 240;
@@ -337,6 +342,15 @@ export function ArticleReaderDrawer({
                     <span className="text-[10px] px-2 py-0.5 rounded bg-black/5 dark:bg-white/5 border border-[var(--border)] shrink-0">
                       {outlet.region} DESK
                     </span>
+                    {blindspot && (
+                      <span
+                        className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded bg-amber-500/15 text-amber-500 dark:text-amber-300 border border-amber-500/35 shrink-0"
+                        title="Global Blindspot: International dispatch with zero US domestic media coverage"
+                      >
+                        <Eye className="w-3 h-3" />
+                        <span>BLINDSPOT</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3 text-[11px]">
@@ -353,6 +367,49 @@ export function ArticleReaderDrawer({
                 <h1 className="font-sans font-extrabold text-xl sm:text-2xl lg:text-[26px] leading-snug text-[var(--ink)] tracking-tight">
                   {article.title}
                 </h1>
+
+                {/* Feature 2: 10-Second Key Takeaways Executive Summary Box */}
+                {takeaways.length > 0 && (
+                  <div
+                    className={`p-3.5 sm:p-4 rounded-xl border ${
+                      cardMode === 'world'
+                        ? isDark
+                          ? 'bg-blue-950/20 border-blue-500/35'
+                          : 'bg-blue-50/80 border-blue-300/80'
+                        : isDark
+                          ? 'bg-amber-950/20 border-amber-500/35'
+                          : 'bg-amber-50/80 border-amber-300/80'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-[10.5px] font-mono font-black uppercase tracking-wider ${
+                          cardMode === 'world'
+                            ? 'text-blue-500 dark:text-blue-400'
+                            : 'text-amber-600 dark:text-amber-400'
+                        }`}
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>10-SECOND KEY TAKEAWAYS</span>
+                      </span>
+                      <span className="text-[9.5px] font-mono font-bold text-[var(--ink-muted)] uppercase">
+                        INSTANT BRIEF
+                      </span>
+                    </div>
+                    <ul className="space-y-1.5 text-xs sm:text-[13px] font-sans text-[var(--ink)]/90 leading-relaxed">
+                      {takeaways.map((bullet, bIdx) => (
+                        <li key={bIdx} className="flex items-start gap-2">
+                          <span
+                            className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${
+                              cardMode === 'world' ? 'bg-blue-400' : 'bg-amber-400'
+                            }`}
+                          />
+                          <span>{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {/* Detected Live Market Asset Chips */}
                 {detectedAssets.length > 0 && (

@@ -28,6 +28,7 @@ interface TerminalWireViewProps {
   mode: AppMode;
   isDark: boolean;
   savedIds: Set<string>;
+  readIds?: Set<string>;
   copiedId: string | null;
   focusedIdx: number | null;
   pulseVotes: Record<string, PulseVote>;
@@ -52,6 +53,7 @@ export const TerminalWireView = memo(function TerminalWireView({
   mode,
   isDark,
   savedIds,
+  readIds,
   copiedId,
   focusedIdx,
   pulseVotes,
@@ -92,6 +94,8 @@ export const TerminalWireView = memo(function TerminalWireView({
 
           return articles.map((art, idx) => {
             const isSaved = savedIds.has(art.id);
+            const isRead = readIds?.has(art.id) ?? false;
+            const shouldDimRead = isRead && (dashboardSettings.dimReadArticles ?? true) && focusedIdx !== idx;
             const isFocused = focusedIdx === idx;
             const related = articleClusters.get(art.id) || EMPTY_RELATED;
             const impact = detectStoryImpact(art.title, art.snippet);
@@ -108,13 +112,13 @@ export const TerminalWireView = memo(function TerminalWireView({
               <React.Fragment key={art.id || idx}>
                 <div
                   data-article-idx={idx}
-                  className={`group px-3 sm:px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5 transition-colors ${
+                  className={`group px-3 sm:px-4 py-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5 transition-all ${
                     isFocused
                       ? 'bg-[var(--accent)]/10 ring-1 ring-inset ring-[var(--accent)]'
                       : isDark
                         ? 'hover:bg-white/[0.025]'
                         : 'hover:bg-slate-50/80'
-                  }`}
+                  } ${shouldDimRead ? 'opacity-65 hover:opacity-100' : ''}`}
                 >
                   {/* Left Meta & Headline Block */}
                   <div className="flex-1 min-w-0 flex items-start gap-2.5 sm:gap-3.5">
@@ -123,7 +127,14 @@ export const TerminalWireView = memo(function TerminalWireView({
                       <span className="font-bold text-[var(--ink)]">
                         {formatTimeAgo(art.date)}
                       </span>
-                      <span className="text-[9px] opacity-60">#{String(idx + 1).padStart(2, '0')}</span>
+                      <span className="text-[9px] opacity-60 flex items-center gap-1">
+                        <span>#{String(idx + 1).padStart(2, '0')}</span>
+                        {isRead && (
+                          <span title="Already read" className="inline-flex">
+                            <Check className="w-2.5 h-2.5 text-emerald-400" />
+                          </span>
+                        )}
+                      </span>
                     </div>
 
                     {/* Headline & Badges */}

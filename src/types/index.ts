@@ -84,6 +84,13 @@ export interface AssetDefinition {
   marketKey?: string;
 }
 
+export interface TrendingTopic {
+  term: string;
+  label: string;
+  count: number;
+  pubCount: number;
+}
+
 export interface DashboardSettings {
   cryptoCategories: string[];
   cryptoHidden: string[];
@@ -93,6 +100,7 @@ export interface DashboardSettings {
   cardDensity: 'comfortable' | 'compact';
   pinnedSources: string[];
   mutedSources: string[];
+  dimReadArticles?: boolean;
 }
 
 export interface TickerToken {

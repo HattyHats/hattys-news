@@ -14,8 +14,9 @@ import {
   Check,
   Layers,
   X,
+  Flame,
 } from 'lucide-react';
-import { CategoryConfig, AppMode, Article, ViewLayoutMode, WorldRegionId } from '../../types';
+import { CategoryConfig, AppMode, Article, ViewLayoutMode, WorldRegionId, TrendingTopic } from '../../types';
 import { WORLD_REGIONS } from '../../config/feeds';
 
 interface FilterTabsProps {
@@ -24,9 +25,14 @@ interface FilterTabsProps {
   activeFilter: string;
   activeRegion?: WorldRegionId;
   regionCounts?: Record<string, number>;
+  hottestRegionId?: WorldRegionId | null;
+  regionRecentCounts?: Record<string, number>;
+  trendingTopics?: TrendingTopic[];
+  activeQuery?: string;
   radarMatchCount: number;
   radarTermsCount: number;
   savedArticles: Article[];
+  readHistoryCount?: number;
   showBrief: boolean;
   signalOnly: boolean;
   hiddenFluffCount: number;
@@ -34,6 +40,7 @@ interface FilterTabsProps {
   viewMode: ViewLayoutMode;
   onSetFilter: (filterId: string) => void;
   onSetRegion?: (regionId: WorldRegionId) => void;
+  onSelectTrendingTopic?: (term: string) => void;
   onToggleBrief: () => void;
   onToggleViewMode: () => void;
   onToggleSignalOnly: () => void;
@@ -46,9 +53,14 @@ export function FilterTabs({
   activeFilter,
   activeRegion = 'all',
   regionCounts = {},
+  hottestRegionId = null,
+  regionRecentCounts = {},
+  trendingTopics = [],
+  activeQuery = '',
   radarMatchCount,
   radarTermsCount,
   savedArticles,
+  readHistoryCount = 0,
   showBrief,
   signalOnly,
   hiddenFluffCount,
@@ -56,12 +68,13 @@ export function FilterTabs({
   viewMode,
   onSetFilter,
   onSetRegion,
+  onSelectTrendingTopic,
   onToggleBrief,
   onToggleViewMode,
   onToggleSignalOnly,
   onPlaySavedQueue,
 }: FilterTabsProps) {
-  const [openMenu, setOpenMenu] = useState<'topic' | 'region' | null>(null);
+  const [openMenu, setOpenMenu] = useState<'topic' | 'region' | 'trending' | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown menus when clicking outside or pressing Escape
@@ -96,7 +109,11 @@ export function FilterTabs({
   const activeCategoryObj =
     categories.find((c) => c.id === activeFilter) || categories[0] || { id: 'all', label: 'ALL', icon: '⚡', badgeClass: '' };
   const isTopicFiltered =
-    activeFilter !== 'all' && activeFilter !== 'radar' && activeFilter !== 'saved' && activeFilter !== 'new';
+    activeFilter !== 'all' &&
+    activeFilter !== 'radar' &&
+    activeFilter !== 'saved' &&
+    activeFilter !== 'history' &&
+    activeFilter !== 'new';
   const activeTopicCount = categoryCounts[activeCategoryObj.id] ?? categoryCounts.all ?? 0;
 
   const activeRegionObj =
@@ -104,6 +121,16 @@ export function FilterTabs({
   const isRegionFiltered = mode === 'world' && activeRegion !== 'all';
   const isBlindspotActive = mode === 'world' && activeRegion === 'blindspot';
   const activeRegionCount = regionCounts[activeRegionObj.id] ?? regionCounts.all ?? 0;
+  const hottestRegionObj =
+    mode === 'world' && hottestRegionId
+      ? WORLD_REGIONS.find((r) => r.id === hottestRegionId) || null
+      : null;
+
+  const cleanActiveQuery = activeQuery.trim().replace(/^\$/, '').toLowerCase();
+  const activeTrendingObj =
+    cleanActiveQuery && trendingTopics.length > 0
+      ? trendingTopics.find((t) => t.term.toLowerCase() === cleanActiveQuery) || null
+      : null;
 
   return (
     <div
@@ -113,7 +140,7 @@ export function FilterTabs({
       {/* Left Cluster: Sleek Topic Dropdown + (World Mode) Region Desk Dropdown + Quick Watchlist/Saved Pills */}
       <div className="flex items-center gap-1.5 flex-wrap">
         {/* 1. TOPIC / CATEGORY DROPDOWN (Crypto & World News) */}
-        <div className="relative">
+        <div className="sm:relative">
           <button
             id="topic-filter-dropdown"
             type="button"
@@ -158,7 +185,7 @@ export function FilterTabs({
             <div
               role="listbox"
               aria-label="Topic Categories"
-              className="absolute left-0 mt-1.5 w-60 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] shadow-2xl py-1.5 z-70 backdrop-blur-xl"
+              className="absolute left-0 right-0 sm:right-auto mt-1.5 w-full sm:w-60 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] shadow-2xl py-1.5 z-70 backdrop-blur-xl"
             >
               <div className="px-3 py-1 border-b border-[var(--border)]/60 flex items-center justify-between text-[9.5px] font-mono font-bold text-[var(--ink-muted)] uppercase tracking-wider">
                 <span>{mode === 'world' ? 'GLOBAL WIRE TOPICS' : 'CRYPTO WIRE TOPICS'}</span>
@@ -215,7 +242,7 @@ export function FilterTabs({
 
         {/* 2. REGION DESK DROPDOWN (World News Mode Only) */}
         {mode === 'world' && onSetRegion && (
-          <div className="relative">
+          <div className="sm:relative">
             <button
               id="region-filter-dropdown"
               type="button"
@@ -257,6 +284,15 @@ export function FilterTabs({
               >
                 {activeRegionCount}
               </span>
+              {!isRegionFiltered && hottestRegionObj && (
+                <span
+                  className="hidden xl:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8.5px] font-mono font-black bg-amber-500/15 text-amber-400 border border-amber-500/35 leading-none"
+                  title={`Hottest Breaking Region Right Now: ${hottestRegionObj.label}`}
+                >
+                  <Flame className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                  <span>{hottestRegionObj.shortLabel}</span>
+                </span>
+              )}
               <ChevronDown
                 className={`w-3.5 h-3.5 transition-transform duration-150 shrink-0 ${
                   openMenu === 'region' ? 'rotate-180' : ''
@@ -269,7 +305,7 @@ export function FilterTabs({
               <div
                 role="listbox"
                 aria-label="World Region Desk"
-                className="absolute right-0 sm:left-0 sm:right-auto mt-1.5 w-64 max-w-[calc(100vw-24px)] rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] shadow-2xl py-1.5 z-70 backdrop-blur-xl"
+                className="absolute left-0 right-0 sm:right-auto mt-1.5 w-full sm:w-64 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] shadow-2xl py-1.5 z-70 backdrop-blur-xl"
               >
                 <div className="px-3 py-1 border-b border-[var(--border)]/60 flex items-center justify-between text-[9.5px] font-mono font-bold text-blue-400 uppercase tracking-wider">
                   <span>🌍 GLOBAL REGION DESK</span>
@@ -279,6 +315,8 @@ export function FilterTabs({
                   {WORLD_REGIONS.map((reg) => {
                     const isSelected = activeRegion === reg.id;
                     const isBlindspot = reg.id === 'blindspot';
+                    const isHottest = hottestRegionId === reg.id;
+                    const recentCount = regionRecentCounts[reg.id] ?? 0;
                     const count = regionCounts[reg.id] ?? 0;
 
                     return (
@@ -305,13 +343,22 @@ export function FilterTabs({
                           }`}
                         >
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               {isBlindspot ? (
                                 <Eye className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                               ) : (
                                 <span className="text-sm shrink-0">{reg.icon}</span>
                               )}
                               <span className="truncate font-bold">{reg.label}</span>
+                              {isHottest && (
+                                <span
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[8.5px] font-mono font-black bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0"
+                                  title={`${reg.label} has the highest breaking story velocity right now (${recentCount} fresh)`}
+                                >
+                                  <Flame className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                                  <span>HOT</span>
+                                </span>
+                              )}
                             </div>
                             {isBlindspot && (
                               <p className="text-[9.5px] text-[var(--ink-muted)] font-sans mt-0.5 pl-5 leading-tight">
@@ -345,7 +392,141 @@ export function FilterTabs({
           </div>
         )}
 
-        {/* 3. MY RADAR Custom Watchlist Pill */}
+        {/* 3. TRENDING RIGHT NOW DROPDOWN (Crypto & World News) */}
+        {trendingTopics.length > 0 && onSelectTrendingTopic && (
+          <div className="sm:relative">
+            <button
+              id="trending-filter-dropdown"
+              type="button"
+              onClick={() => setOpenMenu((prev) => (prev === 'trending' ? null : 'trending'))}
+              aria-expanded={openMenu === 'trending'}
+              aria-haspopup="listbox"
+              className={`fp !py-1.5 !px-2.5 !text-[11px] flex items-center gap-1.5 cursor-pointer transition-all ${
+                activeTrendingObj
+                  ? '!bg-amber-500 !text-black !border-amber-400 font-black shadow-sm'
+                  : openMenu === 'trending'
+                    ? 'border-amber-400 text-[var(--ink)] bg-[var(--surface-solid)]'
+                    : 'bg-[var(--surface-solid)] border-amber-500/35 hover:border-amber-400'
+              }`}
+              title="Trending Right Now: Top spiking topics across multiple independent news outlets"
+            >
+              <Flame
+                className={`w-3.5 h-3.5 shrink-0 ${
+                  activeTrendingObj ? 'fill-black text-black' : 'fill-amber-400 text-amber-400'
+                }`}
+              />
+              <span className="font-bold tracking-wide truncate max-w-[125px] sm:max-w-none">
+                {activeTrendingObj ? (
+                  <>
+                    <span className="hidden sm:inline">TRENDING: </span>
+                    <span>{activeTrendingObj.label.toUpperCase()}</span>
+                  </>
+                ) : (
+                  <span>TRENDING</span>
+                )}
+              </span>
+              <span
+                className={`text-[9.5px] font-mono px-1.5 py-0.5 rounded-full leading-none ${
+                  activeTrendingObj
+                    ? 'bg-black/20 text-black font-black'
+                    : 'bg-amber-500/15 text-amber-400'
+                }`}
+              >
+                {activeTrendingObj ? activeTrendingObj.count : trendingTopics.length}
+              </span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform duration-150 shrink-0 ${
+                  openMenu === 'trending' ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {/* Trending Topics Dropdown Menu Popover */}
+            {openMenu === 'trending' && (
+              <div
+                role="listbox"
+                aria-label="Trending Topics Right Now"
+                className="absolute left-0 right-0 sm:right-auto mt-1.5 w-full sm:w-64 rounded-xl border border-[var(--border)] bg-[var(--surface-solid)] shadow-2xl py-1.5 z-70 backdrop-blur-xl"
+              >
+                <div className="px-3 py-1 border-b border-[var(--border)]/60 flex items-center justify-between text-[9.5px] font-mono font-bold text-amber-400 uppercase tracking-wider">
+                  <span className="flex items-center gap-1">
+                    <Flame className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    <span>TRENDING RIGHT NOW</span>
+                  </span>
+                  <span>STORIES</span>
+                </div>
+                <div className="py-1">
+                  {activeTrendingObj && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectTrendingTopic(activeTrendingObj.term);
+                          setOpenMenu(null);
+                        }}
+                        className="w-full px-3 py-1.5 text-left font-mono text-[11px] flex items-center justify-between gap-2 text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer font-bold"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <X className="w-3.5 h-3.5" />
+                          <span>CLEAR TRENDING FILTER</span>
+                        </span>
+                        <span className="text-[9.5px] opacity-80">ALL</span>
+                      </button>
+                      <div className="my-1 border-t border-[var(--border)]/60" />
+                    </>
+                  )}
+                  {trendingTopics.map((topic, idx) => {
+                    const isSelected = activeTrendingObj?.term === topic.term;
+
+                    return (
+                      <button
+                        key={topic.term}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          onSelectTrendingTopic(topic.term);
+                          setOpenMenu(null);
+                        }}
+                        className={`w-full px-3 py-1.5 text-left font-mono text-xs flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-amber-500/20 text-amber-400 font-bold'
+                            : 'text-[var(--ink)] hover:bg-black/5 dark:hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 shrink-0">
+                            0{idx + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="truncate font-bold">{topic.label}</div>
+                            <div className="text-[9.5px] text-[var(--ink-muted)] font-normal">
+                              Spiking across {topic.pubCount} outlets
+                            </div>
+                          </div>
+                        </div>
+                        <span className="flex items-center gap-1.5 shrink-0">
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full leading-none ${
+                              isSelected
+                                ? 'bg-amber-500/30 text-amber-300 font-bold'
+                                : 'bg-black/10 dark:bg-white/10 text-[var(--ink-muted)]'
+                            }`}
+                          >
+                            {topic.count}
+                          </span>
+                          {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. MY RADAR Custom Watchlist Pill */}
         <button
           type="button"
           className={`fp shrink-0 cursor-pointer !py-1.5 !px-2 !text-[10.5px] ${
@@ -377,24 +558,32 @@ export function FilterTabs({
           </span>
         </button>
 
-        {/* 4. SAVED / Read-Later Queue Filter Pill */}
+        {/* 4. SAVED / Read-Later Queue & History Filter Pill */}
         <button
           type="button"
           className={`fp shrink-0 cursor-pointer !py-1.5 !px-2 !text-[10.5px] ${
-            activeFilter === 'saved'
+            activeFilter === 'saved' || activeFilter === 'history'
               ? 'on'
               : savedArticles.length > 0
                 ? 'border-amber-500/40 text-amber-400'
                 : ''
           }`}
-          onClick={() => onSetFilter(activeFilter === 'saved' ? 'all' : 'saved')}
-          title="View your saved Read-Later queue"
+          onClick={() =>
+            onSetFilter(
+              activeFilter === 'saved' || activeFilter === 'history'
+                ? 'all'
+                : savedArticles.length === 0 && readHistoryCount > 0
+                  ? 'history'
+                  : 'saved'
+            )
+          }
+          title="View your Saved Read-Later queue & Recently Read history"
         >
           <Bookmark className={`w-3 h-3 ${savedArticles.length > 0 ? 'fill-amber-400 text-amber-400' : ''}`} />
           <span>SAVED</span>
           <span
             className={`text-[9.5px] font-mono px-1 py-0.5 rounded-full leading-none ${
-              activeFilter === 'saved'
+              activeFilter === 'saved' || activeFilter === 'history'
                 ? 'bg-white/20 text-white'
                 : 'bg-black/5 dark:bg-white/5 text-[var(--ink-muted)]'
             }`}
@@ -403,16 +592,19 @@ export function FilterTabs({
           </span>
         </button>
 
-        {/* Quick 1-Tap Reset Chip when a Topic or Region filter is active */}
-        {(isTopicFiltered || isRegionFiltered) && (
+        {/* Quick 1-Tap Reset Chip when a Topic, Region, or Trending filter is active */}
+        {(isTopicFiltered || isRegionFiltered || Boolean(activeTrendingObj)) && (
           <button
             type="button"
             onClick={() => {
               onSetFilter('all');
               if (onSetRegion) onSetRegion('all');
+              if (activeTrendingObj && onSelectTrendingTopic) {
+                onSelectTrendingTopic(activeTrendingObj.term);
+              }
             }}
             className="fp shrink-0 cursor-pointer !py-1.5 !px-2 !text-[10px] border-[var(--accent)]/40 text-[var(--ink-muted)] hover:text-[var(--ink)] flex items-center gap-1"
-            title="Reset Topic and Region filters back to All"
+            title="Reset Topic, Region, and Trending filters back to All"
           >
             <X className="w-3 h-3" />
             <span>RESET</span>

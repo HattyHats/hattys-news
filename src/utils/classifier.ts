@@ -155,7 +155,9 @@ export function getOutletBadge(src: string): OutletMeta {
   if (s.includes('cnbc')) return { name: 'CNBC', flag: '🇺🇸', region: 'US', worldRegion: 'north-america' };
   if (s.includes('politico')) return { name: 'Politico', flag: '🇺🇸', region: 'US', worldRegion: 'north-america' };
 
-  // Science, Space & Tech
+  // Science, Space, Flash Wires & Tech
+  if (s.includes('usgs')) return { name: 'USGS Seismic', flag: '🌋', region: 'GLOBAL', worldRegion: 'global-wires' };
+  if (s.includes('hacker news') || s === 'hn wire') return { name: 'HN Tech Wire', flag: '💻', region: 'TECH', worldRegion: 'north-america' };
   if (s.includes('nasa')) return { name: 'NASA', flag: '🚀', region: 'SPACE', worldRegion: 'global-wires' };
   if (s.includes('space.com')) return { name: 'Space.com', flag: '🌌', region: 'SPACE', worldRegion: 'global-wires' };
   if (s.includes('phys.org')) return { name: 'Phys.org', flag: '🔬', region: 'SCIENCE', worldRegion: 'global-wires' };

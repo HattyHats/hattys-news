@@ -31,6 +31,7 @@ interface ArticleCardProps {
   idx: number;
   isDark: boolean;
   isSaved: boolean;
+  isRead?: boolean;
   isNew: boolean;
   isHero?: boolean;
   isFocused?: boolean;
@@ -59,6 +60,7 @@ export const ArticleCard = memo(function ArticleCard({
   idx,
   isDark,
   isSaved,
+  isRead = false,
   isNew,
   isHero = false,
   isFocused = false,
@@ -115,6 +117,8 @@ export const ArticleCard = memo(function ArticleCard({
     [article, cardMode, userVote, relatedSources.length]
   );
 
+  const shouldDimRead = isRead && (dashboardSettings.dimReadArticles ?? true) && !isFocused;
+
   return (
     <article
       data-article-idx={idx}
@@ -123,7 +127,9 @@ export const ArticleCard = memo(function ArticleCard({
       } ${
         isFocused
           ? 'ring-2 ring-[var(--accent)] border-[var(--accent)] shadow-[0_0_24px_rgba(239,68,68,0.22)]'
-          : ''
+          : shouldDimRead
+            ? 'opacity-70 hover:opacity-100'
+            : ''
       }`}
     >
       <div
@@ -249,7 +255,17 @@ export const ArticleCard = memo(function ArticleCard({
             </div>
 
             <span className="flex items-center gap-1 shrink-0 ml-1" title={article.date.toLocaleString()}>
-              {isNew && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="New since last check-in" />}
+              {isRead ? (
+                <span
+                  className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[8.5px] font-mono font-bold bg-black/10 dark:bg-white/10 text-[var(--ink-muted)] shrink-0"
+                  title="Already read"
+                >
+                  <Check className="w-2.5 h-2.5 text-emerald-400" />
+                  <span>READ</span>
+                </span>
+              ) : (
+                isNew && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" title="New since last check-in" />
+              )}
               <Clock className="w-3 h-3 opacity-60" />
               {formatTimeAgo(article.date)}
             </span>

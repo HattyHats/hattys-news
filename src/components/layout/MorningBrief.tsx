@@ -119,7 +119,7 @@ export function MorningBrief({
 
   return (
     <AnimatePresence initial={false}>
-      {showBrief && morningBriefStories.length > 0 && filter !== 'saved' && filter !== 'radar' && !query && (
+      {showBrief && morningBriefStories.length > 0 && filter !== 'saved' && filter !== 'history' && filter !== 'radar' && !query && (
         <motion.section
           initial={{ opacity: 0, height: 0, marginBottom: 0 }}
           animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}

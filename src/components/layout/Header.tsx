@@ -17,6 +17,7 @@ interface HeaderProps {
   fearGreed: FearGreedData | null;
   onSetQuery: (q: string) => void;
   onSetFilter: (f: string) => void;
+  onResetRegion?: () => void;
   onModeSwitch: (m: AppMode) => void;
   onToggleDark: () => void;
   onManualRefresh: () => void;
@@ -38,6 +39,7 @@ export function Header({
   fearGreed,
   onSetQuery,
   onSetFilter,
+  onResetRegion,
   onModeSwitch,
   onToggleDark,
   onManualRefresh,
@@ -62,7 +64,7 @@ export function Header({
           <div className="relative z-30 flex items-center justify-between gap-1.5 w-full">
             <div 
               className="flex items-center gap-1.5 cursor-pointer min-w-0" 
-              onClick={() => { onSetFilter('all'); onSetQuery(''); }}
+              onClick={() => { onSetFilter('all'); onResetRegion?.(); onSetQuery(''); }}
             >
               <div className="relative group shrink-0">
                 <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50" />
@@ -289,7 +291,7 @@ export function Header({
           {/* Logo with Mode Badge */}
           <div 
             className="flex items-center gap-1.5 lg:gap-2 cursor-pointer shrink-0" 
-            onClick={() => { onSetFilter('all'); onSetQuery(''); }}
+            onClick={() => { onSetFilter('all'); onResetRegion?.(); onSetQuery(''); }}
           >
             <div className="relative group shrink-0">
               <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-red-600 to-blue-600 blur-sm opacity-50 group-hover:opacity-100 transition-opacity" />

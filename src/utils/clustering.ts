@@ -1,6 +1,7 @@
-import { Article } from '../types';
+import { Article, AppMode, TrendingTopic } from '../types';
 import { getPublisherRoot, extractHeadlineKeywords } from './textCleaner';
-import { getOutletBadge } from './classifier';
+import { getOutletBadge, detectAssetsInArticle, detectStoryImpact, isGlobalBlindspot } from './classifier';
+import { WORLD_REGIONS, CRYPTO_CATEGORIES, WORLD_CATEGORIES } from '../config/feeds';
 
 export interface BrokeFirstInfo {
   outlet: string;
@@ -149,4 +150,160 @@ export function computeArticleClusters(articles: Article[]): Map<string, Article
   }
 
   return map;
+}
+
+const CURATED_TRENDING_ENTITIES: Record<AppMode, { label: string; term: string; regex: RegExp }[]> = {
+  crypto: [
+    { label: 'Bitcoin', term: 'Bitcoin', regex: /\b(bitcoin|btc)\b/i },
+    { label: 'Ethereum', term: 'Ethereum', regex: /\b(ethereum|eth)\b/i },
+    { label: 'Solana', term: 'Solana', regex: /\b(solana|sol)\b/i },
+    { label: 'XRP', term: 'XRP', regex: /\b(xrp|ripple)\b/i },
+    { label: 'Spot ETF', term: 'ETF', regex: /\b(etf|etfs|blackrock|ibit)\b/i },
+    { label: 'SEC / Policy', term: 'SEC', regex: /\b(sec|cftc|regulation|lawsuit|congress)\b/i },
+    { label: 'DeFi', term: 'DeFi', regex: /\b(defi|uniswap|aave|staking|tvl|yield)\b/i },
+    { label: 'Stablecoins', term: 'Stablecoin', regex: /\b(stablecoin|stablecoins|usdt|tether|usdc|circle)\b/i },
+    { label: 'AI & Crypto', term: 'AI', regex: /\b(ai|artificial intelligence|agent|gpu)\b/i },
+    { label: 'Mining', term: 'Mining', regex: /\b(mining|miner|miners|hashrate)\b/i },
+    { label: 'Cardano', term: 'Cardano', regex: /\b(cardano|ada)\b/i },
+    { label: 'Dogecoin', term: 'Dogecoin', regex: /\b(dogecoin|doge)\b/i },
+  ],
+  world: [
+    { label: 'AI & Chips', term: 'AI', regex: /\b(ai|artificial intelligence|openai|nvidia|chip|semiconductor)\b/i },
+    { label: 'Tariffs & Trade', term: 'Tariffs', regex: /\b(tariff|tariffs|trade war|exports|imports|sanctions)\b/i },
+    { label: 'Ukraine / Russia', term: 'Ukraine', regex: /\b(ukraine|ukrainian|kyiv|russia|moscow|zelensky|putin)\b/i },
+    { label: 'Middle East', term: 'Gaza', regex: /\b(gaza|israel|iran|lebanon|ceasefire|tehran|jerusalem)\b/i },
+    { label: 'Fed & Rates', term: 'Fed', regex: /\b(federal reserve|fed\b|interest rate|inflation|powell|central bank)\b/i },
+    { label: 'China', term: 'China', regex: /\b(china|chinese|beijing|taiwan)\b/i },
+    { label: 'Energy & Oil', term: 'Oil', regex: /\b(oil|crude|opec|energy|natural gas|solar|nuclear)\b/i },
+    { label: 'European Union', term: 'Europe', regex: /\b(european union|\beu\b|brussels|nato|germany|france|uk)\b/i },
+    { label: 'Space & NASA', term: 'Space', regex: /\b(nasa|space|spacex|orbit|satellite|moon|mars|telescope)\b/i },
+    { label: 'United Nations', term: 'UN', regex: /\b(united nations|\bun\b|security council)\b/i },
+    { label: 'Climate', term: 'Climate', regex: /\b(climate|earthquake|wildfire|hurricane|emissions|flood)\b/i },
+    { label: 'India', term: 'India', regex: /\b(india|indian|new delhi|mumbai)\b/i },
+  ],
+};
+
+/**
+ * Feature 1: Live "Trending Right Now" Topic Detector
+ * Scans the active feed pool to identify the top 5 topics spiking across multiple independent publishers right now.
+ */
+export function extractTrendingTopics(
+  articles: Article[],
+  mode: AppMode,
+  maxTopics = 5
+): TrendingTopic[] {
+  if (!articles || articles.length === 0) return [];
+
+  const definitions = CURATED_TRENDING_ENTITIES[mode];
+  const scored: TrendingTopic[] = [];
+
+  for (const def of definitions) {
+    let count = 0;
+    const pubs = new Set<string>();
+    for (const art of articles) {
+      const text = `${art.title} ${art.snippet || ''}`;
+      if (def.regex.test(text)) {
+        count++;
+        pubs.add(getPublisherRoot(art.src));
+      }
+    }
+    if (count >= 3 && pubs.size >= 2) {
+      scored.push({
+        term: def.term,
+        label: def.label,
+        count,
+        pubCount: pubs.size,
+      });
+    }
+  }
+
+  scored.sort((a, b) => b.count - a.count || b.pubCount - a.pubCount);
+  return scored.slice(0, maxTopics);
+}
+
+/**
+ * Feature 2: "10-Second Key Takeaways" Bullet Generator for the Terminal Reader Drawer
+ */
+export function buildArticleTakeaways(
+  article: Article,
+  related: Article[],
+  mode: AppMode,
+  marketQuotes: Record<string, { price: number; change24h: number; formatted: string }>
+): string[] {
+  const cardMode = article.mode || mode;
+  const outlet = getOutletBadge(article.src);
+  const brokeFirst = getBrokeFirstInfo(article, related);
+  const impact = detectStoryImpact(article.title, article.snippet);
+  const detectedAssets = detectAssetsInArticle(article.title, article.snippet || article.fullText, marketQuotes);
+  const blindspot = cardMode === 'world' && isGlobalBlindspot(article, related);
+
+  const takeaways: string[] = [];
+
+  // Bullet 1: Core Lead Fact
+  const rawLead = (article.snippet || article.fullText || '').replace(/\s+/g, ' ').trim();
+  const firstSentenceMatch = rawLead.match(/^(.{35,200}?[.!?])(?:\s|$)/);
+  if (firstSentenceMatch && firstSentenceMatch[1]) {
+    takeaways.push(firstSentenceMatch[1].trim());
+  } else if (rawLead.length >= 35) {
+    takeaways.push(rawLead.length > 180 ? `${rawLead.slice(0, 177).trim()}...` : rawLead);
+  } else {
+    takeaways.push(`${outlet.name} reports: "${article.title}".`);
+  }
+
+  // Bullet 2: Sector, Regional Scope & Market Assets
+  const cats = cardMode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
+  const catLabel = cats.find(c => c.id === article.primaryCat)?.label || article.primaryCat.toUpperCase();
+  const regionLabels =
+    cardMode === 'world' && article.regions && article.regions.length > 0
+      ? article.regions
+          .map(rid => WORLD_REGIONS.find(r => r.id === rid)?.label)
+          .filter(Boolean)
+          .slice(0, 2)
+      : [];
+
+  let scopeBullet = `Classified under ${catLabel}`;
+  if (regionLabels.length > 0) {
+    scopeBullet += ` (${regionLabels.join(' • ')})`;
+  }
+  if (impact) {
+    scopeBullet += ` • Signal: ${impact.label.replace(/^[^\w]+/, '').trim()}`;
+  }
+  if (detectedAssets.length > 0) {
+    const assetSummary = detectedAssets
+      .slice(0, 3)
+      .map(a => {
+        const chg = typeof a.change24h === 'number' ? ` (${a.change24h >= 0 ? '+' : ''}${a.change24h.toFixed(1)}%)` : '';
+        return `$${a.symbol}${a.formatted ? ` ${a.formatted}` : ''}${chg}`;
+      })
+      .join(', ');
+    scopeBullet += ` • Active tickers: ${assetSummary}.`;
+  } else {
+    scopeBullet += ` • Dispatched via ${outlet.flag} ${outlet.name} (${outlet.region} Desk).`;
+  }
+  takeaways.push(scopeBullet);
+
+  // Bullet 3: Multi-Wire Corroboration, "Broke First", & Blindspot Context
+  if (related.length > 0) {
+    const otherNames = related.map(r => getOutletBadge(r.src).name).slice(0, 3).join(', ');
+    const brokeNote = brokeFirst
+      ? brokeFirst.isCurrentArticle
+        ? `${outlet.name} broke this story first`
+        : `First reported by ${brokeFirst.outlet}${brokeFirst.leadMinutes > 0 ? ` (${brokeFirst.leadMinutes}m ahead)` : ''}`
+      : 'Multi-wire consensus';
+    takeaways.push(
+      `Corroborated across ${related.length + 1} independent wires (including ${otherNames}) • ${brokeNote}.${
+        blindspot ? ' Flagged as a Global Blindspot (0 US domestic media coverage).' : ''
+      }`
+    );
+  } else if (blindspot) {
+    takeaways.push(
+      `Global Blindspot dispatch from ${outlet.name} (${outlet.region} Desk) covering international developments with little or no mainstream US coverage.`
+    );
+  } else {
+    takeaways.push(
+      `Direct wire dispatch from ${outlet.name} • Live cross-checking active across ${cardMode === 'world' ? '45+ global' : '24+ crypto'} news desks.`
+    );
+  }
+
+  return takeaways;
 }

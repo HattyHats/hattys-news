@@ -112,6 +112,7 @@ export function DashboardSettingsModal({
       cardDensity: 'comfortable',
       pinnedSources: [],
       mutedSources: [],
+      dimReadArticles: true,
     });
   };
 
@@ -402,6 +403,32 @@ export function DashboardSettingsModal({
               }`}
             >
               {settings.showAssetTags ? 'ENABLED' : 'DISABLED'}
+            </button>
+          </div>
+
+          {/* Section: Dim Already-Read Dispatches Toggle */}
+          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">👀</span>
+                <span className="text-xs font-mono font-bold text-[var(--ink)]">
+                  DIM ALREADY-READ DISPATCHES
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--ink-muted)] mt-1 leading-snug">
+                Gently dims stories you have already opened and tags them with a ✓ READ badge so unread breaking stories stand out.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onUpdateSettings({ ...settings, dimReadArticles: !(settings.dimReadArticles ?? true) })}
+              className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold border shrink-0 self-start sm:self-center transition-all cursor-pointer ${
+                (settings.dimReadArticles ?? true)
+                  ? 'bg-emerald-500 text-black border-emerald-400 shadow-md shadow-emerald-500/20'
+                  : 'bg-black/10 dark:bg-white/10 text-[var(--ink-muted)] border-[var(--border)]'
+              }`}
+            >
+              {(settings.dimReadArticles ?? true) ? 'ENABLED' : 'DISABLED'}
             </button>
           </div>
 

@@ -3,8 +3,9 @@ import { FeedConfig, CategoryConfig, DashboardSettings, WorldRegionConfig, World
 export const OTHER_SITES = [
   { name: 'Learn With Hatty', url: 'https://earnwithhatty.com/' },
   { name: 'Token-Tokens', url: 'https://token-tokens.org/' },
-  { name: 'Open-Focus', url: 'https://hattyhats.github.io/Open-Focus/' },
-  { name: "Hatty's Universe", url: 'https://hatty-universe.netlify.app/' },
+  { name: 'HattyFocus', url: 'https://hattyfocus.org/' },
+  { name: "Hatty's GIF Maker", url: 'https://hattygifmaker.org/' },
+  { name: "Hatty's Universe", url: 'https://hattyuniverse.org/' },
   { name: 'QuickPad', url: 'https://www.quickpad.org/' },
   { name: 'Local-Cast', url: 'https://www.local-cast.org/' },
 ];
@@ -174,4 +175,5 @@ export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
   cardDensity: 'comfortable',
   pinnedSources: [],
   mutedSources: [],
+  dimReadArticles: true,
 };
