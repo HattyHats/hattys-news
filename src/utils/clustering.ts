@@ -252,7 +252,8 @@ export function buildArticleTakeaways(
 
   // Bullet 2: Sector, Regional Scope & Market Assets
   const cats = cardMode === 'world' ? WORLD_CATEGORIES : CRYPTO_CATEGORIES;
-  const catLabel = cats.find(c => c.id === article.primaryCat)?.label || article.primaryCat.toUpperCase();
+  const primaryCatId = article.primaryCat || 'all';
+  const catLabel = cats.find(c => c.id === primaryCatId)?.label || primaryCatId.toUpperCase();
   const regionLabels =
     cardMode === 'world' && article.regions && article.regions.length > 0
       ? article.regions
