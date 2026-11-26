@@ -109,7 +109,7 @@ async function fetchOrGetCachedFeed(targetUrl: string, nocache: boolean): Promis
     const feed = await parser.parseURL(targetUrl);
     const trimmed = {
       ...feed,
-      items: Array.isArray(feed.items) ? feed.items.slice(0, 18) : [],
+      items: Array.isArray(feed.items) ? feed.items.slice(0, 22) : [],
     };
     const bodyStr = JSON.stringify(trimmed);
     if (lambdaFeedCache.size >= 160 && !lambdaFeedCache.has(targetUrl)) {

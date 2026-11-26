@@ -1,6 +1,6 @@
 import { AppMode, Article } from '../types';
 import { getEditorialPhoto } from '../config/photos';
-import { classifyArticle, detectArticleRegions } from './classifier';
+import { classifyArticle, detectArticleRegions, isCryptoRelevantArticle } from './classifier';
 import { cleanWireTitle, safeParseDate } from './textCleaner';
 
 const CRYPTO_KEYWORDS_REGEX =
@@ -91,7 +91,7 @@ export async function fetchHackerNewsFlashWire(targetMode: AppMode): Promise<Art
       .filter((h: any) => {
         if (!h?.title || !h?.url) return false;
         if (targetMode === 'crypto') {
-          return CRYPTO_KEYWORDS_REGEX.test(String(h.title));
+          return CRYPTO_KEYWORDS_REGEX.test(String(h.title)) && isCryptoRelevantArticle(String(h.title), '');
         }
         return true;
       })

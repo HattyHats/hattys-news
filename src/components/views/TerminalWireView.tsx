@@ -104,7 +104,7 @@ export const TerminalWireView = memo(function TerminalWireView({
             const brokeFirst = getBrokeFirstInfo(art, related);
             const blindspot = mode === 'world' && (showBlindspotBadge || related.length > 0) && isGlobalBlindspot(art, related);
             const detectedAssets = dashboardSettings.showAssetTags
-              ? detectAssetsInArticle(art.title, art.snippet, marketQuotes)
+              ? detectAssetsInArticle(art.title, art.snippet, marketQuotes, mode)
               : [];
             const pulse = computeStoryPulse(art, mode, pulseVotes[art.id] || null, related.length);
 

@@ -162,7 +162,7 @@ const CURATED_TRENDING_ENTITIES: Record<AppMode, { label: string; term: string; 
     { label: 'SEC / Policy', term: 'SEC', regex: /\b(sec|cftc|regulation|lawsuit|congress)\b/i },
     { label: 'DeFi', term: 'DeFi', regex: /\b(defi|uniswap|aave|staking|tvl|yield)\b/i },
     { label: 'Stablecoins', term: 'Stablecoin', regex: /\b(stablecoin|stablecoins|usdt|tether|usdc|circle)\b/i },
-    { label: 'AI & Crypto', term: 'AI', regex: /\b(ai|artificial intelligence|agent|gpu)\b/i },
+    { label: 'AI Tokens', term: 'Bittensor', regex: /\b(bittensor|tao\b|render|rndr|fet\b|ai token|ai tokens|ai crypto|ai agent|ai agents|virtuals)\b/i },
     { label: 'Mining', term: 'Mining', regex: /\b(mining|miner|miners|hashrate)\b/i },
     { label: 'Cardano', term: 'Cardano', regex: /\b(cardano|ada)\b/i },
     { label: 'Dogecoin', term: 'Dogecoin', regex: /\b(dogecoin|doge)\b/i },
@@ -234,7 +234,7 @@ export function buildArticleTakeaways(
   const outlet = getOutletBadge(article.src);
   const brokeFirst = getBrokeFirstInfo(article, related);
   const impact = detectStoryImpact(article.title, article.snippet);
-  const detectedAssets = detectAssetsInArticle(article.title, article.snippet || article.fullText, marketQuotes);
+  const detectedAssets = detectAssetsInArticle(article.title, article.snippet || article.fullText, marketQuotes, cardMode);
   const blindspot = cardMode === 'world' && isGlobalBlindspot(article, related);
 
   const takeaways: string[] = [];

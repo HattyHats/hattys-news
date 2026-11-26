@@ -462,7 +462,7 @@ const server = http.createServer(async (req, res) => {
 
         const xmlText = await feedRes.text();
         const parsed = parseXmlFeed(xmlText);
-        const trimmed = { items: Array.isArray(parsed.items) ? parsed.items.slice(0, 18) : [] };
+        const trimmed = { items: Array.isArray(parsed.items) ? parsed.items.slice(0, 22) : [] };
         const bodyStr = JSON.stringify(trimmed);
 
         if (newsFeedCache.size >= 160 && !newsFeedCache.has(targetUrl)) {

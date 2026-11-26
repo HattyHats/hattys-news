@@ -182,7 +182,7 @@ export function ArticleReaderDrawer({
           ? rawBody.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)
           : [`Verified wire dispatch from ${article.src}. Open the publisher report below to read the full coverage.`];
 
-        const detectedAssets = detectAssetsInArticle(article.title, rawBody, marketQuotes);
+        const detectedAssets = detectAssetsInArticle(article.title, rawBody, marketQuotes, cardMode);
         const takeaways = buildArticleTakeaways(article, relatedArticles, cardMode, marketQuotes);
         const canPrev = articleIndex > 0;
         const canNext = articleIndex >= 0 && articleIndex < totalCount - 1;

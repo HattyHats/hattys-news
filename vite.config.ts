@@ -70,7 +70,7 @@ function apiNewsPlugin() {
               urlsList.map(async (u: string) => {
                 try {
                   const feed = await parser.parseURL(u);
-                  results[u] = { items: Array.isArray(feed.items) ? feed.items.slice(0, 18) : [] };
+                  results[u] = { items: Array.isArray(feed.items) ? feed.items.slice(0, 22) : [] };
                 } catch {
                   results[u] = { items: [] };
                 }

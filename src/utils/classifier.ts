@@ -32,16 +32,49 @@ export function classifyArticle(
   };
 }
 
+const CRYPTO_STRICT_RELEVANCE_REGEX =
+  /\b(crypto|cryptocurrency|cryptocurrencies|bitcoin|btc|satoshi|sats|ordinals|runes|lightning network|halving|ethereum|eth|ether\b|vitalik|buterin|erc-?20|layer-?\s?[123]|l1\b|l2\b|rollup|rollups|zk-?rollup|zero-?knowledge|arbitrum|optimism|base chain|polygon|matic|steth|eigenlayer|evm\b|eip\b|pectra|solana|sol\b|ripple|xrp|rlusd|cardano|ada\b|doge|dogecoin|shib|shiba inu|avalanche|avax|chainlink|polkadot|near protocol|sui\b|aptos|bnb|binance|coinbase|kraken|bybit|okx|bitfinex|kucoin|bitget|upbit|bithumb|deribit|gemini|mt\.?\s?gox|ftx|alameda|celsius|tether|usdt|usdc|pyusd|fdusd|usds|stusds|usde|ethena|sky protocol|sky co-founder|circle|stablecoin|stablecoins|cbdc|defi|dex\b|cex\b|uniswap|aave|makerdao|curve|lido|pendle|hyperliquid|jupiter|raydium|pancakeswap|pump\.fun|friend\.tech|farcaster|thorchain|synthetix|morpho|maple finance|liquidity pool|yield farming|staking|restaking|tvl|on-?chain|off-?chain|blockchain|blockchains|web3|dapp|dapps|smart contract|smart contracts|token|tokens|tokenized|tokenization|rwa\b|altcoin|altcoins|memecoin|memecoins|meme coin|pepe\b|bonk\b|wif\b|dogwifhat|floki|nft|nfts|opensea|blur\b|pudgy penguins|bored ape|cryptopunk|cryptopunks|metaverse|gamefi|socialfi|depin|airdrop|airdrops|ico\b|ido\b|dao\b|metadao|digital asset|digital assets|virtual asset|crypto mining|bitcoin mining|bitcoin miner|miners|hashrate|hash rate|asic|antminer|bitmain|marathon digital|riot platforms|cleanspark|core scientific|terawulf|hut 8|bitdeer|proof-of-work|proof-of-stake|seed phrase|private key|hardware wallet|crypto wallet|ledger|trezor|coldcard|metamask|phantom|self-custody|cold wallet|hot wallet|shielded address|shielded addresses|multisig|spot etf|bitcoin etf|ethereum etf|crypto etf|ibit|fbtc|gbtc|grayscale|microstrategy|saylor|bitwise|vaneck|21shares|galaxy digital|pantera|paradigm|consensys|chainalysis|zachxbt|arkham|polymarket|gensler|mica\b|fit21|tornado cash|monero|xmr|litecoin|ltc|zcash|zec\b|toncoin|tron|trx|kaspa|cosmos|hedera|hbar|algorand|stellar|xlm|celestia|injective|sei\b|fantom|sonic|mantle|linea|scroll|zksync|starknet|berachain|bittensor|tao\b|coin\s+and\s+crcl|digital\s+gold\s+trades)\b/i;
+
+const NON_CRYPTO_HEADLINE_BLOCK_REGEX =
+  /\b(gta\s*6|take-two|1password|neuralink|character\.ai|chatgpt|claude\s+ship|spacex|larry\s+ellison|oracle\s+vote|jensen\s+huang|alice\s+huang|pre-k\s+bill|vibe\s+coding|civ\s+rip-off|death\s+bets|2nm\s+sram|rapidus|prop\s+firm|prop\s+firms)\b/i;
+
+const HEADLINE_CORE_CRYPTO_REGEX =
+  /\b(bitcoin|btc|ethereum|eth|crypto|cryptocurrency|blockchain|token|tokens|solana|sol\b|xrp|ripple|defi|web3|nft|nfts|stablecoin|stablecoins|usdt|usdc|coinbase|binance|kraken|altcoin|memecoin|dogecoin|cardano|airdrop|ledger|trezor|coldcard|metamask|polymarket)\b/i;
+
+/**
+ * Strict Crypto Relevance Gate:
+ * Ensures only genuinely crypto/blockchain/Web3/digital-asset stories appear in Crypto mode,
+ * filtering out off-topic general tech, gaming, macro politics, or equity stories syndicated by mixed media feeds.
+ */
+export function isCryptoRelevantArticle(
+  title: string,
+  snippet?: string,
+  fullText?: string
+): boolean {
+  const cleanTitle = (title || '').trim();
+  if (!cleanTitle) return false;
+
+  // If the headline is explicitly about an off-topic non-crypto subject and has no core crypto term in the headline, reject it
+  if (NON_CRYPTO_HEADLINE_BLOCK_REGEX.test(cleanTitle) && !HEADLINE_CORE_CRYPTO_REGEX.test(cleanTitle)) {
+    return false;
+  }
+
+  const scanText = `${cleanTitle} ${snippet || ''} ${(fullText || '').slice(0, 260)}`;
+  return CRYPTO_STRICT_RELEVANCE_REGEX.test(scanText);
+}
+
 export function detectAssetsInArticle(
   title: string,
   snippet: string | undefined,
-  quotes: Record<string, { price?: number; change24h?: number; formatted?: string }>
+  quotes: Record<string, { price?: number; change24h?: number; formatted?: string }>,
+  mode?: AppMode
 ): DetectedAsset[] {
   const matches: DetectedAsset[] = [];
   const textToScan = `${title} ${snippet || ''}`;
   const seenSymbols = new Set<string>();
 
   for (const def of ASSET_DEFINITIONS) {
+    if (mode === 'crypto' && def.type !== 'crypto') continue;
     if (def.regex.test(textToScan)) {
       if (seenSymbols.has(def.symbol)) continue;
       seenSymbols.add(def.symbol);

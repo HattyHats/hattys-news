@@ -30,7 +30,7 @@ import { CRYPTO_FEEDS, WORLD_FEEDS, CRYPTO_CATEGORIES, WORLD_CATEGORIES, WORLD_R
 import { ASSET_DEFINITIONS } from './config/assets';
 import { getEditorialPhoto } from './config/photos';
 import { cleanWireTitle, cleanWireSnippet, getPublisherRoot, safeParseDate, extractReadableBody } from './utils/textCleaner';
-import { classifyArticle, detectArticleRegions, isGlobalBlindspot } from './utils/classifier';
+import { classifyArticle, detectArticleRegions, isGlobalBlindspot, isCryptoRelevantArticle } from './utils/classifier';
 import { computeArticleClusters, interleaveArticlesByDiversity, extractTrendingTopics } from './utils/clustering';
 import { fetchUsgsEarthquakeWire, fetchHackerNewsFlashWire } from './utils/flashWires';
 import { loadCachedArticlesForMode, saveArticlesCache } from './utils/storage';
@@ -738,21 +738,30 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Map raw RSS items for a feed into normalized Article objects (with Dual-Signal World Regions)
+  // Map raw RSS items for a feed into normalized Article objects (with Dual-Signal World Regions & Strict Crypto Gate)
   const mapRawItemsToArticles = useCallback((items: any[], feed: FeedConfig, targetMode: AppMode): Article[] => {
     if (!Array.isArray(items)) return [];
-    return items.slice(0, 18).map((i: any, idx: number) => {
-      let img = pickFeedThumbnail(i);
+    const out: Article[] = [];
+    const sliceLimit = targetMode === 'crypto' ? 22 : 18;
 
-      if (img && img.startsWith('http://')) {
-        img = img.replace(/^http:\/\//i, 'https://');
-      }
-
+    for (let idx = 0; idx < Math.min(items.length, sliceLimit); idx++) {
+      const i = items[idx];
       const rawTitle = i.title ? i.title.trim() : (targetMode === 'world' ? 'World Wire Update' : 'Crypto Market Update');
       const title = cleanWireTitle(rawTitle);
       const rawBodyHtml = i.contentEncoded || i.content || i.description || i.contentSnippet || '';
       const snippet = cleanWireSnippet(i.contentSnippet || i.description || '', title);
       const { fullText, readingMinutes } = extractReadableBody(rawBodyHtml, title);
+
+      // Strict Crypto Relevance Gate: Reject off-topic world, general tech, gaming, or stock news in Crypto mode
+      if (targetMode === 'crypto' && !isCryptoRelevantArticle(title, snippet, fullText)) {
+        continue;
+      }
+
+      let img = pickFeedThumbnail(i);
+      if (img && img.startsWith('http://')) {
+        img = img.replace(/^http:\/\//i, 'https://');
+      }
+
       const { primary, matched } = classifyArticle(title, snippet, feed.defaultCat, targetMode);
       const regions = targetMode === 'world' ? detectArticleRegions(title, snippet, feed.n, feed.region) : undefined;
 
@@ -762,7 +771,7 @@ export default function App() {
 
       const normId = title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 36) || String(idx);
 
-      return {
+      out.push({
         id: `${targetMode}-${feed.n}-${normId}`,
         title,
         link: i.link || '#',
@@ -776,8 +785,10 @@ export default function App() {
         fullText,
         readingMinutes,
         mode: targetMode
-      };
-    });
+      });
+    }
+
+    return out;
   }, []);
 
   // Fetch individual feed with resilient 8.5s timeout
@@ -1266,11 +1277,12 @@ export default function App() {
     }
   }, [mode, dashboardSettings, filter]);
 
-  // Strict topic-isolated articles for current mode + Publisher Mute Filter + Diversity & Pinned Source Interleaving
+  // Strict topic-isolated articles for current mode + Strict Crypto Gate + Publisher Mute Filter + Diversity Interleaving
   const currentModeArticles = useMemo(() => {
     const modeScoped = articles.filter(a => {
       if (a.mode && a.mode !== mode) return false;
       if (mutedSourcesSet.has(a.src.toLowerCase())) return false;
+      if (mode === 'crypto' && !isCryptoRelevantArticle(a.title, a.snippet, a.fullText)) return false;
       return true;
     });
     return interleaveArticlesByDiversity(modeScoped, dashboardSettings.pinnedSources || [], rotationSeed);

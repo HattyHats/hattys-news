@@ -338,7 +338,7 @@ export function ShareSnapshotModal({
     ctx.font = '700 14px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
     ctx.fillStyle = '#94a3b8';
 
-    const detected = detectAssetsInArticle(article.title, article.snippet, marketQuotes);
+    const detected = detectAssetsInArticle(article.title, article.snippet, marketQuotes, cardMode);
     const tickerItems: string[] = [];
 
     if (detected.length > 0) {
